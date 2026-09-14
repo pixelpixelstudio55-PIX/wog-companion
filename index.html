@@ -74,13 +74,30 @@
   .ec-name-text b { font-size: 14.5px; }
   .ec-name-text .ec-sub { display: block; font-size: 11px; color: var(--text-dim); margin-top: 1px; }
   .tier-badge { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 999px; border: 1px solid; }
-  .skill-card .sk-name { font-weight: 700; color: var(--gold-bright); font-size: 13.5px; }
-  .skill-card .sk-type { font-size: 9.5px; padding: 2px 7px; border-radius: 999px; background: var(--accent-bg); color: var(--gold); }
-  .skill-card .sk-req { font-size: 11px; color: var(--text-dim); margin-bottom: 6px; }
-  .skill-card .sk-desc { font-size: 12px; line-height: 1.6; color: var(--text); margin-bottom: 8px; }
-  .lvl-control { display: flex; align-items: center; gap: 8px; font-size: 12.5px; }
-  .lvl-control button { width: 24px; height: 24px; border-radius: 50%; border: 1px solid var(--gold); background: transparent; color: var(--gold); cursor: pointer; }
-  .lvl-control .lvl-val { font-weight: 700; min-width: 46px; text-align: center; }
+  .skill-card .sk-name { font-weight: 700; font-size: 13.5px; }
+  .skill-card .sk-type { font-size: 9.5px; padding: 2px 7px; border-radius: 999px; }
+  .skill-card .sk-req { font-size: 11px; color: var(--text-dim); margin-bottom: 8px; min-height: 15px; }
+  .skill-row-grid { align-items: stretch; }
+  .skill-card { display: flex; flex-direction: column; }
+  .skill-card .sk-name { min-height: 34px; display: flex; align-items: center; }
+
+  .skill-card.skill-active { border-color: rgba(212,169,74,0.45); background: linear-gradient(180deg, rgba(212,169,74,0.08), var(--bg2) 60%); }
+  .skill-card.skill-active .sk-name { color: var(--gold-bright); }
+  .skill-card.skill-active .sk-type { background: rgba(212,169,74,0.18); color: var(--gold-bright); }
+  .skill-card.skill-passive { border-color: rgba(88,166,255,0.45); background: linear-gradient(180deg, rgba(88,166,255,0.08), var(--bg2) 60%); }
+  .skill-card.skill-passive .sk-name { color: #6cb6ff; }
+  .skill-card.skill-passive .sk-type { background: rgba(88,166,255,0.18); color: #6cb6ff; }
+
+  .sk-lvl-scroll { height: 280px; overflow-y: auto; }
+  .sk-lvl-table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+  .sk-lvl-table td { padding: 4px 6px; border-top: 1px solid rgba(255,255,255,0.05); line-height: 1.4; cursor: pointer; }
+  .sk-lvl-table td.sk-lvl-num { width: 40px; font-weight: 700; text-align: center; color: var(--text-dim); }
+  .sk-lvl-table tr:hover td { background: rgba(255,255,255,0.03); }
+  .sk-lvl-table tr.sk-lvl-active td { background: rgba(212,169,74,0.14); }
+  .sk-lvl-table tr.sk-lvl-active td.sk-lvl-num { color: var(--gold-bright); }
+  .skill-card.skill-passive .sk-lvl-table tr.sk-lvl-active td { background: rgba(88,166,255,0.14); }
+  .skill-card.skill-passive .sk-lvl-table tr.sk-lvl-active td.sk-lvl-num { color: #6cb6ff; }
+  .sk-lvl-hint { font-size: 10.5px; color: var(--text-dim); margin-top: 6px; text-align: center; }
 
   table.data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
   table.data-table th { text-align: left; font-size: 10.5px; text-transform: uppercase; letter-spacing: .3px; color: var(--gold); padding: 8px 10px; border-bottom: 2px solid var(--line); cursor: pointer; white-space: nowrap; background: var(--bg2); }
@@ -590,33 +607,30 @@ function renderSkills(){
     return `<div class="branch-block"><div class="branch-title">${esc(fld(b,'branch_title'))}</div><div class="skill-row-grid">${skillsHtml}</div></div>`;
   }).join('') || `<div class="empty-state">—</div>`;
 
-  box.querySelectorAll('[data-alloc-plus]').forEach(btn => btn.addEventListener('click', () => allocSkill(btn.dataset.allocPlus, 1)));
-  box.querySelectorAll('[data-alloc-minus]').forEach(btn => btn.addEventListener('click', () => allocSkill(btn.dataset.allocMinus, -1)));
+  box.querySelectorAll('[data-alloc-row]').forEach(row => row.addEventListener('click', () => allocSkillTo(row.dataset.allocRow, parseInt(row.dataset.allocLvl, 10))));
 }
 
 function skillCardHtml(sk, branchNum){
   const lvl = skillAllocations[sk.id] || 0;
-  const maxLvl = sk.levels.length;
-  const cur = sk.levels[Math.max(0, lvl-1)] || sk.levels[0];
-  const desc = lvl === 0 ? fld(sk.levels[0], 'description') : fld(cur, 'description');
+  const rows = sk.levels.map((lv, i) => `
+    <tr class="${lvl === i+1 ? 'sk-lvl-active' : ''}" data-alloc-row="${sk.id}" data-alloc-lvl="${i+1}">
+      <td class="sk-lvl-num">Lv.${i+1}</td>
+      <td>${esc(fld(lv,'description'))}</td>
+    </tr>`).join('');
   return `
-    <div class="card skill-card">
+    <div class="card skill-card ${sk.is_passive ? 'skill-passive' : 'skill-active'}">
       <div class="sk-head">
         <div class="sk-head-l">${skillIconHtml(sk, branchNum)}<span class="sk-name">${esc(sk.name_en)}</span></div>
         <span class="sk-type">${sk.is_passive ? t('passive') : t('active')}</span>
       </div>
       <div class="sk-req">${t('req_level')}: ${sk.req_player_level}${sk.pre_req ? ' · ' + esc(fld(sk.pre_req,'parent_name')) + ' Lv.' + sk.pre_req.req_level : ''}</div>
-      <div class="sk-desc">${esc(desc)}</div>
-      <div class="lvl-control">
-        <button data-alloc-minus="${sk.id}">−</button>
-        <span class="lvl-val">${lvl} / ${maxLvl}</span>
-        <button data-alloc-plus="${sk.id}">+</button>
-      </div>
+      <div class="sk-lvl-scroll"><table class="sk-lvl-table"><tbody>${rows}</tbody></table></div>
+      <div class="sk-lvl-hint">${currentLang==='th'?'คลิกที่แถวเพื่อจำลองการลงแต้ม (คลิกซ้ำเพื่อล้าง)':'Click a row to simulate allocation (click again to clear)'}</div>
     </div>`;
 }
-function allocSkill(id, delta){
+function allocSkillTo(id, level){
   const cur = skillAllocations[id] || 0;
-  const next = Math.max(0, Math.min(10, cur + delta));
+  const next = cur === level ? 0 : level;
   if(next === 0) delete skillAllocations[id]; else skillAllocations[id] = next;
   localStorage.setItem('wog_skill_alloc', JSON.stringify(skillAllocations));
   renderSkills();
