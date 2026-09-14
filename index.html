@@ -267,7 +267,13 @@
   .switch input:checked + .slider { background: rgba(212,169,74,0.35); border-color: var(--gold); }
   .switch input:checked + .slider::before { transform: translateX(17px); background: var(--gold-bright); }
   .forge-tier-checks { display: flex; gap: 10px; flex-wrap: wrap; }
-  .forge-tier-check { display: flex; align-items: center; gap: 6px; font-size: 12.5px; background: var(--bg3); border: 1px solid var(--navy-line); border-radius: 999px; padding: 6px 12px; cursor: pointer; }
+  .forge-tier-check { display: flex; align-items: center; gap: 6px; font-size: 12.5px; background: var(--bg3); border: 1px solid var(--navy-line); border-radius: 999px; padding: 6px 12px; cursor: pointer; font-weight: 700; }
+  .forge-tier-check.tier-1 { color: #9aa4b5; border-color: rgba(154,164,181,0.5); background: rgba(154,164,181,0.08); }
+  .forge-tier-check.tier-2 { color: #3fb950; border-color: rgba(63,185,80,0.5); background: rgba(63,185,80,0.08); }
+  .forge-tier-check.tier-3 { color: #58a6ff; border-color: rgba(88,166,255,0.5); background: rgba(88,166,255,0.08); }
+  .forge-tier-check.tier-4 { color: #f85149; border-color: rgba(248,81,73,0.5); background: rgba(248,81,73,0.08); }
+  .forge-tier-check.tier-5 { color: #bc8cff; border-color: rgba(188,140,255,0.5); background: rgba(188,140,255,0.08); }
+  .forge-tier-check.tier-6 { color: #e3b341; border-color: rgba(227,179,65,0.6); background: rgba(227,179,65,0.1); }
   .forge-log-empty { text-align: center; color: var(--text-dim); font-size: 13px; padding: 40px 20px; line-height: 1.7; }
   .forge-tier-progress-card { background: var(--bg2); border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
   .ftp-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
@@ -492,12 +498,12 @@
           <div style="flex:1;"><b data-i="forge-sw-main-t">หลอมอัตโนมัติเมื่ออัญมณีเทียร์เดียวกันครบ 6 ชิ้น</b>
           <div class="hint" data-i="forge-sw-main-d">รวม 6 ชิ้นในเทียร์เดียวกันให้กลายเป็นเทียร์ถัดไปทันที</div>
           <div class="forge-tier-checks" style="margin-top:8px;">
-            <label class="forge-tier-check"><input type="checkbox" class="forge-inert-sw" checked> Tier 1</label>
-            <label class="forge-tier-check"><input type="checkbox" class="forge-inert-sw" checked> Tier 2</label>
-            <label class="forge-tier-check"><input type="checkbox" class="forge-inert-sw"> Tier 3</label>
-            <label class="forge-tier-check"><input type="checkbox" class="forge-inert-sw"> Tier 4</label>
-            <label class="forge-tier-check"><input type="checkbox" class="forge-inert-sw"> Tier 5</label>
-            <label class="forge-tier-check"><input type="checkbox" class="forge-inert-sw"> Tier 6</label>
+            <label class="forge-tier-check tier-1"><input type="checkbox" class="forge-inert-sw" checked> Tier 1</label>
+            <label class="forge-tier-check tier-2"><input type="checkbox" class="forge-inert-sw" checked> Tier 2</label>
+            <label class="forge-tier-check tier-3"><input type="checkbox" class="forge-inert-sw"> Tier 3</label>
+            <label class="forge-tier-check tier-4"><input type="checkbox" class="forge-inert-sw"> Tier 4</label>
+            <label class="forge-tier-check tier-5"><input type="checkbox" class="forge-inert-sw"> Tier 5</label>
+            <label class="forge-tier-check tier-6"><input type="checkbox" class="forge-inert-sw"> Tier 6</label>
           </div></div>
         </div>
         <div class="forge-toggle-row" style="flex-direction:column;align-items:stretch;">
@@ -513,18 +519,28 @@
             <div class="hint" style="margin-top:4px;color:var(--gold);" data-i="forge-radio-note">เลือกได้แค่ 1 ใน 2 ข้อนี้เท่านั้น</div></div>
           </div>
           <div class="forge-tier-checks" style="margin-top:12px;">
-            <label class="forge-tier-check"><input type="checkbox" class="forge-inert-sw" checked> Tier 1</label>
-            <label class="forge-tier-check"><input type="checkbox" class="forge-inert-sw"> Tier 2</label>
-            <label class="forge-tier-check"><input type="checkbox" class="forge-inert-sw" checked> Tier 3</label>
-            <label class="forge-tier-check"><input type="checkbox" class="forge-inert-sw"> Tier 4</label>
-            <label class="forge-tier-check"><input type="checkbox" class="forge-inert-sw"> Tier 5</label>
-            <label class="forge-tier-check"><input type="checkbox" class="forge-inert-sw"> Tier 6</label>
+            <label class="forge-tier-check tier-1"><input type="checkbox" class="forge-inert-sw" checked> Tier 1</label>
+            <label class="forge-tier-check tier-2"><input type="checkbox" class="forge-inert-sw"> Tier 2</label>
+            <label class="forge-tier-check tier-3"><input type="checkbox" class="forge-inert-sw" checked> Tier 3</label>
+            <label class="forge-tier-check tier-4"><input type="checkbox" class="forge-inert-sw"> Tier 4</label>
+            <label class="forge-tier-check tier-5"><input type="checkbox" class="forge-inert-sw"> Tier 5</label>
+            <label class="forge-tier-check tier-6"><input type="checkbox" class="forge-inert-sw"> Tier 6</label>
           </div>
         </div>
-        <div class="forge-toggle-row">
-          <label class="switch"><input type="checkbox" class="forge-inert-sw"><span class="slider"></span></label>
-          <div><b>💍 <span data-i="forge-sw-jewelry-t">หลอมเครื่องประดับ Tier 3 อัตโนมัติ (ต้องการ 3 ชิ้น)</span></b>
-          <div class="hint" data-i="forge-sw-jewelry-d">รวมเครื่องประดับ Tier 3 3 ชิ้น เป็น Tier 4 อัตโนมัติ</div></div>
+        <div class="forge-toggle-row" style="flex-direction:column;align-items:stretch;">
+          <div style="display:flex;gap:12px;">
+            <label class="switch"><input type="checkbox" class="forge-inert-sw"><span class="slider"></span></label>
+            <div style="flex:1;"><b>💍 <span data-i="forge-sw-jewelry-t">หลอมเครื่องประดับ อัตโนมัติ (ต้องการ 3 ชิ้น)</span></b>
+            <div class="hint" data-i="forge-sw-jewelry-d">รวมเครื่องประดับเทียร์ที่เลือกไว้ 3 ชิ้น เป็นเทียร์ถัดไปอัตโนมัติ (ไม่จำกัดแค่ Tier 3 แล้ว)</div></div>
+          </div>
+          <div class="forge-tier-checks" style="margin-top:12px;">
+            <label class="forge-tier-check tier-1"><input type="checkbox" class="forge-inert-sw"> Tier 1</label>
+            <label class="forge-tier-check tier-2"><input type="checkbox" class="forge-inert-sw"> Tier 2</label>
+            <label class="forge-tier-check tier-3"><input type="checkbox" class="forge-inert-sw" checked> Tier 3</label>
+            <label class="forge-tier-check tier-4"><input type="checkbox" class="forge-inert-sw"> Tier 4</label>
+            <label class="forge-tier-check tier-5"><input type="checkbox" class="forge-inert-sw"> Tier 5</label>
+            <label class="forge-tier-check tier-6"><input type="checkbox" class="forge-inert-sw"> Tier 6</label>
+          </div>
         </div>
         <div class="forge-toggle-row">
           <label class="switch"><input type="checkbox" class="forge-inert-sw" checked><span class="slider"></span></label>
@@ -631,8 +647,8 @@ const UI_STRINGS = {
   'forge-sw-main-d': { th: 'รวม 6 ชิ้นในเทียร์เดียวกันให้กลายเป็นเทียร์ถัดไปทันที', en: 'Combines 6 same-tier jewels into the next tier automatically.' },
   'forge-sw-gear-t': { th: 'หลอมอุปกรณ์อัตโนมัติ (ต้องการ 6 ชิ้น)', en: 'Auto-fuse Gear (needs 6 items)' },
   'forge-sw-gear-d': { th: 'รวมอุปกรณ์เทียร์ที่เลือกไว้ 6 ชิ้น เป็นเทียร์ถัดไปอัตโนมัติ (ไม่จำกัดแค่ Tier 3 แล้ว)', en: "Auto-fuses 6 gear items of the ticked tier(s) into the next tier - no longer locked to Tier 3 only." },
-  'forge-sw-jewelry-t': { th: 'หลอมเครื่องประดับ Tier 3 อัตโนมัติ (ต้องการ 3 ชิ้น)', en: 'Auto-fuse Tier 3 Jewelry (needs 3 items)' },
-  'forge-sw-jewelry-d': { th: 'รวมเครื่องประดับ Tier 3 3 ชิ้น เป็น Tier 4 อัตโนมัติ', en: 'Auto-fuses 3 Tier 3 jewelry items into Tier 4.' },
+  'forge-sw-jewelry-t': { th: 'หลอมเครื่องประดับ อัตโนมัติ (ต้องการ 3 ชิ้น)', en: 'Auto-fuse Jewelry (needs 3 items)' },
+  'forge-sw-jewelry-d': { th: 'รวมเครื่องประดับเทียร์ที่เลือกไว้ 3 ชิ้น เป็นเทียร์ถัดไปอัตโนมัติ (ไม่จำกัดแค่ Tier 3 แล้ว)', en: "Auto-fuses 3 jewelry items of the ticked tier(s) into the next tier - no longer locked to Tier 3 only." },
   'forge-recommended': { th: 'แนะนำ', en: 'Recommended' },
   'forge-sw-samelvl-t': { th: 'หลอมเฉพาะไอเทมเลเวลเดียวกันเท่านั้น', en: 'Only fuse SAME LEVEL items' },
   'forge-sw-samelvl-d': { th: 'บังคับให้ของ 6 ชิ้นต้องการเลเวลเท่ากันทั้งหมด (เช่น Lv.50 ล้วน) ป้องกันของเลเวลต่ำหลุดไปปนกับของเลเวลสูงตอนหลอม', en: "Requires all 6 items to share the same required level (e.g. all Lv.50) - stops a low-level item from slipping into a high-level fusion." },
@@ -1577,19 +1593,35 @@ const JEWEL_TIDS_BY_GRADE = (() => {
   return out;
 })();
 function buildForgeStatusExpr(){
+  // Jewels are individual "NotStack" items, not a stackable currency - each
+  // instance carries its own real _location (1 = Bag, 2 = Vault), confirmed
+  // by comparing against boss's own in-game screenshot. getOwnedItemCount()
+  // was silently summing a different, coincidentally-similar total; this
+  // reads the actual per-instance list instead, so Bag/Vault are both real.
   return `(function(){
     try {
-      var sItem;
-      for (var e of nn.services._mapService.entries()) {
+      var itemC;
+      for (var e of nn.netData._mapContainer.entries()) {
         var name = e[0].name || e[0].toString();
-        if (name === 'ServiceItem') sItem = e[1];
+        if (name === 'NetContainerItem') itemC = e[1];
       }
       var byGrade = ${JSON.stringify(JEWEL_TIDS_BY_GRADE)};
       var totals = {};
       Object.keys(byGrade).forEach(function(g){
-        var sum = 0;
-        byGrade[g].forEach(function(tid){ try { sum += (sItem.getOwnedItemCount(tid) || 0); } catch(e){} });
-        totals[g] = sum;
+        var bag = 0, vault = 0, other = 0;
+        byGrade[g].forEach(function(tid){
+          try {
+            var items = itemC.getItemNotStackAllByTid(tid);
+            var arr = [];
+            if (items && items.length !== undefined) { for (var i=0;i<items.length;i++) arr.push(items[i]); }
+            arr.forEach(function(it){
+              if (it._location === 1) bag++;
+              else if (it._location === 2) vault++;
+              else other++;
+            });
+          } catch(e){}
+        });
+        totals[g] = { bag: bag, vault: vault, other: other, total: bag+vault+other };
       });
       var autoFusionOn = null;
       try {
@@ -1624,7 +1656,8 @@ async function refreshForgeStatus(){
     const gradeLabels = { 1:['Tier 1','Basic'], 2:['Tier 2','Common'], 3:['Tier 3','Advanced'], 4:['Tier 4','Superior'], 5:['Tier 5','Rare'], 6:['Tier 6','Divine'] };
     let totalOwned = 0, tiersReady = 0;
     gridEl.innerHTML = Object.keys(gradeLabels).map(g => {
-      const cnt = data.totals[g] || 0;
+      const row = data.totals[g] || { bag: 0, vault: 0, other: 0, total: 0 };
+      const cnt = row.total;
       totalOwned += cnt;
       const ready = cnt >= 6;
       if (ready) tiersReady++;
@@ -1632,7 +1665,7 @@ async function refreshForgeStatus(){
       const isMax = g === '6';
       return `<div class="forge-tier-progress-card">
         <div class="ftp-head"><b>${gradeLabels[g][0]} <span class="hint">(${gradeLabels[g][1]})</span></b><span class="ftp-count">${cnt} <span class="hint" style="font-size:11px;">${currentLang==='th'?'ชิ้น':'jewels'}</span></span></div>
-        <div class="ftp-breakdown hint">🎒 ${currentLang==='th'?'กระเป๋า':'Bag'}: — &nbsp; 🏛 ${currentLang==='th'?'คลัง':'Vault'}: — &nbsp; ✗ ${currentLang==='th'?'ฝังอยู่':'Inlaid'}: —</div>
+        <div class="ftp-breakdown hint">🎒 ${currentLang==='th'?'กระเป๋า':'Bag'}: ${row.bag} &nbsp; 🏛 ${currentLang==='th'?'คลัง':'Vault'}: ${row.vault}</div>
         <div class="ftp-bar"><div class="ftp-bar-fill" style="width:${pct}%;"></div></div>
         ${isMax
           ? `<div class="hint" style="color:var(--gold-bright);margin-top:6px;">⭐ ${currentLang==='th'?'เทียร์สูงสุดแล้ว':'Max Tier'}</div>`
