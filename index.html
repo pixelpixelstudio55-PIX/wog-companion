@@ -59,6 +59,8 @@
   .branch-block { margin-bottom: 22px; }
   .branch-title { font-size: 13px; font-weight: 700; color: var(--gold); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 10px; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
   .skill-row-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+  .skill-lvl-group { margin-bottom: 16px; }
+  .skill-lvl-group-label { font-size: 11px; font-weight: 700; color: var(--gold); background: var(--accent-bg); display: inline-block; padding: 3px 10px; border-radius: 999px; margin-bottom: 8px; }
 
   .card { background: var(--bg2); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; }
   .skill-card .sk-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; gap: 8px; }
@@ -116,6 +118,14 @@
   .jewel-card .jc-grade { font-size: 10.5px; color: var(--text-dim); margin-bottom: 6px; }
   .jewel-card .jc-desc { font-size: 12px; line-height: 1.5; }
   .jewel-card .jc-price { margin-top: 8px; font-size: 11px; color: var(--gold); }
+  /* Training cards only: everything ~30% bigger except the Max-Lv line and
+     the per-level cost list, which stay at the base size on purpose. */
+  #training-content.grid-cards { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+  #training-content .jewel-card { padding: 16px; }
+  #training-content .jc-name { font-size: 17px; }
+  #training-content .jc-icon-img { width: 29px; height: 29px; }
+  #training-content .jc-icon { font-size: 26px; }
+  #training-content .jc-desc { font-size: 15.5px; line-height: 1.5; margin-top: 4px; }
   .tr-cost-label { font-size: 10.5px; text-transform: uppercase; letter-spacing: .4px; color: var(--text-dim); margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--line); }
   .tr-cost-scroll { max-height: 110px; overflow-y: auto; margin-top: 4px; }
   .tr-cost-row { display: flex; justify-content: space-between; font-size: 11.5px; padding: 2px 0; color: var(--text); }
@@ -605,9 +615,24 @@ function renderSkills(){
   const cls = GAME_DATA.skillTrees[currentClass];
   const box = document.getElementById('skill-content');
   box.innerHTML = cls.branches.map((b, bi) => {
-    const skillsHtml = b.skills.filter(sk => skillMatches(sk, q)).map(sk => skillCardHtml(sk, bi+1)).join('');
-    if(!skillsHtml) return '';
-    return `<div class="branch-block"><div class="branch-title">${esc(fld(b,'branch_title'))}</div><div class="skill-row-grid">${skillsHtml}</div></div>`;
+    const matched = b.skills.filter(sk => skillMatches(sk, q));
+    if (!matched.length) return '';
+    // group by required level, in ascending order, so it's clear at a glance
+    // which skills unlock together
+    const byLevel = new Map();
+    matched.forEach(sk => {
+      const lvl = sk.req_player_level;
+      if (!byLevel.has(lvl)) byLevel.set(lvl, []);
+      byLevel.get(lvl).push(sk);
+    });
+    const levelGroupsHtml = [...byLevel.keys()].sort((a,b2) => a-b2).map(lvl => {
+      const cardsHtml = byLevel.get(lvl).map(sk => skillCardHtml(sk, bi+1)).join('');
+      return `<div class="skill-lvl-group">
+        <div class="skill-lvl-group-label">${currentLang==='th'?'ต้องการเลเวล':'Requires Level'}: ${lvl}</div>
+        <div class="skill-row-grid">${cardsHtml}</div>
+      </div>`;
+    }).join('');
+    return `<div class="branch-block"><div class="branch-title">${esc(fld(b,'branch_title'))}</div>${levelGroupsHtml}</div>`;
   }).join('') || `<div class="empty-state">—</div>`;
 
   box.querySelectorAll('[data-alloc-row]').forEach(row => row.addEventListener('click', () => allocSkillTo(row.dataset.allocRow, parseInt(row.dataset.allocLvl, 10))));
@@ -619,8 +644,12 @@ function renderSkills(){
 // about. 1-2 varying numbers all go red; 3+ each get their own color so it's
 // still readable which value is which across a run-on sentence.
 const NUM_COLOR_PALETTE = ['#ff6b6b', '#7ee787', '#6cb6ff', '#ffd166', '#c792ea'];
+// Matches a number plus an immediately-attached unit (%, or a lone trailing
+// "s" for seconds like "10s") so the whole "330%"/"10s" gets colored, not
+// just the bare digits.
+const NUM_UNIT_RE = /[0-9]+(?:\.[0-9]+)?%|[0-9]+(?:\.[0-9]+)?s(?![a-zA-Z])|[0-9]+(?:\.[0-9]+)?/g;
 function getVaryingNumberPositions(sk){
-  const numsPerLevel = sk.levels.map(lv => (fld(lv,'description').match(/[0-9]+(\.[0-9]+)?/g) || []));
+  const numsPerLevel = sk.levels.map(lv => (fld(lv,'description').match(NUM_UNIT_RE) || []));
   const minLen = Math.min(...numsPerLevel.map(n => n.length));
   const varying = [];
   for (let i = 0; i < minLen; i++) {
@@ -628,16 +657,27 @@ function getVaryingNumberPositions(sk){
   }
   return varying;
 }
+// Escapes only the plain-text segments and never runs the number regex on
+// already-escaped output - doing esc() first would let this regex match the
+// "39" inside a "&#39;" apostrophe entity and corrupt it (real bug hit here).
 function colorizeVaryingNumbers(text, varyingPositions){
   const rank = {};
   varyingPositions.forEach((pos, i) => { rank[pos] = i; });
-  let idx = -1;
-  return esc(text).replace(/[0-9]+(\.[0-9]+)?/g, (m) => {
+  const re = new RegExp(NUM_UNIT_RE);
+  let idx = -1, lastIndex = 0, out = '', m;
+  while ((m = re.exec(text)) !== null) {
+    out += esc(text.slice(lastIndex, m.index));
     idx++;
-    if (!(idx in rank)) return m;
-    const color = varyingPositions.length <= 2 ? '#ff6b6b' : NUM_COLOR_PALETTE[rank[idx] % NUM_COLOR_PALETTE.length];
-    return `<span style="color:${color};font-weight:700;">${m}</span>`;
-  });
+    if (idx in rank) {
+      const color = varyingPositions.length <= 2 ? '#ff6b6b' : NUM_COLOR_PALETTE[rank[idx] % NUM_COLOR_PALETTE.length];
+      out += `<span style="color:${color};font-weight:700;">${m[0]}</span>`;
+    } else {
+      out += m[0];
+    }
+    lastIndex = re.lastIndex;
+  }
+  out += esc(text.slice(lastIndex));
+  return out;
 }
 function skillCardHtml(sk, branchNum){
   const lvl = skillAllocations[sk.id] || 0;
