@@ -296,6 +296,22 @@ const skillTrees = load("skillTrees", "data_skillTrees.js");
 const trainingSkills = load("trainingSkills", "data_trainingSkills.js");
 const equipments = load("equipments", "data_equipments.js");
 const stageData = load("stageData", "data_stageData.js");
+const steamMarketPrices = load("steamMarketPrices", "data_steamMarketPrices.js");
+
+// Equipment items below Tier 3 aren't tradable on Steam in this game, so the
+// price table only has entries from Tier 3 up, keyed "<name> (Tier N)".
+function getEquipSteamPrice(e) {
+  if (e.tier < 3) return null;
+  const key = `${e.name_en} (Tier ${e.tier})`;
+  return steamMarketPrices[key] || null;
+}
+equipments.forEach(e => {
+  const m = getEquipSteamPrice(e);
+  e.steam_price_usd = m ? m.price_usd : null;
+  e.steam_price_text = m ? m.price_text : null;
+  e.steam_listings = m ? m.listings : 0;
+  e.steam_url = `https://steamcommunity.com/market/search?appid=4891320&q=${encodeURIComponent(e.name_en)}`;
+});
 
 const BRANCH_TITLE_MAP = {
 "Nhánh 1: Tấn Công Đơn Mục Tiêu": ["สายที่ 1: โจมตีเป้าหมายเดี่ยว", "Branch 1: Single-Target Attack"],

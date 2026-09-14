@@ -67,6 +67,13 @@
   .sk-icon-fallback { width: 32px; height: 32px; border-radius: 6px; background: var(--bg3); display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
   .jc-icon, .ec-icon { font-size: 20px; margin-right: 6px; }
   .jc-icon-img, .ec-icon-img { width: 22px; height: 22px; object-fit: contain; vertical-align: -6px; margin-right: 6px; border-radius: 4px; background: var(--bg3); }
+  .ec-icon-box { width: 40px; height: 40px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; margin-right: 10px; border-width: 2px; border-style: solid; flex-shrink: 0; }
+  .ec-icon-box img { width: 30px; height: 30px; object-fit: contain; }
+  .ec-icon-box .ec-icon { font-size: 22px; margin: 0; }
+  .ec-name-cell { display: flex; align-items: center; }
+  .ec-name-text b { font-size: 14.5px; }
+  .ec-name-text .ec-sub { display: block; font-size: 11px; color: var(--text-dim); margin-top: 1px; }
+  .tier-badge { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 999px; border: 1px solid; }
   .skill-card .sk-name { font-weight: 700; color: var(--gold-bright); font-size: 13.5px; }
   .skill-card .sk-type { font-size: 9.5px; padding: 2px 7px; border-radius: 999px; background: var(--accent-bg); color: var(--gold); }
   .skill-card .sk-req { font-size: 11px; color: var(--text-dim); margin-bottom: 6px; }
@@ -285,11 +292,16 @@
   <div class="view" id="view-equipment">
     <div class="controls">
       <div class="search-box"><span class="ic">🔍</span><input type="text" id="equip-search" data-i-ph="search_equip"></div>
-      <select id="equip-slot-filter"><option value="">--</option></select>
-      <select id="equip-tier-filter"><option value="">--</option></select>
+      <select id="equip-slot-filter"></select>
+      <select id="equip-tier-filter"></select>
+      <select id="equip-level-filter"></select>
+      <select id="equip-sort"></select>
+      <button class="btn" id="btn-equip-search">🔍 <span data-i="search_btn">ค้นหา</span></button>
+      <button class="btn btn-outline" id="btn-equip-reset">↺ <span data-i="reset_btn">รีเซ็ต</span></button>
     </div>
     <div class="result-count" id="equip-count"></div>
     <div class="table-scroll"><table class="data-table" id="equip-table"></table></div>
+    <div id="equip-pagination" style="display:flex;gap:8px;align-items:center;justify-content:center;margin-top:16px;"></div>
   </div>
 
   <div class="view" id="view-jewels">
@@ -406,6 +418,17 @@ const UI_STRINGS = {
   tab_history: { th: 'ประวัติเข้าด่าน', en: 'Stage Run History' },
   tab_smart: { th: 'วิเคราะห์อัจฉริยะ', en: 'Smart Analysis' },
   tab_forge: { th: 'หลอมอัญมณี & คลัง', en: 'Jewel Forge & Storage' },
+  search_btn: { th: 'ค้นหา', en: 'Search' },
+  reset_btn: { th: 'รีเซ็ต', en: 'Reset' },
+  all_levels: { th: 'ทุกช่วงเลเวล', en: 'All levels' },
+  press_search_hint: { th: 'ตั้งค่าตัวกรองแล้วกด "ค้นหา" เพื่อแสดงรายการ', en: 'Set your filters then press "Search" to show items' },
+  sort_lvl_asc: { th: 'Req. Lv (น้อย → มาก)', en: 'Req. Lv (low → high)' },
+  sort_lvl_desc: { th: 'Req. Lv (มาก → น้อย)', en: 'Req. Lv (high → low)' },
+  sort_tier_desc: { th: 'Tier (สูง → ต่ำ)', en: 'Tier (high → low)' },
+  sort_tier_asc: { th: 'Tier (ต่ำ → สูง)', en: 'Tier (low → high)' },
+  sort_name: { th: 'ชื่อ A-Z', en: 'Name A-Z' },
+  sort_steam_desc: { th: 'Steam: สูง → ต่ำ', en: 'Steam: High → Low' },
+  sort_steam_asc: { th: 'Steam: ต่ำ → สูง', en: 'Steam: Low → High' },
   search_skill: { th: 'ค้นหาชื่อสกิล...', en: 'Search skill name...' },
   search_training: { th: 'ค้นหาการฝึกฝน...', en: 'Search training...' },
   search_equip: { th: 'ค้นหาอุปกรณ์...', en: 'Search equipment...' },
@@ -511,12 +534,6 @@ function trainingIconHtml(t2){
   }
   return `<span class="jc-icon">🏋️</span>`;
 }
-function equipIconHtml(e){
-  if (REMOTE_SKILL_ICONS && e.icon && REMOTE_SKILL_ICONS[e.icon]) {
-    return `<img src="${REMOTE_SKILL_ICONS[e.icon]}" alt="" class="ec-icon-img">`;
-  }
-  return `<span class="ec-icon">${SLOT_EMOJI[e.slot_name] || '⚙️'}</span>`;
-}
 
 document.getElementById('lang-th').addEventListener('click', () => { currentLang='th'; localStorage.setItem('wog_lang','th'); applyStaticI18n(); renderCurrentView(); });
 document.getElementById('lang-en').addEventListener('click', () => { currentLang='en'; localStorage.setItem('wog_lang','en'); applyStaticI18n(); renderCurrentView(); });
@@ -620,49 +637,143 @@ function renderTraining(){
 }
 
 /* ================= EQUIPMENT ================= */
+const TIER_STYLE = {
+  1: { color: '#9aa4b5', bg: 'rgba(154,164,181,0.10)', border: '#5a6478' },
+  2: { color: '#3fb950', bg: 'rgba(63,185,80,0.10)',  border: '#2ea043' },
+  3: { color: '#58a6ff', bg: 'rgba(88,166,255,0.10)', border: '#388bfd' },
+  4: { color: '#f85149', bg: 'rgba(248,81,73,0.10)',  border: '#da3633' },
+  5: { color: '#bc8cff', bg: 'rgba(188,140,255,0.10)',border: '#a371f7' },
+  6: { color: '#e3b341', bg: 'rgba(227,179,65,0.14)', border: '#d4a94a' },
+};
+function tierBadgeHtml(tier){
+  const s = TIER_STYLE[tier] || TIER_STYLE[1];
+  return `<span class="tier-badge" style="color:${s.color};border-color:${s.border};background:${s.bg};">Tier ${tier}</span>`;
+}
+const EQUIP_LEVEL_BUCKETS = (() => {
+  const max = Math.max(...GAME_DATA.equipments.map(e=>e.level_req));
+  const buckets = [];
+  for (let start = 1; start <= 90; start += 10) buckets.push([start, start+9]);
+  buckets.push([91, max]);
+  return buckets;
+})();
+function equipIconBoxHtml(e){
+  const s = TIER_STYLE[e.tier] || TIER_STYLE[1];
+  const inner = (REMOTE_SKILL_ICONS && e.icon && REMOTE_SKILL_ICONS[e.icon])
+    ? `<img src="${REMOTE_SKILL_ICONS[e.icon]}" alt="">`
+    : `<span class="ec-icon">${SLOT_EMOJI[e.slot_name] || '⚙️'}</span>`;
+  return `<span class="ec-icon-box" style="background:${s.bg};border-color:${s.border};">${inner}</span>`;
+}
 function initEquipFilters(){
   const slotSel = document.getElementById('equip-slot-filter');
   const tierSel = document.getElementById('equip-tier-filter');
-  if(slotSel.children.length <= 1){
+  const lvlSel = document.getElementById('equip-level-filter');
+  const sortSel = document.getElementById('equip-sort');
+  if (slotSel.children.length === 0) {
     const slots = [...new Map(GAME_DATA.equipments.map(e=>[e.slot_name, fld(e,'slot_name')])).entries()];
-    slotSel.innerHTML = `<option value="">${t('all_slots')}</option>` + slots.map(([v,label])=>`<option value="${esc(v)}">${esc(label)}</option>`).join('');
+    slotSel.innerHTML = slots.map(([v,label])=>`<option value="${esc(v)}">${esc(label)}</option>`).join('') +
+      `<option value="">${t('all_slots')}</option>`;
+    slotSel.value = slots[0] ? slots[0][0] : '';
+  }
+  if (tierSel.children.length === 0) {
     const tiers = [...new Set(GAME_DATA.equipments.map(e=>e.tier))].sort((a,b)=>a-b);
-    tierSel.innerHTML = `<option value="">${t('all_tiers')}</option>` + tiers.map(t2=>`<option value="${t2}">${t('tier')} ${t2}</option>`).join('');
+    tierSel.innerHTML = tiers.map(t2=>`<option value="${t2}">Tier ${t2}</option>`).join('') +
+      `<option value="">${t('all_tiers')}</option>`;
+    tierSel.value = '1';
+  }
+  if (lvlSel.children.length === 0) {
+    lvlSel.innerHTML = `<option value="">${t('all_levels')}</option>` +
+      EQUIP_LEVEL_BUCKETS.map(([a,b])=>`<option value="${a}-${b}">${currentLang==='th'?'เลเวล':'Lv.'} ${a}-${b}</option>`).join('');
+  }
+  if (sortSel.children.length === 0) {
+    sortSel.innerHTML = [
+      ['lvl_asc', t('sort_lvl_asc')], ['lvl_desc', t('sort_lvl_desc')],
+      ['tier_desc', t('sort_tier_desc')], ['tier_asc', t('sort_tier_asc')],
+      ['name', t('sort_name')], ['steam_desc', t('sort_steam_desc')], ['steam_asc', t('sort_steam_asc')],
+    ].map(([v,label])=>`<option value="${v}">${esc(label)}</option>`).join('');
   } else {
-    slotSel.options[0].textContent = t('all_slots');
-    tierSel.options[0].textContent = t('all_tiers');
+    // language switched - refresh labels without losing current selection
+    const cur = sortSel.value;
+    const labels = { lvl_asc:t('sort_lvl_asc'), lvl_desc:t('sort_lvl_desc'), tier_desc:t('sort_tier_desc'), tier_asc:t('sort_tier_asc'), name:t('sort_name'), steam_desc:t('sort_steam_desc'), steam_asc:t('sort_steam_asc') };
+    [...sortSel.options].forEach(o => o.textContent = labels[o.value] || o.textContent);
+    sortSel.value = cur;
   }
 }
 let equipRenderToken = 0;
+let equipHasSearched = false;
+let equipPage = 1;
+const EQUIP_PAGE_SIZE = 25;
+function equipResetFilters(){
+  document.getElementById('equip-search').value = '';
+  initEquipFilters();
+  document.getElementById('equip-slot-filter').value = document.getElementById('equip-slot-filter').options[0].value;
+  document.getElementById('equip-tier-filter').value = '1';
+  document.getElementById('equip-level-filter').value = '';
+  document.getElementById('equip-sort').value = 'lvl_asc';
+  equipHasSearched = false;
+  equipPage = 1;
+  renderEquipment();
+}
 function renderEquipment(){
   initEquipFilters();
+  const table = document.getElementById('equip-table');
+  const pager = document.getElementById('equip-pagination');
+  if (!equipHasSearched) {
+    document.getElementById('equip-count').textContent = '';
+    table.innerHTML = `<tbody><tr><td class="empty-state">🔍 ${t('press_search_hint')}</td></tr></tbody>`;
+    pager.innerHTML = '';
+    return;
+  }
   const q = document.getElementById('equip-search').value.trim().toLowerCase();
   const slot = document.getElementById('equip-slot-filter').value;
   const tier = document.getElementById('equip-tier-filter').value;
-  const list = GAME_DATA.equipments.filter(e =>
-    (!q || e.name_en.toLowerCase().includes(q)) &&
+  const lvlRange = document.getElementById('equip-level-filter').value;
+  const sortKey = document.getElementById('equip-sort').value;
+  let list = GAME_DATA.equipments.filter(e =>
+    (!q || e.name_en.toLowerCase().includes(q) || e.name_vi.toLowerCase().includes(q)) &&
     (!slot || e.slot_name === slot) &&
     (!tier || String(e.tier) === tier)
   );
-  document.getElementById('equip-count').innerHTML = `${t('showing')} <b>${list.length.toLocaleString()}</b> ${t('items')}`;
-  const table = document.getElementById('equip-table');
-  table.innerHTML = `<thead><tr><th>${currentLang==='th'?'ชื่อ':'Name'}</th><th>${currentLang==='th'?'ช่อง':'Slot'}</th><th>${t('tier')}</th><th>${t('level_req')}</th><th>${currentLang==='th'?'สถานะ':'Stats'}</th><th>${t('price')}</th></tr></thead><tbody id="equip-tbody"></tbody>`;
-  const tbody = document.getElementById('equip-tbody');
-  const CHUNK = 60;
-  const myToken = ++equipRenderToken;
-  let idx = 0;
-  function chunk(){
-    if(myToken !== equipRenderToken) return;
-    const rows = list.slice(idx, idx+CHUNK).map(e => `<tr>
-      <td>${equipIconHtml(e)}${esc(e.name_en)}</td><td>${esc(fld(e,'slot_name'))}</td><td><span class="tier-pill">T${e.tier}</span></td><td>${e.level_req}</td>
-      <td>${(e.stats||[]).map(s=>esc(fld(s,'text'))).join(', ')}</td><td>${e.price_gold ? e.price_gold.toLocaleString() : '-'}</td>
-    </tr>`).join('');
-    tbody.insertAdjacentHTML('beforeend', rows);
-    idx += CHUNK;
-    if(idx < list.length) requestAnimationFrame(chunk);
+  if (lvlRange) {
+    const [a,b] = lvlRange.split('-').map(Number);
+    list = list.filter(e => e.level_req >= a && e.level_req <= b);
   }
-  requestAnimationFrame(chunk);
+  const sorters = {
+    lvl_asc: (a,b) => a.level_req - b.level_req,
+    lvl_desc: (a,b) => b.level_req - a.level_req,
+    tier_desc: (a,b) => b.tier - a.tier,
+    tier_asc: (a,b) => a.tier - b.tier,
+    name: (a,b) => a.name_en.localeCompare(b.name_en),
+    steam_desc: (a,b) => (b.steam_price_usd||0) - (a.steam_price_usd||0),
+    steam_asc: (a,b) => { const av=a.steam_price_usd, bv=b.steam_price_usd; if(av==null) return 1; if(bv==null) return -1; return av-bv; },
+  };
+  list = [...list].sort(sorters[sortKey] || sorters.lvl_asc);
+
+  const totalPages = Math.max(1, Math.ceil(list.length / EQUIP_PAGE_SIZE));
+  equipPage = Math.min(Math.max(1, equipPage), totalPages);
+  const pageList = list.slice((equipPage-1)*EQUIP_PAGE_SIZE, equipPage*EQUIP_PAGE_SIZE);
+
+  document.getElementById('equip-count').innerHTML = `${t('showing')} <b>${pageList.length}</b> / ${list.length.toLocaleString()} ${t('items')}`;
+  table.innerHTML = `<thead><tr><th>${currentLang==='th'?'ชื่อไอเทม':'Item Name'}</th><th>${currentLang==='th'?'ช่อง':'Slot'}</th><th>${t('tier')}</th><th>${t('level_req')}</th><th>${currentLang==='th'?'สถานะ':'Stats'}</th><th style="text-align:right;">Steam Price ($)</th></tr></thead><tbody id="equip-tbody"></tbody>`;
+  const tbody = document.getElementById('equip-tbody');
+  const myToken = ++equipRenderToken;
+  tbody.innerHTML = pageList.map(e => `<tr>
+      <td><div class="ec-name-cell">${equipIconBoxHtml(e)}<div class="ec-name-text"><b>${esc(e.name_en)}</b><span class="ec-sub">${esc(e.name_vi)}</span></div></div></td>
+      <td>${esc(fld(e,'slot_name'))}</td><td>${tierBadgeHtml(e.tier)}</td><td><b style="color:var(--gold-bright);">Lv.${e.level_req}</b></td>
+      <td>${(e.stats||[]).map(s=>esc(fld(s,'text'))).join(', ')}</td>
+      <td style="text-align:right;">${e.steam_price_text ? `<a href="${e.steam_url}" target="_blank" rel="noopener" style="color:#3fb950;font-weight:700;text-decoration:none;">${esc(e.steam_price_text)}</a><div class="hint" style="font-size:10px;">${e.steam_listings} listings</div>` : '<span class="hint">—</span>'}</td>
+    </tr>`).join('') || `<tr><td class="empty-state">—</td></tr>`;
+
+  pager.innerHTML = `
+    <button class="btn btn-outline" id="equip-prev" ${equipPage<=1?'disabled':''}>← ${currentLang==='th'?'ก่อนหน้า':'Prev'}</button>
+    <span class="hint">${currentLang==='th'?'หน้า':'Page'} ${equipPage} / ${totalPages}</span>
+    <button class="btn btn-outline" id="equip-next" ${equipPage>=totalPages?'disabled':''}>${currentLang==='th'?'ถัดไป':'Next'} →</button>`;
+  const prevBtn = document.getElementById('equip-prev'), nextBtn = document.getElementById('equip-next');
+  if (prevBtn) prevBtn.addEventListener('click', () => { equipPage--; renderEquipment(); });
+  if (nextBtn) nextBtn.addEventListener('click', () => { equipPage++; renderEquipment(); });
 }
+document.getElementById('btn-equip-search').addEventListener('click', () => { equipHasSearched = true; equipPage = 1; renderEquipment(); });
+document.getElementById('btn-equip-reset').addEventListener('click', equipResetFilters);
+document.getElementById('equip-search').addEventListener('keydown', (e) => { if (e.key === 'Enter') { equipHasSearched = true; equipPage = 1; renderEquipment(); } });
 
 /* ================= JEWELS ================= */
 function renderJewels(){
