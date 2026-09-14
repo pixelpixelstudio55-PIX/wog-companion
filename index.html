@@ -276,6 +276,12 @@
   .forge-tier-check.tier-6 { color: #e3b341; border-color: rgba(227,179,65,0.6); background: rgba(227,179,65,0.1); }
   .forge-log-empty { text-align: center; color: var(--text-dim); font-size: 13px; padding: 40px 20px; line-height: 1.7; }
   .forge-tier-progress-card { background: var(--bg2); border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
+  .forge-tier-progress-card.tier-1 { border-color: #5a6478; }
+  .forge-tier-progress-card.tier-2 { border-color: #2ea043; }
+  .forge-tier-progress-card.tier-3 { border-color: #388bfd; }
+  .forge-tier-progress-card.tier-4 { border-color: #da3633; }
+  .forge-tier-progress-card.tier-5 { border-color: #a371f7; }
+  .forge-tier-progress-card.tier-6 { border-color: #d4a94a; }
   .ftp-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
   .ftp-count { font-family: 'Cinzel', serif; color: var(--gold-bright); font-size: 16px; }
   .ftp-breakdown { font-size: 10.5px; margin-bottom: 8px; }
@@ -578,9 +584,13 @@
       </div>
     </div>
 
-    <h3 style="margin:22px 0 4px;">💎 <span data-i="forge-progress-title">ความคืบหน้าการหลอม (ครบ 6 ชิ้นในเทียร์เดียวกัน)</span></h3>
-    <p class="hint" style="margin-bottom:12px;" data-i="forge-progress-sub">นับรวมกระเป๋า+คลังจริงจากเกม (ไม่รวมอัญมณีที่ฝังอยู่กับอุปกรณ์อยู่แล้ว)</p>
+    <h3 style="margin:22px 0 4px;">💎 <span data-i="forge-progress-title">การหลอมอัญมณี (ครบ 6 ชิ้นในเทียร์เดียวกัน)</span></h3>
+    <p class="hint" style="margin-bottom:12px;" data-i="forge-progress-sub">นับรวมกระเป๋า+คลังจริงจากเกม</p>
     <div class="grid-cards" id="forge-jewel-counts"></div>
+
+    <h3 style="margin:22px 0 4px;">💎 <span data-i="forge-gear-progress-title">การหลอมอุปกรณ์ (ครบ 6 ชิ้นในเทียร์เดียวกัน)</span></h3>
+    <p class="hint" style="margin-bottom:12px;" data-i="forge-gear-progress-sub">นับรวมกระเป๋า+คลังจริงจากเกม (ไม่รวมอุปกรณ์ที่สวมใส่อยู่)</p>
+    <div class="grid-cards" id="forge-gear-counts"></div>
 
   </div>
 
@@ -666,8 +676,10 @@ const UI_STRINGS = {
   'forge-log-title': { th: 'บันทึกการทำงาน', en: 'Activity Log' },
   'forge-btn-clearlog': { th: 'ล้างบันทึก', en: 'Clear Log' },
   'forge-log-empty': { th: '🚧 ยังไม่เชื่อมระบบบันทึกเหตุการณ์อัตโนมัติ — ส่วนนี้จะโชว์ประวัติการหลอม/เก็บของ/ใส่อุปกรณ์ที่ระบบทำให้อัตโนมัติ เมื่อต่อระบบจริงแล้ว', en: "🚧 Not wired up yet - once connected, this will log every auto-fuse/store/equip action the system performs on its own." },
-  'forge-progress-title': { th: 'ความคืบหน้าการหลอม (ครบ 6 ชิ้นในเทียร์เดียวกัน)', en: 'Jewel Fuse Progress (6 of same tier)' },
-  'forge-progress-sub': { th: 'นับรวมกระเป๋า+คลังจริงจากเกม (ไม่รวมอัญมณีที่ฝังอยู่กับอุปกรณ์อยู่แล้ว)', en: 'Counts real Bag + Vault totals from the game (not counting jewels already socketed into gear).' },
+  'forge-progress-title': { th: 'การหลอมอัญมณี (ครบ 6 ชิ้นในเทียร์เดียวกัน)', en: 'Jewel Fusion (6 of same tier)' },
+  'forge-progress-sub': { th: 'นับรวมกระเป๋า+คลังจริงจากเกม', en: 'Counts real Bag + Vault totals from the game.' },
+  'forge-gear-progress-title': { th: 'การหลอมอุปกรณ์ (ครบ 6 ชิ้นในเทียร์เดียวกัน)', en: 'Gear Fusion (6 of same tier)' },
+  'forge-gear-progress-sub': { th: 'นับรวมกระเป๋า+คลังจริงจากเกม (ไม่รวมอุปกรณ์ที่สวมใส่อยู่)', en: 'Counts real Bag + Vault totals from the game (not counting equipped gear).' },
   search_skill: { th: 'ค้นหาชื่อสกิล...', en: 'Search skill name...' },
   search_training: { th: 'ค้นหาการฝึกฝน...', en: 'Search training...' },
   search_equip: { th: 'ค้นหาอุปกรณ์...', en: 'Search equipment...' },
@@ -1633,8 +1645,75 @@ function buildForgeStatusExpr(){
     } catch(e) { return JSON.stringify({ error: e.message }); }
   })()`;
 }
+const EQUIP_TIDS_BY_GRADE = (() => {
+  const out = {};
+  GAME_DATA.equipments.forEach(e => {
+    (out[e.tier] = out[e.tier] || []).push(e.id);
+  });
+  return out;
+})();
+function buildForgeEquipStatusExpr(){
+  // Same NotStack/_location pattern as jewels, confirmed against boss's own
+  // currently-equipped gear: _location 1 = Bag, 2 = Vault, 3 = Equipped.
+  return `(function(){
+    try {
+      var itemC;
+      for (var e of nn.netData._mapContainer.entries()) {
+        var name = e[0].name || e[0].toString();
+        if (name === 'NetContainerItem') itemC = e[1];
+      }
+      var byTier = ${JSON.stringify(EQUIP_TIDS_BY_GRADE)};
+      var totals = {};
+      Object.keys(byTier).forEach(function(t){
+        var bag = 0, vault = 0, equipped = 0;
+        byTier[t].forEach(function(tid){
+          try {
+            var items = itemC.getItemNotStackAllByTid(tid);
+            var arr = [];
+            if (items && items.length !== undefined) { for (var i=0;i<items.length;i++) arr.push(items[i]); }
+            arr.forEach(function(it){
+              if (it._location === 1) bag++;
+              else if (it._location === 2) vault++;
+              else if (it._location === 3) equipped++;
+            });
+          } catch(e){}
+        });
+        totals[t] = { bag: bag, vault: vault, equipped: equipped, total: bag+vault };
+      });
+      return JSON.stringify({ totals: totals });
+    } catch(e) { return JSON.stringify({ error: e.message }); }
+  })()`;
+}
+async function refreshForgeEquipStatus(){
+  const gridEl = document.getElementById('forge-gear-counts');
+  const tierLabels = { 1:['Tier 1','Basic'], 2:['Tier 2','Common'], 3:['Tier 3','Advanced'], 4:['Tier 4','Superior'], 5:['Tier 5','Rare'], 6:['Tier 6','Divine'] };
+  try {
+    const data = await sendLiveEval(buildForgeEquipStatusExpr());
+    if (data.error) throw new Error(data.error);
+    gridEl.innerHTML = Object.keys(tierLabels).map(t => {
+      const row = data.totals[t] || { bag: 0, vault: 0, equipped: 0, total: 0 };
+      const cnt = row.total;
+      const ready = cnt >= 6;
+      const pct = Math.min(100, 100 * cnt / 6);
+      const isMax = t === '6';
+      return `<div class="forge-tier-progress-card tier-${t}">
+        <div class="ftp-head"><b>${tierLabels[t][0]} <span class="hint">(${tierLabels[t][1]})</span></b><span class="ftp-count">${cnt} <span class="hint" style="font-size:11px;">${currentLang==='th'?'ชิ้น':'items'}</span></span></div>
+        <div class="ftp-breakdown hint">🎒 ${currentLang==='th'?'กระเป๋า':'Bag'}: ${row.bag} &nbsp; 🏛 ${currentLang==='th'?'คลัง':'Vault'}: ${row.vault}</div>
+        <div class="ftp-bar"><div class="ftp-bar-fill" style="width:${pct}%;"></div></div>
+        ${isMax
+          ? `<div class="hint" style="color:var(--gold-bright);margin-top:6px;">⭐ ${currentLang==='th'?'เทียร์สูงสุดแล้ว':'Max Tier'}</div>`
+          : `<div class="hint" style="margin-top:6px;">${currentLang==='th'?`มี ${cnt}/6 ชิ้น (ขาดอีก ${Math.max(0,6-cnt)})`:`Has ${cnt}/6 items (Need ${Math.max(0,6-cnt)})`}</div>
+             <button class="btn btn-outline forge-inert" style="width:100%;margin-top:8px;padding:6px;font-size:11.5px;" ${ready?'':'disabled'}>${ready ? (currentLang==='th'?'พร้อมหลอม':'Ready to fuse') : (currentLang==='th'?'ต้องการ 6 ชิ้น':'Need 6 items')}</button>`}
+      </div>`;
+    }).join('');
+    gridEl.querySelectorAll('.forge-inert:not([disabled])').forEach(el => el.addEventListener('click', forgeInertToast));
+  } catch(e) {
+    gridEl.innerHTML = `<div class="empty-state">${currentLang==='th'?'อ่านไม่ได้ (เกมไม่ได้เปิด/ไม่ได้เชื่อมต่อ)':'Unavailable (game not running / not connected)'}</div>`;
+  }
+}
 function renderForge(){
   refreshForgeStatus();
+  refreshForgeEquipStatus();
 }
 let forgeAutoFusionOn = null;
 async function refreshForgeStatus(){
@@ -1663,7 +1742,7 @@ async function refreshForgeStatus(){
       if (ready) tiersReady++;
       const pct = Math.min(100, 100 * cnt / 6);
       const isMax = g === '6';
-      return `<div class="forge-tier-progress-card">
+      return `<div class="forge-tier-progress-card tier-${g}">
         <div class="ftp-head"><b>${gradeLabels[g][0]} <span class="hint">(${gradeLabels[g][1]})</span></b><span class="ftp-count">${cnt} <span class="hint" style="font-size:11px;">${currentLang==='th'?'ชิ้น':'jewels'}</span></span></div>
         <div class="ftp-breakdown hint">🎒 ${currentLang==='th'?'กระเป๋า':'Bag'}: ${row.bag} &nbsp; 🏛 ${currentLang==='th'?'คลัง':'Vault'}: ${row.vault}</div>
         <div class="ftp-bar"><div class="ftp-bar-fill" style="width:${pct}%;"></div></div>
