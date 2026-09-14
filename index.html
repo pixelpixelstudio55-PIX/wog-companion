@@ -105,9 +105,93 @@
 
   .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(20px); background: #0e1729; color: var(--gold-bright); padding: 10px 20px; border-radius: 8px; font-size: 13px; opacity: 0; pointer-events: none; transition: .2s; z-index: 999; }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ===== LIVE TOP BAR ===== */
+  .live-topbar {
+    position: sticky; top: 0; z-index: 60;
+    background:
+      radial-gradient(ellipse 700px 80px at 15% 0%, rgba(212,169,74,0.16), transparent 70%),
+      linear-gradient(180deg, #0c1220 0%, #0a0f1a 100%);
+    border-bottom: 1px solid rgba(212,169,74,0.35);
+    box-shadow: 0 2px 18px rgba(0,0,0,0.45);
+    display: flex; align-items: center; gap: 18px;
+    padding: 9px 22px; flex-wrap: wrap;
+  }
+  .ltb-left { display: flex; align-items: center; gap: 11px; min-width: 0; }
+  .ltb-avatar {
+    width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
+    background: linear-gradient(145deg, var(--gold-bright), var(--gold) 55%, #7a5b1e);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 17px; color: #0e1729; box-shadow: 0 0 0 2px rgba(212,169,74,0.25), 0 0 14px rgba(212,169,74,0.35);
+  }
+  .ltb-name { font-family: 'Cinzel', serif; font-size: 14px; color: var(--gold-bright); display: flex; align-items: center; gap: 7px; white-space: nowrap; }
+  .ltb-lvl-badge {
+    font-family: 'Sarabun', sans-serif; font-size: 10.5px; font-weight: 700; color: #0e1729;
+    background: linear-gradient(135deg, var(--gold-bright), var(--gold)); padding: 2px 8px; border-radius: 999px;
+  }
+  .ltb-sub { font-size: 11px; color: var(--text-dim); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px; }
+
+  .ltb-stats { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; flex: 1; justify-content: center; }
+  .ltb-pill {
+    display: flex; align-items: center; gap: 7px; background: rgba(255,255,255,0.03);
+    border: 1px solid var(--navy-line); border-radius: 999px; padding: 6px 14px;
+    font-size: 12.5px; font-weight: 600; color: var(--text); white-space: nowrap;
+    transition: border-color .2s, box-shadow .2s;
+  }
+  .ltb-pill:hover { border-color: var(--gold); box-shadow: 0 0 10px rgba(212,169,74,0.18); }
+  .ltb-pill .ltb-ic { font-size: 14px; }
+  .ltb-pill.gold b { color: var(--gold-bright); }
+  .ltb-pill.dia b { color: #8fd3ff; }
+  .ltb-pill.dps b { color: #ff9d6c; }
+  .ltb-pill.exp { gap: 9px; }
+  .ltb-exp-wrap { display: flex; flex-direction: column; gap: 3px; min-width: 92px; }
+  .ltb-exp-bar { width: 100%; height: 5px; border-radius: 999px; background: rgba(255,255,255,0.08); overflow: hidden; }
+  .ltb-exp-fill { height: 100%; width: 0%; border-radius: 999px; background: linear-gradient(90deg, var(--gold), var(--gold-bright)); transition: width .4s ease; box-shadow: 0 0 6px rgba(240,200,105,0.6); }
+  .ltb-exp-wrap span { font-size: 10.5px; color: var(--text-dim); }
+
+  .ltb-right { display: flex; align-items: center; gap: 12px; margin-left: auto; }
+  .ltb-live { font-size: 11.5px; font-weight: 700; display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+  .ltb-live .dot { width: 8px; height: 8px; border-radius: 50%; background: #57606f; display: inline-block; }
+  .ltb-live.on .dot { background: #38c172; box-shadow: 0 0 8px rgba(56,193,114,0.9); animation: ltbPulse 1.6s infinite; }
+  .ltb-live.on { color: #6fe39a; }
+  .ltb-live.off { color: var(--text-dim); }
+  @keyframes ltbPulse { 0%,100% { opacity: 1; } 50% { opacity: .35; } }
+  .ltb-clock { font-size: 11px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+
+  @media (max-width: 860px) {
+    .live-topbar { padding: 8px 14px; }
+    .ltb-sub { display: none; }
+    .ltb-stats { justify-content: flex-start; }
+  }
 </style>
 </head>
 <body>
+
+<div class="live-topbar" id="live-topbar">
+  <div class="ltb-left">
+    <div class="ltb-avatar">⚔</div>
+    <div>
+      <div class="ltb-name">Lv.<span class="ltb-lvl-badge" id="tb-level">--</span></div>
+      <div class="ltb-sub" id="tb-stage-sub">—</div>
+    </div>
+  </div>
+  <div class="ltb-stats">
+    <div class="ltb-pill gold"><span class="ltb-ic">💰</span><b id="tb-gold">--</b></div>
+    <div class="ltb-pill dia"><span class="ltb-ic">💎</span><b id="tb-diamond">--</b></div>
+    <div class="ltb-pill exp">
+      <span class="ltb-ic">✨</span>
+      <div class="ltb-exp-wrap">
+        <div class="ltb-exp-bar"><div class="ltb-exp-fill" id="tb-exp-fill"></div></div>
+        <span id="tb-exp-text">--</span>
+      </div>
+    </div>
+    <div class="ltb-pill dps" title="ประมาณจากโจมตีพื้นฐาน × คริติคอล × โบนัส (ไม่รวมสกิล)"><span class="ltb-ic">⚡</span><b id="tb-dps">--</b></div>
+  </div>
+  <div class="ltb-right">
+    <span class="ltb-live off" id="tb-live"><span class="dot"></span><span id="tb-live-text">Offline</span></span>
+    <span class="ltb-clock" id="tb-clock">--:--:--</span>
+  </div>
+</div>
 
 <header>
   <h1>⚔ WAR OF GENESIS <span>PERSONAL DATABASE &amp; CALCULATOR</span></h1>
@@ -649,6 +733,9 @@ const LIVE_SYNC_EXPR = `(function(){
         out.attackSpeed = sContent.getValue(104);
         out.critRate = sContent.getValue(106);
         out.critDamage = sContent.getValue(107);
+        out.damageBonus = sContent.getValue(1058);
+        out.pveBonus = sContent.getValue(1054);
+        out.bossBonus = sContent.getValue(1057);
       }
     } catch(e){}
 
@@ -660,11 +747,23 @@ let lastLiveData = null;
 let liveWs = null, liveEvalId = 1, liveRetryMs = 2000;
 function setLiveDot(state){
   const dot = document.getElementById('live-sync-dot');
-  if (!dot) return;
-  const map = { online: ['🟢 เชื่อมต่อแล้ว', 'var(--gold-bright)'], connecting: ['🟡 กำลังเชื่อมต่อ...', 'var(--text-dim)'], offline: ['⚪ ไม่ได้เชื่อมต่อ (เกมไม่ได้เปิด หรือปิดพอร์ตดีบัก)', 'var(--text-dim)'] };
-  const [label, color] = map[state] || map.offline;
-  dot.textContent = label; dot.style.color = color;
+  if (dot) {
+    const map = { online: ['🟢 เชื่อมต่อแล้ว', 'var(--gold-bright)'], connecting: ['🟡 กำลังเชื่อมต่อ...', 'var(--text-dim)'], offline: ['⚪ ไม่ได้เชื่อมต่อ (เกมไม่ได้เปิด หรือปิดพอร์ตดีบัก)', 'var(--text-dim)'] };
+    const [label, color] = map[state] || map.offline;
+    dot.textContent = label; dot.style.color = color;
+  }
+  const tb = document.getElementById('tb-live');
+  const tbText = document.getElementById('tb-live-text');
+  if (tb && tbText) {
+    tb.classList.toggle('on', state === 'online');
+    tb.classList.toggle('off', state !== 'online');
+    tbText.textContent = state === 'online' ? 'Live' : (state === 'connecting' ? 'Connecting…' : 'Offline');
+  }
 }
+setInterval(() => {
+  const el = document.getElementById('tb-clock');
+  if (el) el.textContent = new Date().toLocaleTimeString('th-TH', { hour12: false });
+}, 1000);
 function connectLiveSync(){
   setLiveDot('connecting');
   try { liveWs = new WebSocket('ws://127.0.0.1:10998'); } catch(e) { setLiveDot('offline'); scheduleLiveRetry(); return; }
@@ -688,6 +787,25 @@ function connectLiveSync(){
       document.getElementById('live-exp').textContent = remain.toLocaleString() + ` (${(100*data.curExp/data.maxExp).toFixed(1)}%)`;
     }
     document.getElementById('btn-use-live-stats').disabled = !(data.attack && data.critRate);
+
+    // top bar
+    if (data.level != null) document.getElementById('tb-level').textContent = data.level;
+    if (data.gold != null) document.getElementById('tb-gold').textContent = data.gold.toLocaleString();
+    if (data.diamond != null) document.getElementById('tb-diamond').textContent = data.diamond.toLocaleString();
+    if (data.curExp != null && data.maxExp != null && data.maxExp > 0) {
+      const pct = Math.min(100, 100 * data.curExp / data.maxExp);
+      document.getElementById('tb-exp-fill').style.width = pct.toFixed(1) + '%';
+      document.getElementById('tb-exp-text').textContent = pct.toFixed(1) + '%';
+    }
+    if (data.stage || data.prog) {
+      document.getElementById('tb-stage-sub').textContent = [data.stage, data.prog].filter(Boolean).join(' · ');
+    }
+    if (data.attack && data.critRate != null && data.attackSpeed) {
+      const critMult = 1 + (data.critRate/100) * (data.critDamage/100);
+      const bonusMult = 1 + (data.damageBonus||0)/100 + (data.pveBonus||0)/100 + (data.bossBonus||0)/100;
+      const dps = data.attack * critMult * bonusMult * (data.attackSpeed/100);
+      document.getElementById('tb-dps').textContent = Math.round(dps).toLocaleString();
+    }
     setTimeout(pollLiveOnce, 2000);
   };
   liveWs.onerror = () => {};
