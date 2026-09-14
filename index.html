@@ -681,8 +681,9 @@ function initEquipFilters(){
     tierSel.value = '1';
   }
   if (lvlSel.children.length === 0) {
-    lvlSel.innerHTML = `<option value="">${t('all_levels')}</option>` +
-      EQUIP_LEVEL_BUCKETS.map(([a,b])=>`<option value="${a}-${b}">${currentLang==='th'?'เลเวล':'Lv.'} ${a}-${b}</option>`).join('');
+    lvlSel.innerHTML = EQUIP_LEVEL_BUCKETS.map(([a,b])=>`<option value="${a}-${b}">${currentLang==='th'?'เลเวล':'Lv.'} ${a}-${b}</option>`).join('') +
+      `<option value="">${t('all_levels')}</option>`;
+    lvlSel.value = '1-10';
   }
   if (sortSel.children.length === 0) {
     sortSel.innerHTML = [
@@ -707,7 +708,7 @@ function equipResetFilters(){
   initEquipFilters();
   document.getElementById('equip-slot-filter').value = document.getElementById('equip-slot-filter').options[0].value;
   document.getElementById('equip-tier-filter').value = '1';
-  document.getElementById('equip-level-filter').value = '';
+  document.getElementById('equip-level-filter').value = '1-10';
   document.getElementById('equip-sort').value = 'lvl_asc';
   equipHasSearched = false;
   equipPage = 1;
@@ -759,7 +760,7 @@ function renderEquipment(){
   tbody.innerHTML = pageList.map(e => `<tr>
       <td><div class="ec-name-cell">${equipIconBoxHtml(e)}<div class="ec-name-text"><b>${esc(e.name_en)}</b><span class="ec-sub">${esc(e.name_vi)}</span></div></div></td>
       <td>${esc(fld(e,'slot_name'))}</td><td>${tierBadgeHtml(e.tier)}</td><td><b style="color:var(--gold-bright);">Lv.${e.level_req}</b></td>
-      <td>${(e.stats||[]).map(s=>esc(fld(s,'text'))).join(', ')}</td>
+      <td>${(e.stats||[]).map(s=>esc(fld(s,'text'))).join('<br>')}</td>
       <td style="text-align:right;">${e.steam_price_text ? `<a href="${e.steam_url}" target="_blank" rel="noopener" style="color:#3fb950;font-weight:700;text-decoration:none;">${esc(e.steam_price_text)}</a><div class="hint" style="font-size:10px;">${e.steam_listings} listings</div>` : '<span class="hint">—</span>'}</td>
     </tr>`).join('') || `<tr><td class="empty-state">—</td></tr>`;
 
