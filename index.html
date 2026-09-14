@@ -97,7 +97,6 @@
   .sk-lvl-table tr.sk-lvl-active td.sk-lvl-num { color: var(--gold-bright); }
   .skill-card.skill-passive .sk-lvl-table tr.sk-lvl-active td { background: rgba(88,166,255,0.14); }
   .skill-card.skill-passive .sk-lvl-table tr.sk-lvl-active td.sk-lvl-num { color: #6cb6ff; }
-  .sk-lvl-hint { font-size: 10.5px; color: var(--text-dim); margin-top: 6px; text-align: center; }
 
   table.data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
   table.data-table th { text-align: left; font-size: 10.5px; text-transform: uppercase; letter-spacing: .3px; color: var(--gold); padding: 8px 10px; border-bottom: 2px solid var(--line); cursor: pointer; white-space: nowrap; background: var(--bg2); }
@@ -465,7 +464,7 @@ const UI_STRINGS = {
   search_equip: { th: 'ค้นหาอุปกรณ์...', en: 'Search equipment...' },
   search_jewel: { th: 'ค้นหาอัญมณี...', en: 'Search jewel...' },
   search_farm: { th: 'ค้นหาด่าน/พื้นที่...', en: 'Search stage/area...' },
-  'skill-alloc-hint': { th: 'คลิก +/- เพื่อจำลองการลงแต้ม (บันทึกอัตโนมัติในเครื่องนี้)', en: 'Click +/- to simulate point allocation (auto-saved on this device)' },
+  'skill-alloc-hint': { th: 'คลิกที่แถวในตารางเพื่อจำลองการลงแต้ม (บันทึกอัตโนมัติในเครื่องนี้)', en: 'Click a row in the table to simulate point allocation (auto-saved on this device)' },
   profile_title: { th: 'ตัวละครของฉัน (บันทึกในเครื่องนี้)', en: 'My Character (saved on this device)' },
   save: { th: 'บันทึก', en: 'Save' },
   reset: { th: 'รีเซ็ต', en: 'Reset' },
@@ -610,12 +609,39 @@ function renderSkills(){
   box.querySelectorAll('[data-alloc-row]').forEach(row => row.addEventListener('click', () => allocSkillTo(row.dataset.allocRow, parseInt(row.dataset.allocLvl, 10))));
 }
 
+// Numbers that stay the same across every level of a skill (e.g. a fixed
+// duration) are left plain; only the ones that actually change per level are
+// colored, since those are what a player deciding whether to level up cares
+// about. 1-2 varying numbers all go red; 3+ each get their own color so it's
+// still readable which value is which across a run-on sentence.
+const NUM_COLOR_PALETTE = ['#ff6b6b', '#7ee787', '#6cb6ff', '#ffd166', '#c792ea'];
+function getVaryingNumberPositions(sk){
+  const numsPerLevel = sk.levels.map(lv => (fld(lv,'description').match(/[0-9]+(\.[0-9]+)?/g) || []));
+  const minLen = Math.min(...numsPerLevel.map(n => n.length));
+  const varying = [];
+  for (let i = 0; i < minLen; i++) {
+    if (new Set(numsPerLevel.map(n => n[i])).size > 1) varying.push(i);
+  }
+  return varying;
+}
+function colorizeVaryingNumbers(text, varyingPositions){
+  const rank = {};
+  varyingPositions.forEach((pos, i) => { rank[pos] = i; });
+  let idx = -1;
+  return esc(text).replace(/[0-9]+(\.[0-9]+)?/g, (m) => {
+    idx++;
+    if (!(idx in rank)) return m;
+    const color = varyingPositions.length <= 2 ? '#ff6b6b' : NUM_COLOR_PALETTE[rank[idx] % NUM_COLOR_PALETTE.length];
+    return `<span style="color:${color};font-weight:700;">${m}</span>`;
+  });
+}
 function skillCardHtml(sk, branchNum){
   const lvl = skillAllocations[sk.id] || 0;
+  const varying = getVaryingNumberPositions(sk);
   const rows = sk.levels.map((lv, i) => `
     <tr class="${lvl === i+1 ? 'sk-lvl-active' : ''}" data-alloc-row="${sk.id}" data-alloc-lvl="${i+1}">
       <td class="sk-lvl-num">Lv.${i+1}</td>
-      <td>${esc(fld(lv,'description'))}</td>
+      <td>${colorizeVaryingNumbers(fld(lv,'description'), varying)}</td>
     </tr>`).join('');
   return `
     <div class="card skill-card ${sk.is_passive ? 'skill-passive' : 'skill-active'}">
@@ -625,7 +651,6 @@ function skillCardHtml(sk, branchNum){
       </div>
       <div class="sk-req">${t('req_level')}: ${sk.req_player_level}${sk.pre_req ? ' · ' + esc(fld(sk.pre_req,'parent_name')) + ' Lv.' + sk.pre_req.req_level : ''}</div>
       <div class="sk-lvl-scroll"><table class="sk-lvl-table"><tbody>${rows}</tbody></table></div>
-      <div class="sk-lvl-hint">${currentLang==='th'?'คลิกที่แถวเพื่อจำลองการลงแต้ม (คลิกซ้ำเพื่อล้าง)':'Click a row to simulate allocation (click again to clear)'}</div>
     </div>`;
 }
 function allocSkillTo(id, level){
