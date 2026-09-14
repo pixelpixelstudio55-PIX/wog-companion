@@ -56,10 +56,11 @@
   .class-tab { flex: 1; background: var(--bg3); border: 1px solid var(--line); border-radius: 8px; padding: 12px; text-align: center; cursor: pointer; font-weight: 700; }
   .class-tab.active { border-color: var(--gold); background: var(--accent-bg); color: var(--gold-bright); }
 
-  .skill-row-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+  .skill-row-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 12px; }
   .skill-lvl-group { margin-bottom: 16px; }
   .skill-lvl-group-label { font-size: 11px; font-weight: 700; color: var(--gold); background: var(--accent-bg); display: inline-block; padding: 3px 10px; border-radius: 999px; margin-bottom: 8px; }
-  .sk-branch-tag { font-size: 10px; font-weight: 500; color: var(--text-dim); background: rgba(255,255,255,0.06); padding: 1px 7px; border-radius: 999px; margin-left: 2px; vertical-align: middle; white-space: nowrap; display: inline-block; max-width: 110px; overflow: hidden; text-overflow: ellipsis; }
+  .sk-branch-tag { font-size: 10px; font-weight: 500; color: var(--text-dim); background: rgba(255,255,255,0.06); padding: 1px 7px; border-radius: 999px; display: inline-block; margin-top: 3px; }
+  .sk-name-col { display: flex; flex-direction: column; justify-content: center; gap: 1px; min-width: 0; }
 
   .card { background: var(--bg2); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; }
   .skill-card .sk-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; gap: 8px; }
@@ -80,7 +81,7 @@
   .skill-card .sk-req { font-size: 11px; color: var(--text-dim); margin-bottom: 8px; min-height: 15px; }
   .skill-row-grid { align-items: stretch; }
   .skill-card { display: flex; flex-direction: column; }
-  .skill-card .sk-name { min-height: 34px; display: flex; align-items: center; }
+  .sk-name-col { min-height: 46px; }
 
   .skill-card.skill-active { border-color: rgba(212,169,74,0.45); background: linear-gradient(180deg, rgba(212,169,74,0.08), var(--bg2) 60%); }
   .skill-card.skill-active .sk-name { color: var(--gold-bright); }
@@ -700,7 +701,7 @@ function skillCardHtml(sk, branchNum, branchTag){
   return `
     <div class="card skill-card ${sk.is_passive ? 'skill-passive' : 'skill-active'}">
       <div class="sk-head">
-        <div class="sk-head-l">${skillIconHtml(sk, branchNum)}<span class="sk-name">${esc(sk.name_en)}${branchTag ? ` <span class="sk-branch-tag">${esc(branchTag)}</span>` : ''}</span></div>
+        <div class="sk-head-l">${skillIconHtml(sk, branchNum)}<div class="sk-name-col"><span class="sk-name">${esc(sk.name_en)}</span>${branchTag ? `<span class="sk-branch-tag">${esc(branchTag)}</span>` : ''}</div></div>
         <span class="sk-type">${sk.is_passive ? t('passive') : t('active')}</span>
       </div>
       <div class="sk-req">${t('req_level')}: ${sk.req_player_level}${sk.pre_req ? ' · ' + esc(fld(sk.pre_req,'parent_name')) + ' Lv.' + sk.pre_req.req_level : ''}</div>
