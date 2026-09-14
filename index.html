@@ -56,11 +56,10 @@
   .class-tab { flex: 1; background: var(--bg3); border: 1px solid var(--line); border-radius: 8px; padding: 12px; text-align: center; cursor: pointer; font-weight: 700; }
   .class-tab.active { border-color: var(--gold); background: var(--accent-bg); color: var(--gold-bright); }
 
-  .branch-block { margin-bottom: 22px; }
-  .branch-title { font-size: 13px; font-weight: 700; color: var(--gold); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 10px; border-bottom: 1px solid var(--line); padding-bottom: 6px; }
   .skill-row-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
   .skill-lvl-group { margin-bottom: 16px; }
   .skill-lvl-group-label { font-size: 11px; font-weight: 700; color: var(--gold); background: var(--accent-bg); display: inline-block; padding: 3px 10px; border-radius: 999px; margin-bottom: 8px; }
+  .sk-branch-tag { font-size: 10px; font-weight: 500; color: var(--text-dim); background: rgba(255,255,255,0.06); padding: 1px 7px; border-radius: 999px; margin-left: 2px; vertical-align: middle; white-space: nowrap; display: inline-block; max-width: 110px; overflow: hidden; text-overflow: ellipsis; }
 
   .card { background: var(--bg2); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; }
   .skill-card .sk-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; gap: 8px; }
@@ -609,30 +608,41 @@ function skillMatches(sk, q){
   return sk.name_vi.toLowerCase().includes(q) || sk.name_en.toLowerCase().includes(q);
 }
 
+// "Branch 2: Area Attack (AoE)" / "สายที่ 2: โจมตีพื้นที่ (AoE)" -> just the
+// descriptive part after the colon, used as a small tag next to the skill
+// name now that branches are no longer shown as separate sections.
+function branchShortLabel(branchTitle){
+  return branchTitle.replace(/^(Branch\s*\d+|สายที่\s*\d+)\s*:\s*/i, '');
+}
+
 function renderSkills(){
   initClassTabs();
   const q = document.getElementById('skill-search').value.trim();
   const cls = GAME_DATA.skillTrees[currentClass];
   const box = document.getElementById('skill-content');
-  box.innerHTML = cls.branches.map((b, bi) => {
-    const matched = b.skills.filter(sk => skillMatches(sk, q));
-    if (!matched.length) return '';
-    // group by required level, in ascending order, so it's clear at a glance
-    // which skills unlock together
-    const byLevel = new Map();
-    matched.forEach(sk => {
-      const lvl = sk.req_player_level;
-      if (!byLevel.has(lvl)) byLevel.set(lvl, []);
-      byLevel.get(lvl).push(sk);
-    });
-    const levelGroupsHtml = [...byLevel.keys()].sort((a,b2) => a-b2).map(lvl => {
-      const cardsHtml = byLevel.get(lvl).map(sk => skillCardHtml(sk, bi+1)).join('');
-      return `<div class="skill-lvl-group">
-        <div class="skill-lvl-group-label">${currentLang==='th'?'ต้องการเลเวล':'Requires Level'}: ${lvl}</div>
-        <div class="skill-row-grid">${cardsHtml}</div>
-      </div>`;
-    }).join('');
-    return `<div class="branch-block"><div class="branch-title">${esc(fld(b,'branch_title'))}</div>${levelGroupsHtml}</div>`;
+
+  // Flatten every branch into one list (each skill keeps its own branch tag
+  // + icon-color index), then group purely by required level across the
+  // whole class - no more per-branch sections.
+  const items = [];
+  cls.branches.forEach((b, bi) => {
+    const branchTag = branchShortLabel(fld(b,'branch_title'));
+    b.skills.filter(sk => skillMatches(sk, q)).forEach(sk => items.push({ sk, branchNum: bi+1, branchTag }));
+  });
+
+  const byLevel = new Map();
+  items.forEach(item => {
+    const lvl = item.sk.req_player_level;
+    if (!byLevel.has(lvl)) byLevel.set(lvl, []);
+    byLevel.get(lvl).push(item);
+  });
+
+  box.innerHTML = [...byLevel.keys()].sort((a,b2) => a-b2).map(lvl => {
+    const cardsHtml = byLevel.get(lvl).map(item => skillCardHtml(item.sk, item.branchNum, item.branchTag)).join('');
+    return `<div class="skill-lvl-group">
+      <div class="skill-lvl-group-label">${currentLang==='th'?'ต้องการเลเวล':'Requires Level'}: ${lvl}</div>
+      <div class="skill-row-grid">${cardsHtml}</div>
+    </div>`;
   }).join('') || `<div class="empty-state">—</div>`;
 
   box.querySelectorAll('[data-alloc-row]').forEach(row => row.addEventListener('click', () => allocSkillTo(row.dataset.allocRow, parseInt(row.dataset.allocLvl, 10))));
@@ -679,7 +689,7 @@ function colorizeVaryingNumbers(text, varyingPositions){
   out += esc(text.slice(lastIndex));
   return out;
 }
-function skillCardHtml(sk, branchNum){
+function skillCardHtml(sk, branchNum, branchTag){
   const lvl = skillAllocations[sk.id] || 0;
   const varying = getVaryingNumberPositions(sk);
   const rows = sk.levels.map((lv, i) => `
@@ -690,7 +700,7 @@ function skillCardHtml(sk, branchNum){
   return `
     <div class="card skill-card ${sk.is_passive ? 'skill-passive' : 'skill-active'}">
       <div class="sk-head">
-        <div class="sk-head-l">${skillIconHtml(sk, branchNum)}<span class="sk-name">${esc(sk.name_en)}</span></div>
+        <div class="sk-head-l">${skillIconHtml(sk, branchNum)}<span class="sk-name">${esc(sk.name_en)}${branchTag ? ` <span class="sk-branch-tag">${esc(branchTag)}</span>` : ''}</span></div>
         <span class="sk-type">${sk.is_passive ? t('passive') : t('active')}</span>
       </div>
       <div class="sk-req">${t('req_level')}: ${sk.req_player_level}${sk.pre_req ? ' · ' + esc(fld(sk.pre_req,'parent_name')) + ' Lv.' + sk.pre_req.req_level : ''}</div>
