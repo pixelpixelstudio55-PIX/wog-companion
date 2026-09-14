@@ -170,6 +170,18 @@
 
   <div class="view" id="view-profile">
     <div class="profile-card">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
+        <h3 style="margin:0;">🔴 Live Sync</h3>
+        <span id="live-sync-dot" style="font-size:12px;color:var(--text-dim);">● ไม่ได้เชื่อมต่อ</span>
+      </div>
+      <p class="hint" style="margin:6px 0 14px;">อ่านค่าสดจากเกมที่กำลังรันอยู่ในเครื่องนี้เท่านั้น (ต่อ localhost ของเครื่องตัวเอง ไม่เกี่ยวกับเครื่องอื่น) ต้องเปิดเกมทิ้งไว้ถึงจะเห็นค่า — ตอนนี้ยังอ่านได้แค่ด่าน/ความคืบหน้า/เลือดบอส ส่วนทอง/เลเวล/DPS ที่แถบบนสุดยังหาจุดอ่านไม่เจอ</p>
+      <div class="profile-grid" id="live-sync-fields">
+        <div class="profile-field"><label>ด่านปัจจุบัน</label><div id="live-stage">—</div></div>
+        <div class="profile-field"><label>ความคืบหน้าด่าน</label><div id="live-stage-progress">—</div></div>
+        <div class="profile-field"><label>เลือดบอส</label><div id="live-boss-hp">—</div></div>
+      </div>
+    </div>
+    <div class="profile-card">
       <h3 data-i="profile_title">ตัวละครของฉัน (บันทึกในเครื่องนี้)</h3>
       <div class="profile-grid" id="profile-fields"></div>
       <div style="margin-top:14px;display:flex;gap:10px;">
@@ -558,10 +570,79 @@ function computeDps(){
     `${esc(sk.name_en)} Lv.${lvl} — ${dmgPct}% dmg × Atk ${profile.attack} × crit-mult ${critMult.toFixed(2)} × bonus-mult ${bonusMult.toFixed(2)} × ${profile.attackSpeed} hits/s`;
 }
 
+/* ---------- live sync (read-only) ----------
+   Connects to this PC's own game process (Puerts V8 Inspector debug port,
+   ws://127.0.0.1:10998 - open by default whenever the game itself is
+   running). Every viewer's browser only ever talks to their OWN localhost,
+   never anyone else's, so this stays safe to publish as a static page: a
+   visitor without the game running just sees "not connected".
+   READ-ONLY: the expression below only reads .text off existing UI Text
+   components (exactly what's already visibly on screen) - it never assigns,
+   calls a mutating method, or touches inventory/equipment/automation
+   settings. Only stage/progress/boss-HP were found readable this way so
+   far; gold/level/DPS live in a different UI layer not yet located. */
+const LIVE_SYNC_EXPR = `(function(){
+  try {
+    var panels = nn.uiManager._showingPanels;
+    var out = { stage: null, prog: null, bossHp: null };
+    Object.keys(panels).forEach(function(pk){
+      var p = panels[pk];
+      if (!p) return;
+      try { if (p.TxtStageNum && p.TxtStageNum.text) out.stage = p.TxtStageNum.text; } catch(e){}
+      try { if (p.TxtStageProgress && p.TxtStageProgress.text) out.prog = p.TxtStageProgress.text; } catch(e){}
+      try {
+        var parts = p.Parts;
+        if (parts) Object.keys(parts).forEach(function(pi){
+          var part = parts[pi];
+          try { if (part.TxtBossHpRatio && part.TxtBossHpRatio.text) out.bossHp = part.TxtBossHpRatio.text; } catch(e){}
+        });
+      } catch(e){}
+    });
+    return JSON.stringify(out);
+  } catch(e) { return JSON.stringify({ error: e.message }); }
+})()`;
+
+let liveWs = null, liveEvalId = 1, liveRetryMs = 2000;
+function setLiveDot(state){
+  const dot = document.getElementById('live-sync-dot');
+  if (!dot) return;
+  const map = { online: ['🟢 เชื่อมต่อแล้ว', 'var(--gold-bright)'], connecting: ['🟡 กำลังเชื่อมต่อ...', 'var(--text-dim)'], offline: ['⚪ ไม่ได้เชื่อมต่อ (เกมไม่ได้เปิด หรือปิดพอร์ตดีบัก)', 'var(--text-dim)'] };
+  const [label, color] = map[state] || map.offline;
+  dot.textContent = label; dot.style.color = color;
+}
+function connectLiveSync(){
+  setLiveDot('connecting');
+  try { liveWs = new WebSocket('ws://127.0.0.1:10998'); } catch(e) { setLiveDot('offline'); scheduleLiveRetry(); return; }
+  liveWs.onopen = () => { liveRetryMs = 2000; pollLiveOnce(); };
+  liveWs.onmessage = (ev) => {
+    let msg; try { msg = JSON.parse(ev.data); } catch(e) { return; }
+    const val = msg && msg.result && msg.result.result && msg.result.result.value;
+    if (!val) return;
+    let data; try { data = JSON.parse(val); } catch(e) { return; }
+    if (data.error) return;
+    setLiveDot('online');
+    if (data.stage) document.getElementById('live-stage').textContent = data.stage;
+    if (data.prog) document.getElementById('live-stage-progress').textContent = data.prog;
+    if (data.bossHp) document.getElementById('live-boss-hp').textContent = data.bossHp;
+    setTimeout(pollLiveOnce, 2000);
+  };
+  liveWs.onerror = () => {};
+  liveWs.onclose = () => { setLiveDot('offline'); scheduleLiveRetry(); };
+}
+function pollLiveOnce(){
+  if (!liveWs || liveWs.readyState !== WebSocket.OPEN) return;
+  liveWs.send(JSON.stringify({ id: liveEvalId++, method: 'Runtime.evaluate', params: { expression: LIVE_SYNC_EXPR, returnByValue: true } }));
+}
+function scheduleLiveRetry(){
+  liveRetryMs = Math.min(liveRetryMs * 1.5, 15000);
+  setTimeout(connectLiveSync, liveRetryMs);
+}
+
 /* ---------- init ---------- */
 applyStaticI18n();
 renderSkills();
 loadRemoteSkillIcons();
+connectLiveSync();
 // deep-linkable tabs, e.g. index.html#equipment - also just handy for testing
 if (location.hash) {
   const target = location.hash.slice(1);
