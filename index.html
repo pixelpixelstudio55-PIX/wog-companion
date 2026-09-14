@@ -66,6 +66,7 @@
   .sk-icon-img { width: 32px; height: 32px; object-fit: contain; border-radius: 6px; background: var(--bg3); flex-shrink: 0; }
   .sk-icon-fallback { width: 32px; height: 32px; border-radius: 6px; background: var(--bg3); display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
   .jc-icon, .ec-icon { font-size: 20px; margin-right: 6px; }
+  .jc-icon-img, .ec-icon-img { width: 22px; height: 22px; object-fit: contain; vertical-align: -6px; margin-right: 6px; border-radius: 4px; background: var(--bg3); }
   .skill-card .sk-name { font-weight: 700; color: var(--gold-bright); font-size: 13.5px; }
   .skill-card .sk-type { font-size: 9.5px; padding: 2px 7px; border-radius: 999px; background: var(--accent-bg); color: var(--gold); }
   .skill-card .sk-req { font-size: 11px; color: var(--text-dim); margin-bottom: 6px; }
@@ -163,6 +164,48 @@
     .ltb-sub { display: none; }
     .ltb-stats { justify-content: flex-start; }
   }
+
+  /* ===== APP SHELL / SIDEBAR ===== */
+  .app-shell { display: flex; align-items: flex-start; }
+  .sidebar {
+    width: 240px; flex-shrink: 0; background: var(--bg2); border-right: 1px solid var(--line);
+    min-height: calc(100vh - 54px); position: sticky; top: 54px; align-self: flex-start;
+    padding: 16px 10px; overflow-y: auto;
+  }
+  .sidebar-brand { padding: 4px 10px 16px; }
+  .sidebar-brand h1 { font-size: 15px; color: var(--gold-bright); letter-spacing: .5px; }
+  .sidebar-brand span { color: var(--text-dim); font-size: 9.5px; display: block; font-family: 'Sarabun', sans-serif; letter-spacing: 1.5px; margin-top: 2px; }
+  .sidebar-lang { display: flex; gap: 4px; background: var(--bg3); border-radius: 8px; padding: 3px; margin: 0 10px 16px; }
+  .sidebar-lang button { flex: 1; border: none; background: transparent; color: var(--text-dim); padding: 6px 0; border-radius: 6px; cursor: pointer; font-family: inherit; font-weight: 600; font-size: 12px; }
+  .sidebar-lang button.active { background: var(--gold); color: #0e1729; }
+
+  .sidebar-link, .sidebar-toggle {
+    display: flex; align-items: center; gap: 9px; width: 100%; text-align: left;
+    background: transparent; border: none; color: var(--text-dim); padding: 10px 12px; border-radius: 8px;
+    cursor: pointer; font-family: inherit; font-weight: 600; font-size: 13px; margin-bottom: 2px;
+  }
+  .sidebar-link:hover, .sidebar-toggle:hover { background: var(--accent-bg); color: var(--text); }
+  .sidebar-link.active { background: var(--accent-bg); color: var(--gold-bright); border-left: 3px solid var(--gold); padding-left: 9px; }
+  .sidebar-toggle { justify-content: space-between; }
+  .sidebar-toggle .chev { transition: transform .2s; font-size: 10px; }
+  .sidebar-toggle.open .chev { transform: rotate(180deg); }
+  .sidebar-dropdown { max-height: 0; overflow: hidden; transition: max-height .25s ease; padding-left: 12px; }
+  .sidebar-dropdown.open { max-height: 300px; }
+  .sidebar-sublink {
+    display: block; width: 100%; text-align: left; background: transparent; border: none; border-left: 2px solid var(--navy-line);
+    color: var(--text-dim); padding: 8px 12px; cursor: pointer; font-family: inherit; font-size: 12.5px; margin: 1px 0;
+  }
+  .sidebar-sublink:hover { color: var(--text); border-left-color: var(--gold); }
+  .sidebar-sublink.active { color: var(--gold-bright); border-left-color: var(--gold); font-weight: 700; }
+  .sidebar-badge { font-size: 8.5px; font-weight: 700; text-transform: uppercase; background: var(--accent-bg); color: var(--gold); padding: 1px 6px; border-radius: 999px; margin-left: auto; }
+  .sidebar-hr { border: none; border-top: 1px solid var(--line); margin: 10px 8px; }
+
+  .main-content { flex: 1; min-width: 0; }
+
+  @media (max-width: 860px) {
+    .app-shell { flex-direction: column; }
+    .sidebar { width: 100%; min-height: auto; position: static; border-right: none; border-bottom: 1px solid var(--line); }
+  }
 </style>
 </head>
 <body>
@@ -193,23 +236,36 @@
   </div>
 </div>
 
-<header>
-  <h1>⚔ WAR OF GENESIS <span>PERSONAL DATABASE &amp; CALCULATOR</span></h1>
-  <div class="lang-toggle">
+<div class="app-shell">
+<aside class="sidebar">
+  <div class="sidebar-brand">
+    <h1>⚔ WAR OF GENESIS</h1>
+    <span>PERSONAL DATABASE &amp; CALCULATOR</span>
+  </div>
+  <div class="sidebar-lang">
     <button data-lang="th" id="lang-th">ไทย</button>
     <button data-lang="en" id="lang-en">EN</button>
   </div>
-</header>
 
-<div class="tabs">
-  <button class="tab-btn active" data-view="skills">🌳 <span data-i="tab_skills">Skill Tree</span></button>
-  <button class="tab-btn" data-view="training">🏋️ <span data-i="tab_training">Training</span></button>
-  <button class="tab-btn" data-view="equipment">🛡️ <span data-i="tab_equipment">Equipment</span></button>
-  <button class="tab-btn" data-view="jewels">💎 <span data-i="tab_jewels">Jewels</span></button>
-  <button class="tab-btn" data-view="farm">🏆 <span data-i="tab_farm">Farm Ranking</span></button>
-  <button class="tab-btn" data-view="profile">👤 <span data-i="tab_profile">Profile / DPS</span></button>
-</div>
+  <button class="sidebar-toggle open" id="gamedata-toggle">📊 Game Data <span class="chev">▾</span></button>
+  <div class="sidebar-dropdown open" id="gamedata-dropdown">
+    <button class="sidebar-sublink active" data-view="skills">🌳 <span data-i="tab_skills">Skill Tree</span></button>
+    <button class="sidebar-sublink" data-view="training">🏋️ <span data-i="tab_training">Training</span></button>
+    <button class="sidebar-sublink" data-view="equipment">🛡️ <span data-i="tab_equipment">Equipment</span></button>
+    <button class="sidebar-sublink" data-view="jewels">💎 <span data-i="tab_jewels">Jewels</span></button>
+  </div>
 
+  <hr class="sidebar-hr">
+
+  <button class="sidebar-link" data-view="farm">🏆 <span data-i="tab_farm">Farm Ranking</span></button>
+  <button class="sidebar-link" data-view="dpsbreak">⚔️ <span data-i="tab_dpsbreak">Skill DPS (Combat Breakdown)</span></button>
+  <button class="sidebar-link" data-view="history">📜 <span data-i="tab_history">Stage Run History</span></button>
+  <button class="sidebar-link" data-view="smart">🧠 <span data-i="tab_smart">Smart Analysis</span><span class="sidebar-badge">In Dev</span></button>
+  <button class="sidebar-link" data-view="profile">👤 <span data-i="tab_profile">Profile &amp; EXP</span></button>
+  <button class="sidebar-link" data-view="forge">🔨 <span data-i="tab_forge">Jewel Forge &amp; Storage</span></button>
+</aside>
+
+<main class="main-content">
 <div class="wrap">
 
   <div class="view active" id="view-skills">
@@ -289,6 +345,37 @@
     </div>
   </div>
 
+  <div class="view" id="view-dpsbreak">
+    <p class="hint" style="margin-bottom:14px;">คำนวณจากสถิติสด (ถ้าเชื่อมต่อ Live Sync) หรือฟอร์มโปรไฟล์ ใช้เฉพาะสกิล Active ของคลาสที่เลือกในหน้าสกิลทรี — ไม่ใช่ค่าจริง 100% จากเกม (ไม่รวมผลกระทบพิเศษ เช่น สเตตัสสะสม/บัฟชั่วคราว)</p>
+    <div class="result-count" id="dpsbreak-total"></div>
+    <div class="table-scroll"><table class="data-table" id="dpsbreak-table"></table></div>
+  </div>
+
+  <div class="view" id="view-history">
+    <p class="hint" style="margin-bottom:14px;">บันทึกอัตโนมัติทุกครั้งที่ Live Sync ตรวจพบว่าด่านเปลี่ยน (เก็บย้อนหลังสูงสุด 20 ครั้ง) — เริ่มบันทึกนับจากตอนนี้เท่านั้น ไม่มีประวัติก่อนหน้า และบอกได้แค่ "เข้าด่านไหนเมื่อไหร่" ยังแยกไม่ได้ว่าผ่าน/ไม่ผ่าน</p>
+    <div class="table-scroll"><table class="data-table" id="history-table"></table></div>
+  </div>
+
+  <div class="view" id="view-smart">
+    <div style="background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin-bottom:18px;">
+      <b style="color:var(--gold-bright);">🚧 กำลังพัฒนา</b>
+      <p class="hint" style="margin-top:6px;">คำนวณจากสถิติสด/สกิลปัจจุบันเท่านั้น ยังไม่ครอบคลุมการวางแผนอัพเกรดข้ามหลายเลเวลพร้อมกัน หรือเทียบข้ามคลาส</p>
+    </div>
+    <div class="table-scroll"><table class="data-table" id="smart-table"></table></div>
+  </div>
+
+  <div class="view" id="view-forge">
+    <div style="background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin-bottom:18px;">
+      <b style="color:#ff9d6c;">⚠️ ส่วนนี้จะสั่งงานเข้าเกมจริง (ไม่ใช่แค่อ่านค่า)</b>
+      <p class="hint" style="margin-top:6px;">ต่างจากเมนูอื่นทั้งหมดในเว็บนี้ที่อ่านอย่างเดียว — ส่วนนี้จะเขียนค่ากลับเข้าเกม (เปิด/ปิด auto-fuse ฯลฯ) มีความเสี่ยงบัญชีโดนแบนถ้าเกมตรวจจับการเข้าถึงนอกช่องทางปกติได้ (บอสรับทราบและยอมรับความเสี่ยงนี้แล้ว) — กำลังสำรวจโครงสร้างจริงของช่องเก็บของ/ฟังก์ชันหลอมอัญมณีอยู่ จะทยอยเปิดใช้ทีละส่วนเพื่อลดโอกาสเขียนค่าผิดพลาดใส่เซฟจริง</p>
+    </div>
+    <div class="profile-grid" id="forge-status">
+      <div class="profile-field"><label>สถานะ</label><div>🚧 กำลังสำรวจ API หลอมอัญมณี</div></div>
+    </div>
+  </div>
+
+</div>
+</main>
 </div>
 
 <script src="assets/game_data.js"></script>
@@ -309,6 +396,10 @@ const UI_STRINGS = {
   tab_jewels: { th: 'อัญมณี', en: 'Jewels' },
   tab_farm: { th: 'จัดอันดับฟาร์ม', en: 'Farm Ranking' },
   tab_profile: { th: 'โปรไฟล์ / DPS', en: 'Profile / DPS' },
+  tab_dpsbreak: { th: 'Skill DPS (แจกแจงการต่อสู้)', en: 'Skill DPS (Combat Breakdown)' },
+  tab_history: { th: 'ประวัติเข้าด่าน', en: 'Stage Run History' },
+  tab_smart: { th: 'วิเคราะห์อัจฉริยะ', en: 'Smart Analysis' },
+  tab_forge: { th: 'หลอมอัญมณี & คลัง', en: 'Jewel Forge & Storage' },
   search_skill: { th: 'ค้นหาชื่อสกิล...', en: 'Search skill name...' },
   search_training: { th: 'ค้นหาการฝึกฝน...', en: 'Search training...' },
   search_equip: { th: 'ค้นหาอุปกรณ์...', en: 'Search equipment...' },
@@ -365,7 +456,7 @@ function loadRemoteSkillIcons(){
   remoteSkillIconsPromise = (async () => {
     try {
       const cached = sessionStorage.getItem('wog_remote_icons_v1');
-      if (cached) { REMOTE_SKILL_ICONS = JSON.parse(cached); if(currentView==='skills') renderSkills(); return; }
+      if (cached) { REMOTE_SKILL_ICONS = JSON.parse(cached); renderCurrentView(); return; }
     } catch(e) {}
     try {
       const res = await fetch('https://titlee2111.github.io/war-of-genesis-helper/');
@@ -374,7 +465,7 @@ function loadRemoteSkillIcons(){
       if (!m) return;
       REMOTE_SKILL_ICONS = new Function('return ' + m[1])();
       try { sessionStorage.setItem('wog_remote_icons_v1', JSON.stringify(REMOTE_SKILL_ICONS)); } catch(e) {}
-      if (currentView === 'skills') renderSkills();
+      renderCurrentView();
     } catch(e) { console.warn('Remote skill icons unavailable, using emoji fallback.', e); }
   })();
   return remoteSkillIconsPromise;
@@ -396,30 +487,45 @@ const JEWEL_GRADE_EMOJI = {
   'Cấp Thấp (1★)': '⚪', 'Cấp Trung (2★)': '🟢', 'Cấp Cao (3★)': '🔵',
   'Cao Cấp (4★)': '🟣', 'Đặc Biệt (5★)': '🟠', 'Thượng Hạng (6★)': '🔴',
 };
-function jewelIconHtml(j){ return `<span class="jc-icon">${JEWEL_GRADE_EMOJI[j.grade_name_vi] || '💎'}</span>`; }
+function jewelIconHtml(j){
+  if (REMOTE_SKILL_ICONS && j.icon && REMOTE_SKILL_ICONS[j.icon]) {
+    return `<img src="${REMOTE_SKILL_ICONS[j.icon]}" alt="" class="jc-icon-img">`;
+  }
+  return `<span class="jc-icon">${JEWEL_GRADE_EMOJI[j.grade_name_vi] || '💎'}</span>`;
+}
 const SLOT_EMOJI = {
   'Vũ khí chính': '⚔️', 'Vũ khí phụ': '🗡️', 'Nón / Mũ': '⛑️', 'Áo giáp': '🎽',
   'Găng tay': '🧤', 'Giày / Ủng': '👢', 'Áo choàng': '🧣', 'Giáp vai': '🪖',
   'Nhẫn': '💍', 'Khuyên tai': '👂', 'Dây chuyền': '📿', 'Vòng tay': '⛓️',
   'Dây thắt lưng': '🎗️', 'Trâm cài / Huy hiệu': '🎖️',
 };
-function equipIconHtml(e){ return `<span class="ec-icon">${SLOT_EMOJI[e.slot_name] || '⚙️'}</span>`; }
+function equipIconHtml(e){
+  if (REMOTE_SKILL_ICONS && e.icon && REMOTE_SKILL_ICONS[e.icon]) {
+    return `<img src="${REMOTE_SKILL_ICONS[e.icon]}" alt="" class="ec-icon-img">`;
+  }
+  return `<span class="ec-icon">${SLOT_EMOJI[e.slot_name] || '⚙️'}</span>`;
+}
 
 document.getElementById('lang-th').addEventListener('click', () => { currentLang='th'; localStorage.setItem('wog_lang','th'); applyStaticI18n(); renderCurrentView(); });
 document.getElementById('lang-en').addEventListener('click', () => { currentLang='en'; localStorage.setItem('wog_lang','en'); applyStaticI18n(); renderCurrentView(); });
 
-/* ---------- tabs ---------- */
+/* ---------- sidebar nav ---------- */
 let currentView = 'skills';
-document.querySelectorAll('.tab-btn').forEach(btn => btn.addEventListener('click', () => {
-  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+document.querySelectorAll('.sidebar-link[data-view], .sidebar-sublink[data-view]').forEach(btn => btn.addEventListener('click', () => {
+  document.querySelectorAll('.sidebar-link[data-view], .sidebar-sublink[data-view]').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   currentView = btn.dataset.view;
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById('view-' + currentView).classList.add('active');
   renderCurrentView();
 }));
+document.getElementById('gamedata-toggle').addEventListener('click', () => {
+  document.getElementById('gamedata-toggle').classList.toggle('open');
+  document.getElementById('gamedata-dropdown').classList.toggle('open');
+});
 function renderCurrentView(){
-  ({ skills: renderSkills, training: renderTraining, equipment: renderEquipment, jewels: renderJewels, farm: renderFarm, profile: renderProfile })[currentView]();
+  ({ skills: renderSkills, training: renderTraining, equipment: renderEquipment, jewels: renderJewels, farm: renderFarm, profile: renderProfile,
+     dpsbreak: renderDpsBreakdown, history: renderHistory, smart: renderSmartAnalysis, forge: () => {} })[currentView]();
 }
 
 /* ================= SKILL TREE ================= */
@@ -806,6 +912,7 @@ function connectLiveSync(){
       const dps = data.attack * critMult * bonusMult * (data.attackSpeed/100);
       document.getElementById('tb-dps').textContent = Math.round(dps).toLocaleString();
     }
+    trackStageHistory(data.stageTid);
     setTimeout(pollLiveOnce, 2000);
   };
   liveWs.onerror = () => {};
@@ -820,6 +927,101 @@ function scheduleLiveRetry(){
   setTimeout(connectLiveSync, liveRetryMs);
 }
 
+/* ================= SKILL DPS BREAKDOWN ================= */
+function activeStatsForCalc(){
+  if (lastLiveData && lastLiveData.attack && lastLiveData.critRate != null) {
+    return {
+      attack: lastLiveData.attack, attackSpeed: lastLiveData.attackSpeed/100,
+      critRate: lastLiveData.critRate, critDamage: lastLiveData.critDamage,
+      pveBonus: lastLiveData.pveBonus||0, damageBonus: lastLiveData.damageBonus||0, bossBonus: lastLiveData.bossBonus||0,
+      source: 'live',
+    };
+  }
+  return { ...profile, source: 'manual' };
+}
+function renderDpsBreakdown(){
+  const st = activeStatsForCalc();
+  const critMult = 1 + (st.critRate/100) * (st.critDamage/100);
+  const bonusMult = 1 + st.damageBonus/100 + st.pveBonus/100 + st.bossBonus/100;
+  const cls = GAME_DATA.skillTrees[currentClass];
+  const rows = [];
+  cls.branches.forEach(b => b.skills.forEach(sk => {
+    if (sk.is_passive) return;
+    const lvl = skillAllocations[sk.id] || 0;
+    const cur = sk.levels[Math.max(0, lvl-1)] || sk.levels[0];
+    if (!cur.damage_percent) return;
+    const castsPerMin = cur.cooldown_sec > 0 ? 60/cur.cooldown_sec : 0;
+    const perCast = st.attack * (cur.damage_percent/100) * critMult * bonusMult;
+    const dpsOutput = perCast * castsPerMin / 60;
+    rows.push({ name: sk.name_en, level: lvl||1, dmgPct: cur.damage_percent, cooldown: cur.cooldown_sec, castsPerMin, perCast, dpsOutput });
+  }));
+  // basic attack row
+  const basicPerCast = st.attack * critMult * bonusMult;
+  const basicCastsPerMin = st.attackSpeed * 60;
+  rows.push({ name: currentLang==='th'?'โจมตีพื้นฐาน':'Basic Attack', level: '-', dmgPct: 100, cooldown: 0, castsPerMin: basicCastsPerMin, perCast: basicPerCast, dpsOutput: basicPerCast*basicCastsPerMin/60 });
+  rows.sort((a,b) => b.dpsOutput - a.dpsOutput);
+  const total = rows.reduce((s,r) => s+r.dpsOutput, 0) || 1;
+  document.getElementById('dpsbreak-total').innerHTML = `${currentLang==='th'?'DPS รวมประมาณ':'Estimated total DPS'}: <b style="color:var(--gold-bright);">${Math.round(total).toLocaleString()}</b>` +
+    ` <span class="hint">(${st.source==='live' ? (currentLang==='th'?'ใช้สถิติสดจากเกม':'using live game stats') : (currentLang==='th'?'ใช้ฟอร์มโปรไฟล์ที่กรอกเอง':'using manually entered profile')})</span>`;
+  const table = document.getElementById('dpsbreak-table');
+  table.innerHTML = `<thead><tr><th>#</th><th>${currentLang==='th'?'สกิล':'Skill'}</th><th>${t('tier')==='Tier'?'Lv.':'Lv.'}</th><th>Dmg%</th><th>${currentLang==='th'?'คูลดาวน์':'Cooldown'}</th><th>Casts/min</th><th>DPS</th><th>%</th></tr></thead><tbody>` +
+    rows.map((r,i) => `<tr><td>${i+1}</td><td>${esc(r.name)}</td><td>${r.level}</td><td>${r.dmgPct}%</td><td>${r.cooldown}s</td><td>${r.castsPerMin.toFixed(1)}</td><td>${Math.round(r.dpsOutput).toLocaleString()}</td><td>${(100*r.dpsOutput/total).toFixed(1)}%</td></tr>`).join('') +
+    `</tbody>`;
+}
+
+/* ================= STAGE RUN HISTORY ================= */
+let lastKnownStageTid = null;
+function trackStageHistory(stageTid){
+  if (stageTid == null) return;
+  if (lastKnownStageTid === null) { lastKnownStageTid = stageTid; return; }
+  if (stageTid === lastKnownStageTid) return;
+  lastKnownStageTid = stageTid;
+  const hist = JSON.parse(localStorage.getItem('wog_stage_history') || '[]');
+  hist.unshift({ time: Date.now(), stageTid });
+  localStorage.setItem('wog_stage_history', JSON.stringify(hist.slice(0, 20)));
+  if (currentView === 'history') renderHistory();
+}
+function renderHistory(){
+  const hist = JSON.parse(localStorage.getItem('wog_stage_history') || '[]');
+  const table = document.getElementById('history-table');
+  if (!hist.length) {
+    table.innerHTML = `<tbody><tr><td class="empty-state">${currentLang==='th'?'ยังไม่มีข้อมูล — เปิดเกม+เชื่อม Live Sync ทิ้งไว้ แล้วรอด่านเปลี่ยน':'No data yet — keep the game running with Live Sync connected and wait for a stage change'}</td></tr></tbody>`;
+    return;
+  }
+  table.innerHTML = `<thead><tr><th>#</th><th>${currentLang==='th'?'เวลา':'Time'}</th><th>${t('stage')}</th></tr></thead><tbody>` +
+    hist.map((h,i) => {
+      const s = GAME_DATA.stageData.find(s2 => s2.stage_id === h.stageTid);
+      const label = s ? fld(s,'display_full') : h.stageTid;
+      return `<tr><td>${i+1}</td><td>${new Date(h.time).toLocaleString(currentLang==='th'?'th-TH':'en-US')}</td><td>${esc(label)}</td></tr>`;
+    }).join('') + `</tbody>`;
+}
+
+/* ================= SMART ANALYSIS (skill upgrade ranking) ================= */
+function renderSmartAnalysis(){
+  const st = activeStatsForCalc();
+  const critMult = 1 + (st.critRate/100) * (st.critDamage/100);
+  const bonusMult = 1 + st.damageBonus/100 + st.pveBonus/100 + st.bossBonus/100;
+  const cls = GAME_DATA.skillTrees[currentClass];
+  const rows = [];
+  cls.branches.forEach(b => b.skills.forEach(sk => {
+    if (sk.is_passive) return;
+    const lvl = skillAllocations[sk.id] || 0;
+    if (lvl >= sk.levels.length) return; // maxed
+    const curLvl = sk.levels[Math.max(0, lvl-1)] || sk.levels[0];
+    const nextLvl = sk.levels[lvl];
+    if (!nextLvl || !nextLvl.damage_percent) return;
+    const curDps = lvl===0 ? 0 : st.attack * (curLvl.damage_percent/100) * critMult * bonusMult * (60/curLvl.cooldown_sec) / 60;
+    const nextDps = st.attack * (nextLvl.damage_percent/100) * critMult * bonusMult * (60/nextLvl.cooldown_sec) / 60;
+    rows.push({ name: sk.name_en, from: lvl, to: lvl+1, fromPct: lvl===0?0:curLvl.damage_percent, toPct: nextLvl.damage_percent, delta: nextDps-curDps });
+  }));
+  rows.sort((a,b) => b.delta - a.delta);
+  const table = document.getElementById('smart-table');
+  if (!rows.length) { table.innerHTML = `<tbody><tr><td class="empty-state">${currentLang==='th'?'สกิลทั้งหมดเต็มเลเวลแล้ว หรือยังไม่มีข้อมูลสถิติ':'All skills maxed, or no stats available yet'}</td></tr></tbody>`; return; }
+  table.innerHTML = `<thead><tr><th>#</th><th>${currentLang==='th'?'สกิล':'Skill'}</th><th>Lv.${currentLang==='th'?'จาก→ไป':' from→to'}</th><th>Dmg%</th><th>+DPS</th></tr></thead><tbody>` +
+    rows.map((r,i) => `<tr><td>${i+1}</td><td>${esc(r.name)}</td><td>${r.from} → ${r.to}</td><td>${r.fromPct}% → ${r.toPct}%</td><td style="color:var(--gold-bright);">+${Math.round(r.delta).toLocaleString()}</td></tr>`).join('') +
+    `</tbody>`;
+}
+
 /* ---------- init ---------- */
 applyStaticI18n();
 renderSkills();
@@ -828,7 +1030,7 @@ connectLiveSync();
 // deep-linkable tabs, e.g. index.html#equipment - also just handy for testing
 if (location.hash) {
   const target = location.hash.slice(1);
-  const btn = document.querySelector(`.tab-btn[data-view="${target}"]`);
+  const btn = document.querySelector(`.sidebar-link[data-view="${target}"], .sidebar-sublink[data-view="${target}"]`);
   if (btn) btn.click();
 }
 </script>
