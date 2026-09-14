@@ -268,6 +268,12 @@
   .forge-tier-checks { display: flex; gap: 10px; flex-wrap: wrap; }
   .forge-tier-check { display: flex; align-items: center; gap: 6px; font-size: 12.5px; background: var(--bg3); border: 1px solid var(--navy-line); border-radius: 999px; padding: 6px 12px; cursor: pointer; }
   .forge-log-empty { text-align: center; color: var(--text-dim); font-size: 13px; padding: 40px 20px; line-height: 1.7; }
+  .forge-tier-progress-card { background: var(--bg2); border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
+  .ftp-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+  .ftp-count { font-family: 'Cinzel', serif; color: var(--gold-bright); font-size: 16px; }
+  .ftp-breakdown { font-size: 10.5px; margin-bottom: 8px; }
+  .ftp-bar { height: 6px; border-radius: 999px; background: rgba(255,255,255,0.08); overflow: hidden; }
+  .ftp-bar-fill { height: 100%; background: linear-gradient(90deg, var(--gold), var(--gold-bright)); border-radius: 999px; transition: width .3s; }
 </style>
 </head>
 <body>
@@ -482,68 +488,65 @@
         <h3 style="margin-bottom:10px;">⚙️ <span data-i="forge-settings-title">การตั้งค่าอัตโนมัติ</span></h3>
         <div class="forge-toggle-row">
           <label class="switch"><input type="checkbox" id="forge-sw-main"><span class="slider"></span></label>
-          <div><b data-i="forge-sw-main-t">หลอมอัตโนมัติเมื่ออัญมณีเทียร์เดียวกันครบ 6 ชิ้น</b>
-          <div class="hint" data-i="forge-sw-main-d">รวม 6 ชิ้นในเทียร์เดียวกันให้กลายเป็นเทียร์ถัดไปทันที</div></div>
-        </div>
-        <div class="forge-toggle-row">
-          <label class="switch"><input type="checkbox" class="forge-inert-sw"></label>
-          <div><b>💎 <span data-i="forge-sw-gear-t">หลอมอุปกรณ์ Tier 3 อัตโนมัติ (ต้องการ 6 ชิ้น)</span></b>
-          <div class="hint" data-i="forge-sw-gear-d">รวมอุปกรณ์ Tier 3 6 ชิ้น เป็น Tier 4 อัตโนมัติ</div></div>
-        </div>
-        <div class="forge-toggle-row">
-          <label class="switch"><input type="checkbox" class="forge-inert-sw"></label>
-          <div><b>💍 <span data-i="forge-sw-jewelry-t">หลอมเครื่องประดับ Tier 3 อัตโนมัติ (ต้องการ 3 ชิ้น)</span></b>
-          <div class="hint" data-i="forge-sw-jewelry-d">รวมเครื่องประดับ Tier 3 3 ชิ้น เป็น Tier 4 อัตโนมัติ</div></div>
-        </div>
-        <div class="forge-toggle-row" style="background:var(--accent-bg);border-radius:8px;padding:10px;">
-          <label class="switch"><input type="checkbox" class="forge-inert-sw" checked></label>
-          <div><b>🔒 <span data-i="forge-sw-samelvl-t">หลอมเฉพาะไอเทมเลเวลเดียวกันเท่านั้น</span></b> <span class="sidebar-badge" data-i="forge-recommended">แนะนำ</span>
-          <div class="hint" data-i="forge-sw-samelvl-d">บังคับให้ของ 6/3 ชิ้นต้องการเลเวลเท่ากันทั้งหมด (เช่น Lv.50 ล้วน) ป้องกันของเลเวลต่ำหลุดไปปนกับของเลเวลสูงตอนหลอม</div></div>
-        </div>
-        <div class="forge-toggle-row">
-          <label class="switch"><input type="checkbox" class="forge-inert-sw" checked></label>
-          <div><b data-i="forge-sw-usevault-t">ใช้ของ/อัญมณีในคลังตอนหลอมได้ด้วย</b>
-          <div class="hint" data-i="forge-sw-usevault-d">ไม่ใช่แค่ในกระเป๋า รวมของจากคลังทุกแท็บมานับด้วย</div></div>
-        </div>
-        <div class="forge-toggle-row">
-          <label class="switch"><input type="checkbox" class="forge-inert-sw" checked></label>
-          <div><b data-i="forge-sw-autostore-t">เก็บอัญมณีที่หลุดเข้าคลังอัตโนมัติ</b>
-          <div class="hint" data-i="forge-sw-autostore-d">อัญมณีใหม่/ที่หลอมเสร็จ ย้ายเข้าคลังทันที กระเป๋าจะได้ไม่เต็มตอน AFK</div></div>
-        </div>
-        <div class="forge-toggle-row">
-          <label class="switch"><input type="checkbox" class="forge-inert-sw" checked></label>
-          <div><b>⚔️ <span data-i="forge-sw-weapon-t">ใส่อาวุธที่ดีที่สุดอัตโนมัติตอนสลับคลาส</span></b>
-          <div class="hint" data-i="forge-sw-weapon-d">หาอาวุธหลัก/รองที่แรงที่สุดจากกระเป๋าและคลังมาใส่ให้เอง</div></div>
-        </div>
-        <div class="forge-toggle-row">
-          <label class="switch"><input type="checkbox" class="forge-inert-sw" checked></label>
-          <div><b>📘 <span data-i="forge-sw-skills-t">ใส่ชุดสกิลมาตรฐานอัตโนมัติตอนสลับคลาส</span></b>
-          <div class="hint" data-i="forge-sw-skills-d">เปลี่ยนสกิลชุดที่เหมาะกับคลาสนั้นให้อัตโนมัติ</div></div>
-        </div>
-        <div class="forge-toggle-row">
-          <label class="switch"><input type="checkbox" class="forge-inert-sw" checked></label>
-          <div><b>🌐 <span data-i="forge-sw-reconnect-t">ยืนยันเชื่อมต่อใหม่อัตโนมัติเมื่อเน็ตหลุด</span></b>
-          <div class="hint" data-i="forge-sw-reconnect-d">เจอกล่อง "Reconnect Failed" จะกด Confirm ให้เองไม่ให้ AFK สะดุด</div></div>
-        </div>
-
-        <div style="margin-top:16px;">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px;">
-            <b data-i="forge-tier-filter-title">🎯 เทียร์อัญมณีที่อนุญาตให้หลอมอัตโนมัติ</b>
-            <div style="display:flex;gap:6px;">
-              <button class="btn btn-outline forge-inert" style="padding:5px 12px;font-size:11.5px;" data-i="forge-btn-selectall">เลือกทุกเทียร์</button>
-              <button class="btn btn-outline forge-inert" style="padding:5px 12px;font-size:11.5px;" data-i="forge-btn-deselectall">ไม่เลือกเลย</button>
-            </div>
-          </div>
-          <div class="forge-tier-checks">
+          <div style="flex:1;"><b data-i="forge-sw-main-t">หลอมอัตโนมัติเมื่ออัญมณีเทียร์เดียวกันครบ 6 ชิ้น</b>
+          <div class="hint" data-i="forge-sw-main-d">รวม 6 ชิ้นในเทียร์เดียวกันให้กลายเป็นเทียร์ถัดไปทันที</div>
+          <div class="forge-tier-checks" style="margin-top:8px;">
             <label class="forge-tier-check"><input type="checkbox" class="forge-inert-sw" checked> Tier 1</label>
             <label class="forge-tier-check"><input type="checkbox" class="forge-inert-sw" checked> Tier 2</label>
             <label class="forge-tier-check"><input type="checkbox" class="forge-inert-sw"> Tier 3</label>
             <label class="forge-tier-check"><input type="checkbox" class="forge-inert-sw"> Tier 4</label>
             <label class="forge-tier-check"><input type="checkbox" class="forge-inert-sw"> Tier 5</label>
             <label class="forge-tier-check"><input type="checkbox" class="forge-inert-sw"> Tier 6</label>
-            <label class="forge-tier-check"><input type="checkbox" class="forge-inert-sw"> Tier 7</label>
+          </div></div>
+        </div>
+        <div class="forge-toggle-row">
+          <label class="switch"><input type="checkbox" class="forge-radio-a" data-pair="gear"><span class="slider"></span></label>
+          <div style="flex:1;"><b>💎 <span data-i="forge-sw-gear-t">หลอมอุปกรณ์อัตโนมัติ (ต้องการ 6 ชิ้น)</span></b>
+          <div class="hint" data-i="forge-sw-gear-d">รวมอุปกรณ์เทียร์ที่เลือกไว้ 6 ชิ้น เป็นเทียร์ถัดไปอัตโนมัติ (ไม่จำกัดแค่ Tier 3 แล้ว)</div>
+          <div class="forge-tier-checks" style="margin-top:8px;">
+            <label class="forge-tier-check"><input type="checkbox" class="forge-inert-sw" checked> Tier 1</label>
+            <label class="forge-tier-check"><input type="checkbox" class="forge-inert-sw"> Tier 2</label>
+            <label class="forge-tier-check"><input type="checkbox" class="forge-inert-sw" checked> Tier 3</label>
+            <label class="forge-tier-check"><input type="checkbox" class="forge-inert-sw"> Tier 4</label>
+            <label class="forge-tier-check"><input type="checkbox" class="forge-inert-sw"> Tier 5</label>
+            <label class="forge-tier-check"><input type="checkbox" class="forge-inert-sw"> Tier 6</label>
           </div>
-          <p class="hint" style="margin-top:8px;" data-i="forge-tier-filter-note">ตัวกรองนี้ใช้กับ "อัญมณี" เท่านั้น ระบบจะหลอมอัตโนมัติเฉพาะเทียร์ที่ติ๊กไว้ (ครบ 6 ชิ้น) เทียร์ที่ไม่ติ๊กจะเก็บไว้เฉยๆ ให้เอาไปฝังของเอง</p>
+          <div class="forge-toggle-row" style="border:none;padding:10px 0 0;margin-top:6px;border-top:1px dashed var(--navy-line);">
+            <label class="switch"><input type="checkbox" class="forge-radio-a" data-pair="gear" checked><span class="slider"></span></label>
+            <div><b>🔒 <span data-i="forge-sw-samelvl-t">หลอมเฉพาะไอเทมเลเวลเดียวกันเท่านั้น</span></b> <span class="sidebar-badge" data-i="forge-recommended">แนะนำ</span>
+            <div class="hint" data-i="forge-sw-samelvl-d">บังคับให้ของ 6 ชิ้นต้องการเลเวลเท่ากันทั้งหมด (เช่น Lv.50 ล้วน) ป้องกันของเลเวลต่ำหลุดไปปนกับของเลเวลสูงตอนหลอม</div>
+            <div class="hint" style="margin-top:4px;color:var(--gold);" data-i="forge-radio-note">เลือกได้แค่ 1 ใน 2 ข้อนี้เท่านั้น</div></div>
+          </div></div>
+        </div>
+        <div class="forge-toggle-row">
+          <label class="switch"><input type="checkbox" class="forge-inert-sw"><span class="slider"></span></label>
+          <div><b>💍 <span data-i="forge-sw-jewelry-t">หลอมเครื่องประดับ Tier 3 อัตโนมัติ (ต้องการ 3 ชิ้น)</span></b>
+          <div class="hint" data-i="forge-sw-jewelry-d">รวมเครื่องประดับ Tier 3 3 ชิ้น เป็น Tier 4 อัตโนมัติ</div></div>
+        </div>
+        <div class="forge-toggle-row">
+          <label class="switch"><input type="checkbox" class="forge-inert-sw" checked><span class="slider"></span></label>
+          <div><b data-i="forge-sw-usevault-t">ใช้ของ/อัญมณีในคลังตอนหลอมได้ด้วย</b>
+          <div class="hint" data-i="forge-sw-usevault-d">ไม่ใช่แค่ในกระเป๋า รวมของจากคลังทุกแท็บมานับด้วย</div></div>
+        </div>
+        <div class="forge-toggle-row">
+          <label class="switch"><input type="checkbox" class="forge-inert-sw" checked><span class="slider"></span></label>
+          <div><b data-i="forge-sw-autostore-t">เก็บอัญมณีที่หลุดเข้าคลังอัตโนมัติ</b>
+          <div class="hint" data-i="forge-sw-autostore-d">อัญมณีใหม่/ที่หลอมเสร็จ ย้ายเข้าคลังทันที กระเป๋าจะได้ไม่เต็มตอน AFK</div></div>
+        </div>
+        <div class="forge-toggle-row">
+          <label class="switch"><input type="checkbox" class="forge-inert-sw" checked><span class="slider"></span></label>
+          <div><b>⚔️ <span data-i="forge-sw-weapon-t">ใส่อาวุธที่ดีที่สุดอัตโนมัติตอนสลับคลาส</span></b>
+          <div class="hint" data-i="forge-sw-weapon-d">หาอาวุธหลัก/รองที่แรงที่สุดจากกระเป๋าและคลังมาใส่ให้เอง</div></div>
+        </div>
+        <div class="forge-toggle-row">
+          <label class="switch"><input type="checkbox" class="forge-inert-sw" checked><span class="slider"></span></label>
+          <div><b>📘 <span data-i="forge-sw-skills-t">ใส่ชุดสกิลมาตรฐานอัตโนมัติตอนสลับคลาส</span></b>
+          <div class="hint" data-i="forge-sw-skills-d">เปลี่ยนสกิลชุดที่เหมาะกับคลาสนั้นให้อัตโนมัติ</div></div>
+        </div>
+        <div class="forge-toggle-row">
+          <label class="switch"><input type="checkbox" class="forge-inert-sw" checked><span class="slider"></span></label>
+          <div><b>🌐 <span data-i="forge-sw-reconnect-t">ยืนยันเชื่อมต่อใหม่อัตโนมัติเมื่อเน็ตหลุด</span></b>
+          <div class="hint" data-i="forge-sw-reconnect-d">เจอกล่อง "Reconnect Failed" จะกด Confirm ให้เองไม่ให้ AFK สะดุด</div></div>
         </div>
       </div>
 
@@ -560,13 +563,6 @@
     <p class="hint" style="margin-bottom:12px;" data-i="forge-progress-sub">นับรวมกระเป๋า+คลังจริงจากเกม (ไม่รวมอัญมณีที่ฝังอยู่กับอุปกรณ์อยู่แล้ว)</p>
     <div class="grid-cards" id="forge-jewel-counts"></div>
 
-    <h3 style="margin:22px 0 4px;">📜 <span data-i="forge-list-title">รายการอัญมณีทั้งหมด</span></h3>
-    <p class="hint" style="margin-bottom:12px;" data-i="forge-list-sub">กฎการหลอม: อัญมณี 6 ชิ้นเทียร์เดียวกัน (ไม่ต้องชนิดเดียวกัน) → 1 ชิ้นเทียร์ถัดไป (โอกาสสำเร็จ 100%)</p>
-    <div class="controls">
-      <div class="search-box"><span class="ic">🔍</span><input type="text" id="forge-list-search" data-i-ph="search_jewel"></div>
-      <select id="forge-list-tier"></select>
-    </div>
-    <div class="table-scroll"><table class="data-table" id="forge-list-table"></table></div>
   </div>
 
 </div>
@@ -630,13 +626,14 @@ const UI_STRINGS = {
   'forge-settings-title': { th: 'การตั้งค่าอัตโนมัติ', en: 'Automation Settings' },
   'forge-sw-main-t': { th: 'หลอมอัตโนมัติเมื่ออัญมณีเทียร์เดียวกันครบ 6 ชิ้น', en: 'Auto-fuse when 6 jewels of the same tier are available' },
   'forge-sw-main-d': { th: 'รวม 6 ชิ้นในเทียร์เดียวกันให้กลายเป็นเทียร์ถัดไปทันที', en: 'Combines 6 same-tier jewels into the next tier automatically.' },
-  'forge-sw-gear-t': { th: 'หลอมอุปกรณ์ Tier 3 อัตโนมัติ (ต้องการ 6 ชิ้น)', en: 'Auto-fuse Tier 3 Gear (needs 6 items)' },
-  'forge-sw-gear-d': { th: 'รวมอุปกรณ์ Tier 3 6 ชิ้น เป็น Tier 4 อัตโนมัติ', en: 'Auto-fuses 6 Tier 3 gear items into Tier 4.' },
+  'forge-sw-gear-t': { th: 'หลอมอุปกรณ์อัตโนมัติ (ต้องการ 6 ชิ้น)', en: 'Auto-fuse Gear (needs 6 items)' },
+  'forge-sw-gear-d': { th: 'รวมอุปกรณ์เทียร์ที่เลือกไว้ 6 ชิ้น เป็นเทียร์ถัดไปอัตโนมัติ (ไม่จำกัดแค่ Tier 3 แล้ว)', en: "Auto-fuses 6 gear items of the ticked tier(s) into the next tier - no longer locked to Tier 3 only." },
   'forge-sw-jewelry-t': { th: 'หลอมเครื่องประดับ Tier 3 อัตโนมัติ (ต้องการ 3 ชิ้น)', en: 'Auto-fuse Tier 3 Jewelry (needs 3 items)' },
   'forge-sw-jewelry-d': { th: 'รวมเครื่องประดับ Tier 3 3 ชิ้น เป็น Tier 4 อัตโนมัติ', en: 'Auto-fuses 3 Tier 3 jewelry items into Tier 4.' },
   'forge-recommended': { th: 'แนะนำ', en: 'Recommended' },
   'forge-sw-samelvl-t': { th: 'หลอมเฉพาะไอเทมเลเวลเดียวกันเท่านั้น', en: 'Only fuse SAME LEVEL items' },
-  'forge-sw-samelvl-d': { th: 'บังคับให้ของ 6/3 ชิ้นต้องการเลเวลเท่ากันทั้งหมด (เช่น Lv.50 ล้วน) ป้องกันของเลเวลต่ำหลุดไปปนกับของเลเวลสูงตอนหลอม', en: "Requires all 6 (or 3) items to share the same required level (e.g. all Lv.50) - stops a low-level item from slipping into a high-level fusion." },
+  'forge-sw-samelvl-d': { th: 'บังคับให้ของ 6 ชิ้นต้องการเลเวลเท่ากันทั้งหมด (เช่น Lv.50 ล้วน) ป้องกันของเลเวลต่ำหลุดไปปนกับของเลเวลสูงตอนหลอม', en: "Requires all 6 items to share the same required level (e.g. all Lv.50) - stops a low-level item from slipping into a high-level fusion." },
+  'forge-radio-note': { th: 'เลือกได้แค่ 1 ใน 2 ข้อนี้เท่านั้น', en: 'Only one of these two can be on at a time.' },
   'forge-sw-usevault-t': { th: 'ใช้ของ/อัญมณีในคลังตอนหลอมได้ด้วย', en: 'Allow using gear & jewels from the Vault when fusing' },
   'forge-sw-usevault-d': { th: 'ไม่ใช่แค่ในกระเป๋า รวมของจากคลังทุกแท็บมานับด้วย', en: 'Not just the Bag - counts items across every Vault tab too.' },
   'forge-sw-autostore-t': { th: 'เก็บอัญมณีที่หลุดเข้าคลังอัตโนมัติ', en: 'Auto-store loose jewels into the Vault' },
@@ -647,17 +644,11 @@ const UI_STRINGS = {
   'forge-sw-skills-d': { th: 'เปลี่ยนสกิลชุดที่เหมาะกับคลาสนั้นให้อัตโนมัติ', en: "Swaps in a skill loadout suited to that class automatically." },
   'forge-sw-reconnect-t': { th: 'ยืนยันเชื่อมต่อใหม่อัตโนมัติเมื่อเน็ตหลุด', en: 'Auto-confirm reconnect on network error' },
   'forge-sw-reconnect-d': { th: 'เจอกล่อง "Reconnect Failed" จะกด Confirm ให้เองไม่ให้ AFK สะดุด', en: 'Clicks "Confirm" automatically when a "Reconnect Failed" dialog appears, so AFK farming isn\'t interrupted.' },
-  'forge-tier-filter-title': { th: 'เทียร์อัญมณีที่อนุญาตให้หลอมอัตโนมัติ', en: 'Allowed Fusion Tiers (Jewels)' },
-  'forge-btn-selectall': { th: 'เลือกทุกเทียร์', en: 'Select All' },
-  'forge-btn-deselectall': { th: 'ไม่เลือกเลย', en: 'Deselect All' },
-  'forge-tier-filter-note': { th: 'ตัวกรองนี้ใช้กับ "อัญมณี" เท่านั้น ระบบจะหลอมอัตโนมัติเฉพาะเทียร์ที่ติ๊กไว้ (ครบ 6 ชิ้น) เทียร์ที่ไม่ติ๊กจะเก็บไว้เฉยๆ ให้เอาไปฝังของเอง', en: 'This filter is for Jewels only. Auto-fuse only runs on ticked tiers (once 6 are ready) - unticked tiers are left alone for you to socket manually.' },
   'forge-log-title': { th: 'บันทึกการทำงาน', en: 'Activity Log' },
   'forge-btn-clearlog': { th: 'ล้างบันทึก', en: 'Clear Log' },
   'forge-log-empty': { th: '🚧 ยังไม่เชื่อมระบบบันทึกเหตุการณ์อัตโนมัติ — ส่วนนี้จะโชว์ประวัติการหลอม/เก็บของ/ใส่อุปกรณ์ที่ระบบทำให้อัตโนมัติ เมื่อต่อระบบจริงแล้ว', en: "🚧 Not wired up yet - once connected, this will log every auto-fuse/store/equip action the system performs on its own." },
   'forge-progress-title': { th: 'ความคืบหน้าการหลอม (ครบ 6 ชิ้นในเทียร์เดียวกัน)', en: 'Jewel Fuse Progress (6 of same tier)' },
   'forge-progress-sub': { th: 'นับรวมกระเป๋า+คลังจริงจากเกม (ไม่รวมอัญมณีที่ฝังอยู่กับอุปกรณ์อยู่แล้ว)', en: 'Counts real Bag + Vault totals from the game (not counting jewels already socketed into gear).' },
-  'forge-list-title': { th: 'รายการอัญมณีทั้งหมด', en: 'All Jewels' },
-  'forge-list-sub': { th: 'กฎการหลอม: อัญมณี 6 ชิ้นเทียร์เดียวกัน (ไม่ต้องชนิดเดียวกัน) → 1 ชิ้นเทียร์ถัดไป (โอกาสสำเร็จ 100%)', en: 'Fuse rule: any 6 jewels of the same tier (any type) -> 1 jewel of the next tier (100% success rate).' },
   search_skill: { th: 'ค้นหาชื่อสกิล...', en: 'Search skill name...' },
   search_training: { th: 'ค้นหาการฝึกฝน...', en: 'Search training...' },
   search_equip: { th: 'ค้นหาอุปกรณ์...', en: 'Search equipment...' },
@@ -1609,7 +1600,6 @@ function buildForgeStatusExpr(){
 }
 function renderForge(){
   refreshForgeStatus();
-  renderForgeList();
 }
 let forgeAutoFusionOn = null;
 async function refreshForgeStatus(){
@@ -1635,11 +1625,19 @@ async function refreshForgeStatus(){
       totalOwned += cnt;
       const ready = cnt >= 6;
       if (ready) tiersReady++;
-      return `<div class="jewel-card"><div class="jc-name">${gradeLabels[g][0]} (${gradeLabels[g][1]})</div>
-        <div class="jc-desc" style="font-size:20px;font-weight:700;color:${ready?'var(--gold-bright)':'var(--text)'};">${cnt} <span class="hint" style="font-size:11px;">/ 6</span></div>
-        ${ready ? `<div class="hint" style="color:#38c172;">${currentLang==='th'?'พร้อมหลอมแล้ว':'ready to fuse'}</div>` : ''}
+      const pct = Math.min(100, 100 * cnt / 6);
+      const isMax = g === '6';
+      return `<div class="forge-tier-progress-card">
+        <div class="ftp-head"><b>${gradeLabels[g][0]} <span class="hint">(${gradeLabels[g][1]})</span></b><span class="ftp-count">${cnt} <span class="hint" style="font-size:11px;">${currentLang==='th'?'ชิ้น':'jewels'}</span></span></div>
+        <div class="ftp-breakdown hint">🎒 ${currentLang==='th'?'กระเป๋า':'Bag'}: — &nbsp; 🏛 ${currentLang==='th'?'คลัง':'Vault'}: — &nbsp; ✗ ${currentLang==='th'?'ฝังอยู่':'Inlaid'}: —</div>
+        <div class="ftp-bar"><div class="ftp-bar-fill" style="width:${pct}%;"></div></div>
+        ${isMax
+          ? `<div class="hint" style="color:var(--gold-bright);margin-top:6px;">⭐ ${currentLang==='th'?'เทียร์สูงสุดแล้ว':'Max Tier'}</div>`
+          : `<div class="hint" style="margin-top:6px;">${currentLang==='th'?`มี ${cnt}/6 ชิ้น (ขาดอีก ${Math.max(0,6-cnt)})`:`Has ${cnt}/6 jewels (Need ${Math.max(0,6-cnt)})`}</div>
+             <button class="btn btn-outline forge-inert" style="width:100%;margin-top:8px;padding:6px;font-size:11.5px;" ${ready?'':'disabled'}>${ready ? (currentLang==='th'?'พร้อมหลอม':'Ready to fuse') : (currentLang==='th'?'ต้องการ 6 ชิ้น':'Need 6 jewels')}</button>`}
       </div>`;
     }).join('');
+    gridEl.querySelectorAll('.forge-inert:not([disabled])').forEach(el => el.addEventListener('click', forgeInertToast));
     document.getElementById('forge-stat-total').textContent = totalOwned.toLocaleString();
     document.getElementById('forge-stat-total-sub').textContent = currentLang==='th' ? 'นับเทียร์ 1-6 (กระเป๋า+คลัง)' : 'Tiers 1-6 (Bag + Vault)';
     document.getElementById('forge-stat-ready').textContent = tiersReady;
@@ -1683,36 +1681,17 @@ function forgeInertToast(){
 document.querySelectorAll('.forge-inert').forEach(el => el.addEventListener('click', forgeInertToast));
 document.querySelectorAll('.forge-inert-sw').forEach(el => el.addEventListener('change', forgeInertToast));
 
-/* ---- Jewel Forge: full jewel list (name/tier real, per-item bag/vault counts not wired yet) ---- */
-function initForgeListFilters(){
-  const tierSel = document.getElementById('forge-list-tier');
-  if (tierSel.children.length === 0) {
-    tierSel.innerHTML = `<option value="">${t('all_tiers')}</option>` + [1,2,3,4,5,6].map(g=>`<option value="${g}">${g}★</option>`).join('');
-  } else {
-    tierSel.options[0].textContent = t('all_tiers');
-  }
-}
-function renderForgeList(){
-  initForgeListFilters();
-  const q = document.getElementById('forge-list-search').value.trim().toLowerCase();
-  const tier = document.getElementById('forge-list-tier').value;
-  const list = GAME_DATA.jewelDatabase.filter(j =>
-    (!q || j.name_en.toLowerCase().includes(q) || j.name_vi.toLowerCase().includes(q)) &&
-    (!tier || String(j.grade) === tier)
-  );
-  const table = document.getElementById('forge-list-table');
-  table.innerHTML = `<thead><tr><th>#</th><th>${currentLang==='th'?'ชื่ออัญมณี':'Jewel Name'}</th><th>${currentLang==='th'?'เกรด':'Grade'}</th><th>🎒 ${currentLang==='th'?'กระเป๋า':'Bag'}</th><th>🏛 ${currentLang==='th'?'คลัง':'Vault'}</th><th>⚔️ ${currentLang==='th'?'ฝังอยู่':'Socketed'}</th><th>${currentLang==='th'?'รวม':'Total'}</th><th>${currentLang==='th'?'จัดการ':'Action'}</th></tr></thead><tbody>` +
-    list.map((j,i) => `<tr>
-      <td>${i+1}</td>
-      <td><div class="ec-name-cell">${jewelIconBoxHtml(j)}<div class="ec-name-text"><b>${esc(j.name_en)}</b><span class="ec-sub">${esc(j.name_vi)}</span></div></div></td>
-      <td>${gradeBadgeHtml(j.grade, fld(j,'grade_name'))}</td>
-      <td class="hint">—</td><td class="hint">—</td><td class="hint">—</td><td class="hint">—</td>
-      <td><button class="btn btn-outline forge-inert" style="padding:4px 10px;font-size:11px;">📤 Take</button></td>
-    </tr>`).join('') || `<tr><td class="empty-state">—</td></tr>`;
-  table.querySelectorAll('.forge-inert').forEach(el => el.addEventListener('click', forgeInertToast));
-}
-document.getElementById('forge-list-search').addEventListener('input', renderForgeList);
-document.getElementById('forge-list-tier').addEventListener('change', renderForgeList);
+// "Auto-fuse Gear" and "Only fuse same level items" are mutually exclusive -
+// turning one on turns the other off. Still purely local UI state (no
+// backend), just demonstrating the intended interaction.
+document.querySelectorAll('.forge-radio-a[data-pair="gear"]').forEach(el => {
+  el.addEventListener('change', () => {
+    if (el.checked) {
+      document.querySelectorAll('.forge-radio-a[data-pair="gear"]').forEach(other => { if (other !== el) other.checked = false; });
+    }
+    forgeInertToast();
+  });
+});
 
 /* ---------- init ---------- */
 applyStaticI18n();
