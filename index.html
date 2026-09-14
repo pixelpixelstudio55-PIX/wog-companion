@@ -471,12 +471,11 @@
   <div class="view" id="view-forge">
     <div class="forge-warn">
       <b>⚠️ <span data-i="forge-warn-title">ของจริงหลายจุดแล้ว แต่ยังไม่ใช่ทั้งหมด</span></b>
-      <p class="hint" style="margin-top:6px;" data-i="forge-warn-body">ของจริง: Auto Jewel Fuse, จำนวนอัญมณี/อุปกรณ์ตามเทียร์, ความจุคลัง, ปุ่มใส่อาวุธดีที่สุด/เก็บเข้าคลัง/ถอนออกกระเป๋า, สวิตช์อัตโนมัติ "ใส่อาวุธดีที่สุดตอนสลับคลาส" กับ "เก็บอัญมณีเข้าคลังตอน AFK" (ทำงานเฉพาะตอนเปิดหน้านี้ค้างไว้ เช็คทุก 2 วิ ทุกอย่างผ่านฟังก์ชันทางการของเกม ไม่ใช่แก้ค่าตรงๆ) — ส่วน "หลอม Tier 3 เดี๋ยวนี้" ยังไม่ทำเพราะเสี่ยงเผาไอเทมจริงถ้าผิดขั้นตอน, "ใส่สกิลมาตรฐาน" ยังหาวิธีอ่าน "สกิลที่เรียนแล้ว" จากเกมไม่เจอ, "ยืนยันเชื่อมต่อใหม่อัตโนมัติ" ทำตามโครงสร้างที่เจอในโค้ดต้นฉบับแต่ยังไม่เคยเจอเหตุการณ์จริงให้ทดสอบ</p>
+      <p class="hint" style="margin-top:6px;" data-i="forge-warn-body">ของจริง: Auto Jewel Fuse, จำนวนอัญมณี/อุปกรณ์ตามเทียร์, ความจุคลัง, ปุ่มใส่อาวุธดีที่สุด/เก็บเข้าคลัง/ถอนออกกระเป๋า, สวิตช์อัตโนมัติ "ใส่อาวุธดีที่สุดตอนสลับคลาส" กับ "เก็บอัญมณีเข้าคลังตอน AFK", และปุ่ม "พร้อมหลอม" ใต้การ์ดอุปกรณ์แต่ละเทียร์ = หลอมจริง (กด 6 ชิ้นหายจริง กลายเป็น 1 ชิ้นเทียร์ถัดไป ทดสอบสำเร็จแล้วกับของจริง) — ทั้งหมดผ่านฟังก์ชันทางการของเกม ไม่ใช่แก้ค่าตรงๆ, สวิตช์ด้านล่างทำงานเฉพาะตอนเปิดหน้านี้ค้างไว้เท่านั้น — ส่วนที่ยังไม่ทำ: หลอมเครื่องประดับ (แหวน/ต่างหู ฯลฯ ใช้ระบบคนละตัวกับอุปกรณ์ทั่วไป), "ใส่สกิลมาตรฐาน" ยังหาวิธีอ่าน "สกิลที่เรียนแล้ว" จากเกมไม่เจอ, "ยืนยันเชื่อมต่อใหม่อัตโนมัติ" ทำตามโครงสร้างที่เจอในโค้ดต้นฉบับแต่ยังไม่เคยเจอเหตุการณ์จริงให้ทดสอบ</p>
     </div>
 
     <div class="forge-actions">
       <button class="btn forge-toggle-btn" id="btn-forge-toggle">⚡ <span data-i="forge-btn-autofuse">Auto Jewel Fuse</span>: <span id="forge-toggle-state">—</span></button>
-      <button class="btn btn-outline forge-inert" data-i="forge-btn-fusetier3">⚙️ Fuse Tier 3 Now</button>
       <button class="btn btn-outline" id="btn-forge-equipweapon" data-i="forge-btn-equipweapon">🗡️ Equip Best Weapons</button>
       <button class="btn btn-outline forge-inert" id="btn-forge-equipskills" data-i="forge-btn-equipskills">📘 Equip Standard Skills</button>
       <button class="btn btn-outline" id="btn-forge-storeall" data-i="forge-btn-storeall">📦 Store All in Vault</button>
@@ -657,9 +656,8 @@ const UI_STRINGS = {
   sort_grade_desc: { th: 'เกรด (6★ → 1★)', en: 'Grade (6★ → 1★)' },
   sort_grade_asc: { th: 'เกรด (1★ → 6★)', en: 'Grade (1★ → 6★)' },
   'forge-warn-title': { th: 'ของจริงหลายจุดแล้ว แต่ยังไม่ใช่ทั้งหมด', en: 'Several parts are real now - but not everything yet' },
-  'forge-warn-body': { th: 'ของจริง: Auto Jewel Fuse, จำนวนอัญมณี/อุปกรณ์ตามเทียร์, ความจุคลัง, ปุ่มใส่อาวุธดีที่สุด/เก็บเข้าคลัง/ถอนออกกระเป๋า, สวิตช์อัตโนมัติ "ใส่อาวุธดีที่สุดตอนสลับคลาส" กับ "เก็บอัญมณีเข้าคลังตอน AFK" (ทำงานเฉพาะตอนเปิดหน้านี้ค้างไว้ เช็คทุก 2 วิ ทุกอย่างผ่านฟังก์ชันทางการของเกม ไม่ใช่แก้ค่าตรงๆ) — ส่วน "หลอม Tier 3 เดี๋ยวนี้" ยังไม่ทำเพราะเสี่ยงเผาไอเทมจริงถ้าผิดขั้นตอน, "ใส่สกิลมาตรฐาน" ยังหาวิธีอ่าน "สกิลที่เรียนแล้ว" จากเกมไม่เจอ, "ยืนยันเชื่อมต่อใหม่อัตโนมัติ" ทำตามโครงสร้างที่เจอในโค้ดต้นฉบับแต่ยังไม่เคยเจอเหตุการณ์จริงให้ทดสอบ', en: 'Real now: Auto Jewel Fuse, per-tier jewel/gear counts, Vault capacity, Equip Best Weapons/Store All/Withdraw All, plus the "auto-equip on class switch" and "auto-store loose jewels while AFK" automation switches (only run while this tab stays open, checked every 2s - all through the game\'s own official functions, never a raw value edit). "Fuse Tier 3 Now" is still not built - real fusion risks burning real items if a step goes wrong. "Equip Standard Skills" is blocked on finding a reliable way to read which skills are actually learned. "Auto-confirm reconnect" is built from the reference site\'s own code structure but has never been tested against a real disconnect.' },
+  'forge-warn-body': { th: 'ของจริง: Auto Jewel Fuse, จำนวนอัญมณี/อุปกรณ์ตามเทียร์, ความจุคลัง, ปุ่มใส่อาวุธดีที่สุด/เก็บเข้าคลัง/ถอนออกกระเป๋า, สวิตช์อัตโนมัติ "ใส่อาวุธดีที่สุดตอนสลับคลาส" กับ "เก็บอัญมณีเข้าคลังตอน AFK", และปุ่ม "พร้อมหลอม" ใต้การ์ดอุปกรณ์แต่ละเทียร์ = หลอมจริง (กด 6 ชิ้นหายจริง กลายเป็น 1 ชิ้นเทียร์ถัดไป ทดสอบสำเร็จแล้วกับของจริง) — ทั้งหมดผ่านฟังก์ชันทางการของเกม ไม่ใช่แก้ค่าตรงๆ, สวิตช์ด้านล่างทำงานเฉพาะตอนเปิดหน้านี้ค้างไว้เท่านั้น — ส่วนที่ยังไม่ทำ: หลอมเครื่องประดับ (แหวน/ต่างหู ฯลฯ ใช้ระบบคนละตัวกับอุปกรณ์ทั่วไป), "ใส่สกิลมาตรฐาน" ยังหาวิธีอ่าน "สกิลที่เรียนแล้ว" จากเกมไม่เจอ, "ยืนยันเชื่อมต่อใหม่อัตโนมัติ" ทำตามโครงสร้างที่เจอในโค้ดต้นฉบับแต่ยังไม่เคยเจอเหตุการณ์จริงให้ทดสอบ', en: 'Real now: Auto Jewel Fuse, per-tier jewel/gear counts, Vault capacity, Equip Best Weapons/Store All/Withdraw All, the "auto-equip on class switch" and "auto-store loose jewels while AFK" automation switches, and the "Ready to fuse" button under each gear tier card - REAL fusion (6 real items become 1 of the next tier, tested successfully against the real game) - all through the game\'s own official functions, never a raw value edit; the switches below only run while this tab stays open. Not built yet: Jewelry fusion (rings/earrings/etc. use a separate content-type from regular gear), "Equip Standard Skills" (blocked on finding a reliable way to read which skills are actually learned), and "Auto-confirm reconnect" (built from the reference site\'s own code structure but never tested against a real disconnect).' },
   'forge-btn-autofuse': { th: 'Auto Jewel Fuse', en: 'Auto Jewel Fuse' },
-  'forge-btn-fusetier3': { th: 'หลอม Tier 3 เดี๋ยวนี้', en: 'Fuse Tier 3 Now' },
   'forge-btn-equipweapon': { th: 'ใส่อาวุธที่ดีที่สุด', en: 'Equip Best Weapons' },
   'forge-btn-equipskills': { th: 'ใส่สกิลมาตรฐาน', en: 'Equip Standard Skills' },
   'forge-btn-storeall': { th: 'เก็บทั้งหมดเข้าคลัง', en: 'Store All in Vault' },
@@ -1441,6 +1439,18 @@ function sendLiveEval(expression){
     setTimeout(() => { if (pendingLiveRequests[reqId]) { delete pendingLiveRequests[reqId]; reject(new Error('timeout')); } }, 5000);
   });
 }
+// Same as sendLiveEval but sets awaitPromise so an `(async function(){...})()`
+// expression's real resolved value comes back, not the Promise object itself.
+// Used only for calls that must await a real async game method (fusion).
+function sendLiveEvalAwait(expression, timeoutMs){
+  return new Promise((resolve, reject) => {
+    if (!liveWs || liveWs.readyState !== WebSocket.OPEN) { reject(new Error('offline')); return; }
+    const reqId = liveEvalId++;
+    pendingLiveRequests[reqId] = { resolve, reject };
+    liveWs.send(JSON.stringify({ id: reqId, method: 'Runtime.evaluate', params: { expression, returnByValue: true, awaitPromise: true } }));
+    setTimeout(() => { if (pendingLiveRequests[reqId]) { delete pendingLiveRequests[reqId]; reject(new Error('timeout')); } }, timeoutMs || 15000);
+  });
+}
 function setLiveDot(state){
   const dot = document.getElementById('live-sync-dot');
   if (dot) {
@@ -1676,6 +1686,19 @@ const EQUIP_TIDS_BY_GRADE = (() => {
   });
   return out;
 })();
+// Real fusion is two separate game systems by slot: Gear (slots 1-8: weapons/
+// armor/gloves/boots/shoulder/cloak, contentType 1) vs Jewelry (slots 9-14:
+// ring/earring/necklace/bracelet/belt/brooch, contentType 2, needs only 3).
+// The combined "Gear Fusion Progress" panel above counts both together for
+// display, but a real fuse must target one contentType at a time - only Gear
+// is wired to a real button for now (Jewelry fusion isn't tested yet).
+const GEAR_ONLY_TIDS_BY_TIER = (() => {
+  const out = {};
+  GAME_DATA.equipments.forEach(e => {
+    if (e.slot >= 1 && e.slot <= 8) (out[e.tier] = out[e.tier] || []).push(e.id);
+  });
+  return out;
+})();
 function buildForgeEquipStatusExpr(){
   // Same NotStack/_location pattern as jewels, confirmed against boss's own
   // currently-equipped gear: _location 1 = Bag, 2 = Vault, 3 = Equipped.
@@ -1727,10 +1750,10 @@ async function refreshForgeEquipStatus(){
         ${isMax
           ? `<div class="hint" style="color:var(--gold-bright);margin-top:6px;">⭐ ${currentLang==='th'?'เทียร์สูงสุดแล้ว':'Max Tier'}</div>`
           : `<div class="hint" style="margin-top:6px;">${currentLang==='th'?`มี ${cnt}/6 ชิ้น (ขาดอีก ${Math.max(0,6-cnt)})`:`Has ${cnt}/6 items (Need ${Math.max(0,6-cnt)})`}</div>
-             <button class="btn btn-outline forge-inert" style="width:100%;margin-top:8px;padding:6px;font-size:11.5px;" ${ready?'':'disabled'}>${ready ? (currentLang==='th'?'พร้อมหลอม':'Ready to fuse') : (currentLang==='th'?'ต้องการ 6 ชิ้น':'Need 6 items')}</button>`}
+             <button class="btn btn-outline forge-fuse-gear-btn" data-tier="${t}" style="width:100%;margin-top:8px;padding:6px;font-size:11.5px;" ${ready?'':'disabled'}>${ready ? (currentLang==='th'?'พร้อมหลอม (กดเพื่อหลอมจริง)':'Ready to fuse (click to fuse for real)') : (currentLang==='th'?'ต้องการ 6 ชิ้น':'Need 6 items')}</button>`}
       </div>`;
     }).join('');
-    gridEl.querySelectorAll('.forge-inert:not([disabled])').forEach(el => el.addEventListener('click', forgeInertToast));
+    gridEl.querySelectorAll('.forge-fuse-gear-btn:not([disabled])').forEach(el => el.addEventListener('click', () => forgeRealFuseGear(parseInt(el.dataset.tier, 10))));
   } catch(e) {
     gridEl.innerHTML = `<div class="empty-state">${currentLang==='th'?'อ่านไม่ได้ (เกมไม่ได้เปิด/ไม่ได้เชื่อมต่อ)':'Unavailable (game not running / not connected)'}</div>`;
   }
@@ -1993,6 +2016,78 @@ async function forgeEquipBestWeapon(){
   }
 }
 document.getElementById('btn-forge-equipweapon').addEventListener('click', forgeEquipBestWeapon);
+
+/* ---- Real Fuse (Gear only, contentType 1): the one irreversible action in
+   this app. Uses the exact sequence found in the reference site's own code:
+   findFusionTable(contentType, tier, maxLevel) -> validateFusionMaterials ->
+   clearFusionStaging -> reqFusionAsync(FusionID, materials). Picks the 6
+   owned items of that tier sharing the same level requirement (the largest
+   such group), since the game itself groups fusion by level. Confirmed via a
+   native confirm() dialog first since this consumes real items with no undo. */
+function buildRealGearFuseExpr(tier, tidList){
+  return `(async function(){
+    try {
+      var sWorkshop;
+      for (var e of nn.services._mapService.entries()) { var name = e[0].name || e[0].toString(); if (name === 'ServiceWorkshop') sWorkshop = e[1]; }
+      var tidSet = ${JSON.stringify(tidList)};
+      var allItems = nn.net.data.item.getAllItemNotStack();
+      var candidates = allItems.filter(function(it){ return (it.location === 1 || it.location === 2) && tidSet.indexOf(it.itemTid) !== -1; });
+      if (candidates.length < 6) return JSON.stringify({ error: 'not_enough', have: candidates.length });
+      var byLevel = {};
+      candidates.forEach(function(it){
+        var d = nn.db.equip.get(it.itemTid);
+        var lv = d ? d.LimitLevel : 0;
+        (byLevel[lv] = byLevel[lv] || []).push(it);
+      });
+      var bestLv = null, bestGroup = null;
+      Object.keys(byLevel).forEach(function(lv){
+        if (byLevel[lv].length >= 6 && (!bestGroup || byLevel[lv].length > bestGroup.length)) { bestGroup = byLevel[lv]; bestLv = lv; }
+      });
+      if (!bestGroup) {
+        var summary = Object.keys(byLevel).map(function(lv){ return lv + ':' + byLevel[lv].length; }).join(', ');
+        return JSON.stringify({ error: 'no_same_level_group', have: candidates.length, byLevel: summary });
+      }
+      var selected = bestGroup.slice(0, 6);
+      var maxLv = Math.max.apply(null, selected.map(function(it){ var d = nn.db.equip.get(it.itemTid); return d ? d.LimitLevel : 0; }));
+      var targetTable = sWorkshop.findFusionTable(1, ${tier}, maxLv);
+      if (!targetTable) return JSON.stringify({ error: 'no_target_table', level: bestLv });
+      var materials = selected.map(function(it){ return { itemId: it.itemId, itemTid: it.itemTid, itemCnt: 1 }; });
+      if (!sWorkshop.validateFusionMaterials(targetTable, materials)) return JSON.stringify({ error: 'validate_failed', level: bestLv });
+      sWorkshop.clearFusionStaging();
+      var fusionRes = await sWorkshop.reqFusionAsync(targetTable.FusionID, materials);
+      var ok = !!(fusionRes && (fusionRes.NetResult === 0 || !fusionRes.NetResult || fusionRes.Data));
+      return JSON.stringify({ ok: ok, level: bestLv, resultTids: selected.map(function(it){ return it.itemTid; }) });
+    } catch(e) { return JSON.stringify({ error: e.message }); }
+  })()`;
+}
+async function forgeRealFuseGear(tier){
+  const confirmMsg = currentLang==='th'
+    ? `ยืนยันหลอมอุปกรณ์ Tier ${tier} จำนวน 6 ชิ้นจริง? การกระทำนี้ย้อนกลับไม่ได้ (ของ 6 ชิ้นจะหายไป กลายเป็น 1 ชิ้น Tier ${tier+1})`
+    : `Really fuse 6 real Tier ${tier} gear items? This cannot be undone (6 items become 1 Tier ${tier+1} item).`;
+  if (!confirm(confirmMsg)) return;
+  const tidList = GEAR_ONLY_TIDS_BY_TIER[tier] || [];
+  toast(currentLang==='th' ? `กำลังหลอม Tier ${tier}...` : `Fusing Tier ${tier}...`);
+  try {
+    const res = await sendLiveEvalAwait(buildRealGearFuseExpr(tier, tidList), 15000);
+    if (res.error === 'not_enough') {
+      toast(currentLang==='th' ? `ของไม่พอ (มี ${res.have}/6)` : `Not enough items (${res.have}/6)`);
+    } else if (res.error === 'no_same_level_group') {
+      toast(currentLang==='th' ? `ไม่มีกลุ่มเลเวลเดียวกันครบ 6 ชิ้น (${res.byLevel})` : `No same-level group has 6 items (${res.byLevel})`);
+    } else if (res.error) {
+      toast(currentLang==='th' ? `หลอมไม่สำเร็จ: ${res.error}` : `Fuse failed: ${res.error}`);
+      forgeLogActivity(currentLang==='th' ? `⚙️ หลอม Tier ${tier} ไม่สำเร็จ: ${res.error}` : `⚙️ Fuse Tier ${tier} failed: ${res.error}`);
+    } else if (res.ok) {
+      toast(currentLang==='th' ? `หลอม Tier ${tier} สำเร็จ! (Lv.${res.level})` : `Fused Tier ${tier} successfully! (Lv.${res.level})`);
+      forgeLogActivity(currentLang==='th' ? `⚙️ หลอมอุปกรณ์ Tier ${tier} สำเร็จ (Lv.${res.level}, 6 ชิ้น → Tier ${tier+1})` : `⚙️ Fused Tier ${tier} gear (Lv.${res.level}, 6 items → Tier ${tier+1})`);
+    } else {
+      toast(currentLang==='th' ? 'ผลลัพธ์ไม่ชัดเจน เช็คในเกมด้วย' : 'Unclear result, please check in-game');
+      forgeLogActivity(currentLang==='th' ? `⚙️ หลอม Tier ${tier}: ผลลัพธ์ไม่ชัดเจน` : `⚙️ Fuse Tier ${tier}: unclear result`);
+    }
+  } catch(e) {
+    toast(currentLang==='th' ? 'สั่งงานไม่สำเร็จ (เกมไม่ได้เปิด/ไม่ได้เชื่อมต่อ/หมดเวลา)' : 'Command failed (game not running / not connected / timed out)');
+  }
+  setTimeout(() => { refreshForgeStatus(); refreshForgeEquipStatus(); refreshForgeStorageCapacity(); }, 800);
+}
 
 /* ---- Automation: runs every 2s while this tab stays open, only for whichever
    switch below is on. There is no background service - closing this tab (or
