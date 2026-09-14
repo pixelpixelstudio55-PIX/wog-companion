@@ -499,6 +499,12 @@ const SLOT_EMOJI = {
   'Nhẫn': '💍', 'Khuyên tai': '👂', 'Dây chuyền': '📿', 'Vòng tay': '⛓️',
   'Dây thắt lưng': '🎗️', 'Trâm cài / Huy hiệu': '🎖️',
 };
+function trainingIconHtml(t2){
+  if (REMOTE_SKILL_ICONS && t2.icon && REMOTE_SKILL_ICONS[t2.icon]) {
+    return `<img src="${REMOTE_SKILL_ICONS[t2.icon]}" alt="" class="jc-icon-img">`;
+  }
+  return `<span class="jc-icon">🏋️</span>`;
+}
 function equipIconHtml(e){
   if (REMOTE_SKILL_ICONS && e.icon && REMOTE_SKILL_ICONS[e.icon]) {
     return `<img src="${REMOTE_SKILL_ICONS[e.icon]}" alt="" class="ec-icon-img">`;
@@ -600,7 +606,7 @@ function renderTraining(){
     const lastLvl = tr.levels[tr.levels.length-1];
     const stats = (lastLvl.stats||[]).map(s => fld(s,'text')).join(', ');
     return `<div class="jewel-card">
-      <div class="jc-name">${esc(tr.name_en)}</div>
+      <div class="jc-name">${trainingIconHtml(tr)}${esc(tr.name_en)}</div>
       <div class="jc-grade">${t('tier')} Max Lv.${tr.levels.length} · ${lastLvl.cost_gold.toLocaleString()} ${currentLang==='th'?'ทอง':'gold'}</div>
       <div class="jc-desc">${esc(stats)}</div>
     </div>`;
