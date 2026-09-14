@@ -250,7 +250,8 @@
   .forge-warn b { color: #ff9d6c; }
   .forge-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 18px; }
   .forge-toggle-btn { background: var(--gold); }
-  .forge-inert { opacity: .78; }
+  .forge-actions .forge-inert { background: var(--bg3); border: 1px solid var(--navy-line); color: var(--text); font-weight: 600; }
+  .forge-actions .forge-inert:hover { border-color: var(--gold); color: var(--gold-bright); background: var(--accent-bg); }
   .forge-stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap: 12px; margin-bottom: 20px; }
   .forge-stat-card { background: var(--bg2); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
   .forge-stat-label { font-size: 11.5px; color: var(--text-dim); margin-bottom: 6px; }
@@ -499,11 +500,19 @@
             <label class="forge-tier-check"><input type="checkbox" class="forge-inert-sw"> Tier 6</label>
           </div></div>
         </div>
-        <div class="forge-toggle-row">
-          <label class="switch"><input type="checkbox" class="forge-radio-a" data-pair="gear"><span class="slider"></span></label>
-          <div style="flex:1;"><b>💎 <span data-i="forge-sw-gear-t">หลอมอุปกรณ์อัตโนมัติ (ต้องการ 6 ชิ้น)</span></b>
-          <div class="hint" data-i="forge-sw-gear-d">รวมอุปกรณ์เทียร์ที่เลือกไว้ 6 ชิ้น เป็นเทียร์ถัดไปอัตโนมัติ (ไม่จำกัดแค่ Tier 3 แล้ว)</div>
-          <div class="forge-tier-checks" style="margin-top:8px;">
+        <div class="forge-toggle-row" style="flex-direction:column;align-items:stretch;">
+          <div style="display:flex;gap:12px;">
+            <label class="switch"><input type="checkbox" class="forge-radio-a" data-pair="gear"><span class="slider"></span></label>
+            <div style="flex:1;"><b>💎 <span data-i="forge-sw-gear-t">หลอมอุปกรณ์อัตโนมัติ (ต้องการ 6 ชิ้น)</span></b>
+            <div class="hint" data-i="forge-sw-gear-d">รวมอุปกรณ์เทียร์ที่เลือกไว้ 6 ชิ้น เป็นเทียร์ถัดไปอัตโนมัติ (ไม่จำกัดแค่ Tier 3 แล้ว)</div></div>
+          </div>
+          <div style="display:flex;gap:12px;margin-top:10px;padding-top:10px;border-top:1px dashed var(--navy-line);">
+            <label class="switch"><input type="checkbox" class="forge-radio-a" data-pair="gear" checked><span class="slider"></span></label>
+            <div style="flex:1;"><b>🔒 <span data-i="forge-sw-samelvl-t">หลอมเฉพาะไอเทมเลเวลเดียวกันเท่านั้น</span></b> <span class="sidebar-badge" data-i="forge-recommended">แนะนำ</span>
+            <div class="hint" data-i="forge-sw-samelvl-d">บังคับให้ของ 6 ชิ้นต้องการเลเวลเท่ากันทั้งหมด (เช่น Lv.50 ล้วน) ป้องกันของเลเวลต่ำหลุดไปปนกับของเลเวลสูงตอนหลอม</div>
+            <div class="hint" style="margin-top:4px;color:var(--gold);" data-i="forge-radio-note">เลือกได้แค่ 1 ใน 2 ข้อนี้เท่านั้น</div></div>
+          </div>
+          <div class="forge-tier-checks" style="margin-top:12px;">
             <label class="forge-tier-check"><input type="checkbox" class="forge-inert-sw" checked> Tier 1</label>
             <label class="forge-tier-check"><input type="checkbox" class="forge-inert-sw"> Tier 2</label>
             <label class="forge-tier-check"><input type="checkbox" class="forge-inert-sw" checked> Tier 3</label>
@@ -511,12 +520,6 @@
             <label class="forge-tier-check"><input type="checkbox" class="forge-inert-sw"> Tier 5</label>
             <label class="forge-tier-check"><input type="checkbox" class="forge-inert-sw"> Tier 6</label>
           </div>
-          <div class="forge-toggle-row" style="border:none;padding:10px 0 0;margin-top:6px;border-top:1px dashed var(--navy-line);">
-            <label class="switch"><input type="checkbox" class="forge-radio-a" data-pair="gear" checked><span class="slider"></span></label>
-            <div><b>🔒 <span data-i="forge-sw-samelvl-t">หลอมเฉพาะไอเทมเลเวลเดียวกันเท่านั้น</span></b> <span class="sidebar-badge" data-i="forge-recommended">แนะนำ</span>
-            <div class="hint" data-i="forge-sw-samelvl-d">บังคับให้ของ 6 ชิ้นต้องการเลเวลเท่ากันทั้งหมด (เช่น Lv.50 ล้วน) ป้องกันของเลเวลต่ำหลุดไปปนกับของเลเวลสูงตอนหลอม</div>
-            <div class="hint" style="margin-top:4px;color:var(--gold);" data-i="forge-radio-note">เลือกได้แค่ 1 ใน 2 ข้อนี้เท่านั้น</div></div>
-          </div></div>
         </div>
         <div class="forge-toggle-row">
           <label class="switch"><input type="checkbox" class="forge-inert-sw"><span class="slider"></span></label>
