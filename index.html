@@ -174,11 +174,18 @@
         <h3 style="margin:0;">🔴 Live Sync</h3>
         <span id="live-sync-dot" style="font-size:12px;color:var(--text-dim);">● ไม่ได้เชื่อมต่อ</span>
       </div>
-      <p class="hint" style="margin:6px 0 14px;">อ่านค่าสดจากเกมที่กำลังรันอยู่ในเครื่องนี้เท่านั้น (ต่อ localhost ของเครื่องตัวเอง ไม่เกี่ยวกับเครื่องอื่น) ต้องเปิดเกมทิ้งไว้ถึงจะเห็นค่า — ตอนนี้ยังอ่านได้แค่ด่าน/ความคืบหน้า/เลือดบอส ส่วนทอง/เลเวล/DPS ที่แถบบนสุดยังหาจุดอ่านไม่เจอ</p>
+      <p class="hint" style="margin:6px 0 14px;">อ่านค่าสดจากเกมที่กำลังรันอยู่ในเครื่องนี้เท่านั้น (ต่อ localhost ของเครื่องตัวเอง ไม่เกี่ยวกับเครื่องอื่น) ต้องเปิดเกมทิ้งไว้ถึงจะเห็นค่า</p>
       <div class="profile-grid" id="live-sync-fields">
+        <div class="profile-field"><label>เลเวล</label><div id="live-level">—</div></div>
+        <div class="profile-field"><label>ทอง</label><div id="live-gold">—</div></div>
+        <div class="profile-field"><label>เพชร</label><div id="live-diamond">—</div></div>
+        <div class="profile-field"><label>EXP (คงเหลือถึงเลเวลถัดไป)</label><div id="live-exp">—</div></div>
         <div class="profile-field"><label>ด่านปัจจุบัน</label><div id="live-stage">—</div></div>
         <div class="profile-field"><label>ความคืบหน้าด่าน</label><div id="live-stage-progress">—</div></div>
         <div class="profile-field"><label>เลือดบอส</label><div id="live-boss-hp">—</div></div>
+      </div>
+      <div style="margin-top:14px;">
+        <button class="btn btn-outline" id="btn-use-live-stats" disabled>⬇️ ใช้สถิติจริงจากเกมเติมฟอร์มด้านล่าง</button>
       </div>
     </div>
     <div class="profile-card">
@@ -531,6 +538,14 @@ function renderProfile(){
   };
   populateDpsSelect();
   computeDps();
+  document.getElementById('btn-use-live-stats').onclick = () => {
+    if (!lastLiveData || !lastLiveData.attack) return;
+    document.getElementById('pf-attack').value = lastLiveData.attack.toFixed(1);
+    document.getElementById('pf-attackSpeed').value = (lastLiveData.attackSpeed/100).toFixed(3);
+    document.getElementById('pf-critRate').value = lastLiveData.critRate.toFixed(1);
+    document.getElementById('pf-critDamage').value = lastLiveData.critDamage.toFixed(1);
+    toast(currentLang==='th' ? 'เติมค่าจริงจากเกมแล้ว' : 'Filled from live game data');
+  };
 }
 function allSkillsFlatList(){
   const out = [];
@@ -583,24 +598,64 @@ function computeDps(){
    far; gold/level/DPS live in a different UI layer not yet located. */
 const LIVE_SYNC_EXPR = `(function(){
   try {
-    var panels = nn.uiManager._showingPanels;
-    var out = { stage: null, prog: null, bossHp: null };
-    Object.keys(panels).forEach(function(pk){
-      var p = panels[pk];
-      if (!p) return;
-      try { if (p.TxtStageNum && p.TxtStageNum.text) out.stage = p.TxtStageNum.text; } catch(e){}
-      try { if (p.TxtStageProgress && p.TxtStageProgress.text) out.prog = p.TxtStageProgress.text; } catch(e){}
-      try {
-        var parts = p.Parts;
-        if (parts) Object.keys(parts).forEach(function(pi){
-          var part = parts[pi];
-          try { if (part.TxtBossHpRatio && part.TxtBossHpRatio.text) out.bossHp = part.TxtBossHpRatio.text; } catch(e){}
-        });
-      } catch(e){}
-    });
+    var out = { stage: null, prog: null, bossHp: null, gold: null, diamond: null, level: null, curExp: null, maxExp: null, attack: null, attackSpeed: null, critRate: null, critDamage: null, stageTid: null };
+
+    // UI text: exactly what's already on screen (no different from reading it visually)
+    try {
+      var panels = nn.uiManager._showingPanels;
+      Object.keys(panels).forEach(function(pk){
+        var p = panels[pk];
+        if (!p) return;
+        try { if (p.TxtStageNum && p.TxtStageNum.text) out.stage = p.TxtStageNum.text; } catch(e){}
+        try { if (p.TxtStageProgress && p.TxtStageProgress.text) out.prog = p.TxtStageProgress.text; } catch(e){}
+        try {
+          var parts = p.Parts;
+          if (parts) Object.keys(parts).forEach(function(pi){
+            var part = parts[pi];
+            try { if (part.TxtBossHpRatio && part.TxtBossHpRatio.text) out.bossHp = part.TxtBossHpRatio.text; } catch(e){}
+          });
+        } catch(e){}
+      });
+    } catch(e){}
+
+    // Currency/level/stats: read (never write) named net containers/services -
+    // these are Map-like objects, iterated with .entries()/.getValue(), not
+    // plain property access.
+    try {
+      var itemC, stageC, sUser, sContent;
+      for (var e of nn.netData._mapContainer.entries()) {
+        var name = e[0].name || e[0].toString();
+        if (name === 'NetContainerItem') itemC = e[1];
+        if (name === 'NetContainerStage') stageC = e[1];
+      }
+      for (var e2 of nn.services._mapService.entries()) {
+        var name2 = e2[0].name || e2[0].toString();
+        if (name2 === 'ServiceUser') sUser = e2[1];
+        if (name2 === 'ServiceContentState') sContent = e2[1];
+      }
+      if (itemC && itemC._mapItemStack) {
+        var goldIt = itemC._mapItemStack.getValue(1000);
+        var diaIt = itemC._mapItemStack.getValue(6000);
+        if (goldIt) out.gold = Number(goldIt._cnt);
+        if (diaIt) out.diamond = Number(diaIt._cnt);
+      }
+      if (sUser && sUser.getCurrentExpInfo) {
+        var expInfo = sUser.getCurrentExpInfo();
+        if (expInfo) { out.level = expInfo.level; out.curExp = Number(expInfo.curExp); out.maxExp = Number(expInfo.maxExp); }
+      }
+      if (stageC && stageC._stageInfo) out.stageTid = stageC._stageInfo._stageTid;
+      if (sContent && sContent.getValue) {
+        out.attack = sContent.getValue(101);
+        out.attackSpeed = sContent.getValue(104);
+        out.critRate = sContent.getValue(106);
+        out.critDamage = sContent.getValue(107);
+      }
+    } catch(e){}
+
     return JSON.stringify(out);
   } catch(e) { return JSON.stringify({ error: e.message }); }
 })()`;
+let lastLiveData = null;
 
 let liveWs = null, liveEvalId = 1, liveRetryMs = 2000;
 function setLiveDot(state){
@@ -621,9 +676,18 @@ function connectLiveSync(){
     let data; try { data = JSON.parse(val); } catch(e) { return; }
     if (data.error) return;
     setLiveDot('online');
+    lastLiveData = data;
     if (data.stage) document.getElementById('live-stage').textContent = data.stage;
     if (data.prog) document.getElementById('live-stage-progress').textContent = data.prog;
     if (data.bossHp) document.getElementById('live-boss-hp').textContent = data.bossHp;
+    if (data.gold != null) document.getElementById('live-gold').textContent = data.gold.toLocaleString();
+    if (data.diamond != null) document.getElementById('live-diamond').textContent = data.diamond.toLocaleString();
+    if (data.level != null) document.getElementById('live-level').textContent = data.level;
+    if (data.curExp != null && data.maxExp != null) {
+      const remain = Math.max(0, data.maxExp - data.curExp);
+      document.getElementById('live-exp').textContent = remain.toLocaleString() + ` (${(100*data.curExp/data.maxExp).toFixed(1)}%)`;
+    }
+    document.getElementById('btn-use-live-stats').disabled = !(data.attack && data.critRate);
     setTimeout(pollLiveOnce, 2000);
   };
   liveWs.onerror = () => {};
