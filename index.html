@@ -275,6 +275,10 @@
   .forge-tier-check.tier-5 { color: #bc8cff; border-color: rgba(188,140,255,0.5); background: rgba(188,140,255,0.08); }
   .forge-tier-check.tier-6 { color: #e3b341; border-color: rgba(227,179,65,0.6); background: rgba(227,179,65,0.1); }
   .forge-log-empty { text-align: center; color: var(--text-dim); font-size: 13px; padding: 40px 20px; line-height: 1.7; }
+  .forge-log-item { display: flex; justify-content: space-between; gap: 10px; padding: 8px 4px; border-bottom: 1px solid var(--navy-line); font-size: 13px; }
+  .forge-log-item:last-child { border-bottom: none; }
+  .forge-log-item .forge-log-text { flex: 1; }
+  .forge-log-item .forge-log-time { color: var(--text-dim); font-size: 11.5px; white-space: nowrap; }
   .forge-tier-progress-card { background: var(--bg2); border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
   .forge-tier-progress-card.tier-1 { border-color: #5a6478; }
   .forge-tier-progress-card.tier-2 { border-color: #2ea043; }
@@ -282,6 +286,12 @@
   .forge-tier-progress-card.tier-4 { border-color: #da3633; }
   .forge-tier-progress-card.tier-5 { border-color: #a371f7; }
   .forge-tier-progress-card.tier-6 { border-color: #d4a94a; }
+  .forge-tier-progress-card.tier-1 .ftp-bar-fill { background: linear-gradient(90deg, #5a6478, #9aa4b5); }
+  .forge-tier-progress-card.tier-2 .ftp-bar-fill { background: linear-gradient(90deg, #2ea043, #3fb950); }
+  .forge-tier-progress-card.tier-3 .ftp-bar-fill { background: linear-gradient(90deg, #388bfd, #58a6ff); }
+  .forge-tier-progress-card.tier-4 .ftp-bar-fill { background: linear-gradient(90deg, #da3633, #f85149); }
+  .forge-tier-progress-card.tier-5 .ftp-bar-fill { background: linear-gradient(90deg, #a371f7, #bc8cff); }
+  .forge-tier-progress-card.tier-6 .ftp-bar-fill { background: linear-gradient(90deg, #d4a94a, #e3b341); }
   .ftp-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
   .ftp-count { font-family: 'Cinzel', serif; color: var(--gold-bright); font-size: 16px; }
   .ftp-breakdown { font-size: 10.5px; margin-bottom: 8px; }
@@ -460,17 +470,17 @@
 
   <div class="view" id="view-forge">
     <div class="forge-warn">
-      <b>⚠️ <span data-i="forge-warn-title">มีของจริงแค่จุดเดียว ที่เหลือเป็นตัวอย่างหน้าตารอต่อระบบ</span></b>
-      <p class="hint" style="margin-top:6px;" data-i="forge-warn-body">ปุ่ม "Auto Jewel Fuse" กับตัวเลขจำนวนอัญมณีตามเทียร์ อ่าน/สั่งงานกับเกมจริง (ผ่านฟังก์ชันทางการของเกม ไม่ใช่แก้ค่าตรงๆ) ส่วนปุ่ม/สวิตช์/ตารางที่เหลือทั้งหมดยังเป็นแค่หน้าตาเฉยๆ รอต่อระบบจริงทีหลัง กดแล้วจะขึ้นแจ้งว่า "ยังไม่เปิดใช้งาน"</p>
+      <b>⚠️ <span data-i="forge-warn-title">ของจริงหลายจุดแล้ว แต่ยังไม่ใช่ทั้งหมด</span></b>
+      <p class="hint" style="margin-top:6px;" data-i="forge-warn-body">ของจริง: Auto Jewel Fuse, จำนวนอัญมณี/อุปกรณ์ตามเทียร์, ความจุคลัง, ปุ่มใส่อาวุธดีที่สุด, เก็บเข้าคลัง, ถอนออกกระเป๋า (ทุกอย่างผ่านฟังก์ชันทางการของเกม ไม่ใช่แก้ค่าตรงๆ) — ส่วน "หลอม Tier 3 เดี๋ยวนี้" ยังไม่ทำเพราะเสี่ยงเผาไอเทมจริงถ้าผิดขั้นตอน, "ใส่สกิลมาตรฐาน" ยังหาวิธีอ่าน "สกิลที่เรียนแล้ว" จากเกมไม่เจอ, สวิตช์ตั้งค่าอัตโนมัติอื่นๆ ที่เหลือยังเป็นหน้าตาเฉยๆ รอต่อระบบ</p>
     </div>
 
     <div class="forge-actions">
       <button class="btn forge-toggle-btn" id="btn-forge-toggle">⚡ <span data-i="forge-btn-autofuse">Auto Jewel Fuse</span>: <span id="forge-toggle-state">—</span></button>
       <button class="btn btn-outline forge-inert" data-i="forge-btn-fusetier3">⚙️ Fuse Tier 3 Now</button>
-      <button class="btn btn-outline forge-inert" data-i="forge-btn-equipweapon">🗡️ Equip Best Weapons</button>
-      <button class="btn btn-outline forge-inert" data-i="forge-btn-equipskills">📘 Equip Standard Skills</button>
-      <button class="btn btn-outline forge-inert" data-i="forge-btn-storeall">📦 Store All in Vault</button>
-      <button class="btn btn-outline forge-inert" data-i="forge-btn-withdrawall">📤 Withdraw All to Bag</button>
+      <button class="btn btn-outline" id="btn-forge-equipweapon" data-i="forge-btn-equipweapon">🗡️ Equip Best Weapons</button>
+      <button class="btn btn-outline forge-inert" id="btn-forge-equipskills" data-i="forge-btn-equipskills">📘 Equip Standard Skills</button>
+      <button class="btn btn-outline" id="btn-forge-storeall" data-i="forge-btn-storeall">📦 Store All in Vault</button>
+      <button class="btn btn-outline" id="btn-forge-withdrawall" data-i="forge-btn-withdrawall">📤 Withdraw All to Bag</button>
     </div>
 
     <div class="forge-stats-grid">
@@ -481,8 +491,14 @@
       </div>
       <div class="forge-stat-card">
         <div class="forge-stat-label">📦 <span data-i="forge-stat-vault">ความจุคลัง</span></div>
-        <div class="forge-stat-value">—</div>
-        <div class="hint" data-i="forge-stat-vault-sub">รอต่อระบบ</div>
+        <div class="forge-stat-value" id="forge-stat-vault-value">—</div>
+        <div class="hint" id="forge-stat-vault-sub" data-i="forge-stat-vault-sub-default">อ่านจากเกมจริง</div>
+        <select id="forge-vault-tabs-select" style="margin-top:8px;width:100%;background:var(--bg3);color:var(--text);border:1px solid var(--navy-line);border-radius:6px;padding:4px 6px;font-size:12px;">
+          <option value="auto" data-i="forge-vault-tabs-auto">ตรวจจับอัตโนมัติ</option>
+          <option value="1" data-i="forge-vault-tabs-1">1 คลัง (42 ช่อง)</option>
+          <option value="2" data-i="forge-vault-tabs-2">2 คลัง (84 ช่อง)</option>
+          <option value="3" data-i="forge-vault-tabs-3">3 คลัง (126 ช่อง)</option>
+        </select>
       </div>
       <div class="forge-stat-card">
         <div class="forge-stat-label">⚡ <span data-i="forge-stat-ready">เทียร์ที่พร้อมหลอม</span></div>
@@ -566,7 +582,7 @@
         <div class="forge-toggle-row">
           <label class="switch"><input type="checkbox" class="forge-inert-sw" checked><span class="slider"></span></label>
           <div><b>📘 <span data-i="forge-sw-skills-t">ใส่ชุดสกิลมาตรฐานอัตโนมัติตอนสลับคลาส</span></b>
-          <div class="hint" data-i="forge-sw-skills-d">เปลี่ยนสกิลชุดที่เหมาะกับคลาสนั้นให้อัตโนมัติ</div></div>
+          <div class="hint" data-i="forge-sw-skills-d">ยังทำไม่ได้ตอนนี้ — หาวิธีอ่าน "สกิลที่เรียนแล้วจริง" จากเกมยังไม่เจอ (ต่างจากใส่อาวุธที่มีข้อมูลชัดเจนแล้ว)</div></div>
         </div>
         <div class="forge-toggle-row">
           <label class="switch"><input type="checkbox" class="forge-inert-sw" checked><span class="slider"></span></label>
@@ -578,9 +594,11 @@
       <div class="panel">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
           <h3 style="margin:0;">📋 <span data-i="forge-log-title">บันทึกการทำงาน</span></h3>
-          <button class="btn btn-outline forge-inert" style="padding:5px 12px;font-size:11.5px;" data-i="forge-btn-clearlog">ล้างบันทึก</button>
+          <button class="btn btn-outline" id="btn-forge-clearlog" style="padding:5px 12px;font-size:11.5px;" data-i="forge-btn-clearlog">ล้างบันทึก</button>
         </div>
-        <div class="forge-log-empty" data-i="forge-log-empty">🚧 ยังไม่เชื่อมระบบบันทึกเหตุการณ์อัตโนมัติ — ส่วนนี้จะโชว์ประวัติการหลอม/เก็บของ/ใส่อุปกรณ์ที่ระบบทำให้อัตโนมัติ เมื่อต่อระบบจริงแล้ว</div>
+        <div id="forge-log-list">
+          <div class="forge-log-empty" id="forge-log-empty" data-i="forge-log-empty">ยังไม่มีบันทึก — เมื่อกดปุ่มด้านบน (ใส่อาวุธ/เก็บเข้าคลัง/ถอนออกกระเป๋า/เปิดปิด Auto Fuse) จะบันทึกไว้ที่นี่</div>
+        </div>
       </div>
     </div>
 
@@ -637,8 +655,8 @@ const UI_STRINGS = {
   jewel_market_only: { th: '💵 เฉพาะที่มีราคา Steam', en: '💵 Only jewels with a Steam price' },
   sort_grade_desc: { th: 'เกรด (6★ → 1★)', en: 'Grade (6★ → 1★)' },
   sort_grade_asc: { th: 'เกรด (1★ → 6★)', en: 'Grade (1★ → 6★)' },
-  'forge-warn-title': { th: 'มีของจริงแค่จุดเดียว ที่เหลือเป็นตัวอย่างหน้าตารอต่อระบบ', en: 'Only one part here is real - everything else is a UI preview waiting to be wired up' },
-  'forge-warn-body': { th: 'ปุ่ม "Auto Jewel Fuse" กับตัวเลขจำนวนอัญมณีตามเทียร์ อ่าน/สั่งงานกับเกมจริง (ผ่านฟังก์ชันทางการของเกม ไม่ใช่แก้ค่าตรงๆ) ส่วนปุ่ม/สวิตช์/ตารางที่เหลือทั้งหมดยังเป็นแค่หน้าตาเฉยๆ รอต่อระบบจริงทีหลัง กดแล้วจะขึ้นแจ้งว่า "ยังไม่เปิดใช้งาน"', en: 'The "Auto Jewel Fuse" button and the per-tier jewel counts read/act on the real game (through its own official function, not a raw value edit). Every other button/switch/table here is still just a UI mockup waiting to be wired up - clicking one shows a "not active yet" notice.' },
+  'forge-warn-title': { th: 'ของจริงหลายจุดแล้ว แต่ยังไม่ใช่ทั้งหมด', en: 'Several parts are real now - but not everything yet' },
+  'forge-warn-body': { th: 'ของจริง: Auto Jewel Fuse, จำนวนอัญมณี/อุปกรณ์ตามเทียร์, ความจุคลัง, ปุ่มใส่อาวุธดีที่สุด, เก็บเข้าคลัง, ถอนออกกระเป๋า (ทุกอย่างผ่านฟังก์ชันทางการของเกม ไม่ใช่แก้ค่าตรงๆ) — ส่วน "หลอม Tier 3 เดี๋ยวนี้" ยังไม่ทำเพราะเสี่ยงเผาไอเทมจริงถ้าผิดขั้นตอน, "ใส่สกิลมาตรฐาน" ยังหาวิธีอ่าน "สกิลที่เรียนแล้ว" จากเกมไม่เจอ, สวิตช์ตั้งค่าอัตโนมัติอื่นๆ ที่เหลือยังเป็นหน้าตาเฉยๆ รอต่อระบบ', en: 'Real now: Auto Jewel Fuse, per-tier jewel/gear counts, Vault capacity, Equip Best Weapons, Store All, Withdraw All (all through the game\'s own official functions, never a raw value edit). "Fuse Tier 3 Now" is still not built - real fusion risks burning real items if a step goes wrong. "Equip Standard Skills" is blocked on finding a reliable way to read which skills are actually learned. The remaining automation switches are still a UI mockup waiting to be wired up.' },
   'forge-btn-autofuse': { th: 'Auto Jewel Fuse', en: 'Auto Jewel Fuse' },
   'forge-btn-fusetier3': { th: 'หลอม Tier 3 เดี๋ยวนี้', en: 'Fuse Tier 3 Now' },
   'forge-btn-equipweapon': { th: 'ใส่อาวุธที่ดีที่สุด', en: 'Equip Best Weapons' },
@@ -647,7 +665,11 @@ const UI_STRINGS = {
   'forge-btn-withdrawall': { th: 'ถอนทั้งหมดออกกระเป๋า', en: 'Withdraw All to Bag' },
   'forge-stat-total': { th: 'รวมอัญมณีทั้งหมด', en: 'Total Jewels Owned' },
   'forge-stat-vault': { th: 'ความจุคลัง', en: 'Vault Capacity' },
-  'forge-stat-vault-sub': { th: 'รอต่อระบบ', en: 'Not wired up yet' },
+  'forge-stat-vault-sub-default': { th: 'อ่านจากเกมจริง', en: 'Read from the real game' },
+  'forge-vault-tabs-auto': { th: 'ตรวจจับอัตโนมัติ', en: 'Auto detect' },
+  'forge-vault-tabs-1': { th: '1 คลัง (42 ช่อง)', en: '1 Tab (42 slots)' },
+  'forge-vault-tabs-2': { th: '2 คลัง (84 ช่อง)', en: '2 Tabs (84 slots)' },
+  'forge-vault-tabs-3': { th: '3 คลัง (126 ช่อง)', en: '3 Tabs (126 slots)' },
   'forge-stat-ready': { th: 'เทียร์ที่พร้อมหลอม', en: 'Tiers Ready for Fuse' },
   'forge-stat-ready-sub': { th: 'ต้องการ 6 ชิ้นต่อเทียร์', en: 'Needs 6 of the same tier' },
   'forge-stat-conn': { th: 'สถานะเชื่อมต่อ', en: 'Connection Status' },
@@ -670,12 +692,12 @@ const UI_STRINGS = {
   'forge-sw-weapon-t': { th: 'ใส่อาวุธที่ดีที่สุดอัตโนมัติตอนสลับคลาส', en: 'Auto-equip the best weapon on class switch' },
   'forge-sw-weapon-d': { th: 'หาอาวุธหลัก/รองที่แรงที่สุดจากกระเป๋าและคลังมาใส่ให้เอง', en: 'Finds the strongest main/sub weapon across Bag and Vault and equips it automatically.' },
   'forge-sw-skills-t': { th: 'ใส่ชุดสกิลมาตรฐานอัตโนมัติตอนสลับคลาส', en: 'Auto-equip a standard skill set on class switch' },
-  'forge-sw-skills-d': { th: 'เปลี่ยนสกิลชุดที่เหมาะกับคลาสนั้นให้อัตโนมัติ', en: "Swaps in a skill loadout suited to that class automatically." },
+  'forge-sw-skills-d': { th: 'ยังทำไม่ได้ตอนนี้ — หาวิธีอ่าน "สกิลที่เรียนแล้วจริง" จากเกมยังไม่เจอ (ต่างจากใส่อาวุธที่มีข้อมูลชัดเจนแล้ว)', en: "Not possible yet - haven't found a reliable way to read which skills are actually learned in the game (unlike weapons, where the data is clear)." },
   'forge-sw-reconnect-t': { th: 'ยืนยันเชื่อมต่อใหม่อัตโนมัติเมื่อเน็ตหลุด', en: 'Auto-confirm reconnect on network error' },
   'forge-sw-reconnect-d': { th: 'เจอกล่อง "Reconnect Failed" จะกด Confirm ให้เองไม่ให้ AFK สะดุด', en: 'Clicks "Confirm" automatically when a "Reconnect Failed" dialog appears, so AFK farming isn\'t interrupted.' },
   'forge-log-title': { th: 'บันทึกการทำงาน', en: 'Activity Log' },
   'forge-btn-clearlog': { th: 'ล้างบันทึก', en: 'Clear Log' },
-  'forge-log-empty': { th: '🚧 ยังไม่เชื่อมระบบบันทึกเหตุการณ์อัตโนมัติ — ส่วนนี้จะโชว์ประวัติการหลอม/เก็บของ/ใส่อุปกรณ์ที่ระบบทำให้อัตโนมัติ เมื่อต่อระบบจริงแล้ว', en: "🚧 Not wired up yet - once connected, this will log every auto-fuse/store/equip action the system performs on its own." },
+  'forge-log-empty': { th: 'ยังไม่มีบันทึก — เมื่อกดปุ่มด้านบน (ใส่อาวุธ/เก็บเข้าคลัง/ถอนออกกระเป๋า/เปิดปิด Auto Fuse) จะบันทึกไว้ที่นี่', en: "No activity yet - actions you trigger above (equip weapon / store / withdraw / toggle Auto Fuse) will be logged here." },
   'forge-progress-title': { th: 'การหลอมอัญมณี (ครบ 6 ชิ้นในเทียร์เดียวกัน)', en: 'Jewel Fusion (6 of same tier)' },
   'forge-progress-sub': { th: 'นับรวมกระเป๋า+คลังจริงจากเกม', en: 'Counts real Bag + Vault totals from the game.' },
   'forge-gear-progress-title': { th: 'การหลอมอุปกรณ์ (ครบ 6 ชิ้นในเทียร์เดียวกัน)', en: 'Gear Fusion (6 of same tier)' },
@@ -1714,6 +1736,8 @@ async function refreshForgeEquipStatus(){
 function renderForge(){
   refreshForgeStatus();
   refreshForgeEquipStatus();
+  refreshForgeStorageCapacity();
+  forgeRenderActivityLog();
 }
 let forgeAutoFusionOn = null;
 async function refreshForgeStatus(){
@@ -1781,6 +1805,7 @@ async function toggleAutoFusion(){
     const res = await sendLiveEval(expr);
     if (res.error) throw new Error(res.error);
     toast(currentLang==='th' ? (on ? 'เปิด Auto Jewel Fuse แล้ว' : 'ปิด Auto Jewel Fuse แล้ว') : (on ? 'Auto Jewel Fuse turned ON' : 'Auto Jewel Fuse turned OFF'));
+    forgeLogActivity(currentLang==='th' ? `⚡ ${on ? 'เปิด' : 'ปิด'} Auto Jewel Fuse` : `⚡ Auto Jewel Fuse turned ${on ? 'ON' : 'OFF'}`);
   } catch(e) {
     toast(currentLang==='th' ? 'สั่งงานไม่สำเร็จ (เกมไม่ได้เปิด/ไม่ได้เชื่อมต่อ)' : 'Command failed (game not running / not connected)');
   }
@@ -1788,8 +1813,188 @@ async function toggleAutoFusion(){
 }
 document.getElementById('btn-forge-toggle').addEventListener('click', toggleAutoFusion);
 
-// Everything below this line is a UI preview only (per boss's request, before
-// any backend for it is built) - clicking just says so, nothing is wired.
+/* ---- Activity Log: local record of actions this tool actually performed ---- */
+const FORGE_LOG_KEY = 'wog_forge_activity_log';
+function forgeLogActivity(text){
+  let log = [];
+  try { log = JSON.parse(localStorage.getItem(FORGE_LOG_KEY) || '[]'); } catch(e){}
+  log.unshift({ text, ts: Date.now() });
+  log = log.slice(0, 50);
+  localStorage.setItem(FORGE_LOG_KEY, JSON.stringify(log));
+  forgeRenderActivityLog();
+}
+function forgeRenderActivityLog(){
+  let log = [];
+  try { log = JSON.parse(localStorage.getItem(FORGE_LOG_KEY) || '[]'); } catch(e){}
+  const listEl = document.getElementById('forge-log-list');
+  if (!listEl) return;
+  if (!log.length) {
+    listEl.innerHTML = `<div class="forge-log-empty" id="forge-log-empty" data-i="forge-log-empty">${t('forge-log-empty')}</div>`;
+    return;
+  }
+  listEl.innerHTML = log.map(entry => `<div class="forge-log-item"><span class="forge-log-text">${esc(entry.text)}</span><span class="forge-log-time">${new Date(entry.ts).toLocaleTimeString(currentLang==='th'?'th-TH':'en-US', {hour12:false})}</span></div>`).join('');
+}
+document.getElementById('btn-forge-clearlog').addEventListener('click', () => {
+  localStorage.removeItem(FORGE_LOG_KEY);
+  forgeRenderActivityLog();
+});
+
+/* ---- Vault/Storage Capacity: real, via ServiceItemMove + Storage_Slot_Cnt ----
+   The game exposes no direct "how many Vault tabs did you buy" field, so like
+   the reference site's own "Auto detect" dropdown, we infer it from the
+   highest real Vault slotIdx in use, with a manual override the boss can pick
+   if they own tabs that are still completely empty (auto-detect can't see those). */
+const FORGE_VAULT_TABS_KEY = 'wog_forge_vault_tabs_override';
+let forgeVaultTabs = 1;
+function buildForgeStorageExpr(){
+  return `(function(){
+    try {
+      var allItems = nn.net.data.item.getAllItemNotStack();
+      var slotCnt = nn.db.config.gen.Storage_Slot_Cnt || 42;
+      var maxSlot = -1, used = 0;
+      allItems.forEach(function(it){ if (it.location === 2) { used++; if (it.slotIdx > maxSlot) maxSlot = it.slotIdx; } });
+      var detectedTabs = Math.max(1, Math.ceil((maxSlot+1)/slotCnt));
+      return JSON.stringify({ slotCnt: slotCnt, used: used, detectedTabs: detectedTabs });
+    } catch(e) { return JSON.stringify({ error: e.message }); }
+  })()`;
+}
+async function refreshForgeStorageCapacity(){
+  const valueEl = document.getElementById('forge-stat-vault-value');
+  const subEl = document.getElementById('forge-stat-vault-sub');
+  try {
+    const data = await sendLiveEval(buildForgeStorageExpr());
+    if (data.error) throw new Error(data.error);
+    const override = localStorage.getItem(FORGE_VAULT_TABS_KEY) || 'auto';
+    forgeVaultTabs = override === 'auto' ? data.detectedTabs : parseInt(override, 10);
+    const total = forgeVaultTabs * data.slotCnt;
+    const free = Math.max(0, total - data.used);
+    valueEl.textContent = `${data.used} / ${total}`;
+    subEl.textContent = currentLang==='th'
+      ? `เหลือว่าง ${free} ช่อง (${forgeVaultTabs} คลัง)${override==='auto' ? ' · ตรวจจับอัตโนมัติ' : ''}`
+      : `${free} slots free (${forgeVaultTabs} tab${forgeVaultTabs>1?'s':''})${override==='auto' ? ' · auto detected' : ''}`;
+  } catch(e) {
+    valueEl.textContent = '—';
+    subEl.textContent = currentLang==='th' ? 'อ่านไม่ได้ (เกมไม่ได้เปิด/ไม่ได้เชื่อมต่อ)' : 'Unavailable (game not running / not connected)';
+  }
+}
+(() => {
+  const sel = document.getElementById('forge-vault-tabs-select');
+  sel.value = localStorage.getItem(FORGE_VAULT_TABS_KEY) || 'auto';
+  sel.addEventListener('change', () => {
+    localStorage.setItem(FORGE_VAULT_TABS_KEY, sel.value);
+    refreshForgeStorageCapacity();
+  });
+})();
+
+/* ---- Store All / Withdraw All: real, via ServiceItemMove's own
+   moveInventoryToStorage()/moveStoragePageToInventory() - the exact same
+   functions the game's own UI buttons call (auto-skips equipped items,
+   respects real capacity, uses the game's own request-locking). ---- */
+async function forgeStoreAllToVault(){
+  const expr = `(function(){
+    try {
+      var sim;
+      for (var e of nn.services._mapService.entries()) { var name = e[0].name || e[0].toString(); if (name === 'ServiceItemMove') sim = e[1]; }
+      sim.moveInventoryToStorage();
+      return JSON.stringify({ ok: true });
+    } catch(e) { return JSON.stringify({ error: e.message }); }
+  })()`;
+  try {
+    const res = await sendLiveEval(expr);
+    if (res.error) throw new Error(res.error);
+    toast(currentLang==='th' ? 'สั่งเก็บของเข้าคลังแล้ว' : 'Sent: store all to vault');
+    forgeLogActivity(currentLang==='th' ? '📦 เก็บของทั้งหมดเข้าคลัง' : '📦 Stored all items into the Vault');
+  } catch(e) {
+    toast(currentLang==='th' ? 'สั่งงานไม่สำเร็จ (เกมไม่ได้เปิด/ไม่ได้เชื่อมต่อ)' : 'Command failed (game not running / not connected)');
+  }
+  setTimeout(() => { refreshForgeStatus(); refreshForgeEquipStatus(); refreshForgeStorageCapacity(); }, 600);
+}
+async function forgeWithdrawAllToBag(){
+  const tabs = forgeVaultTabs || 1;
+  const expr = `(function(){
+    try {
+      var sim;
+      for (var e of nn.services._mapService.entries()) { var name = e[0].name || e[0].toString(); if (name === 'ServiceItemMove') sim = e[1]; }
+      for (var p = 0; p < ${tabs}; p++) sim.moveStoragePageToInventory(p);
+      return JSON.stringify({ ok: true, tabs: ${tabs} });
+    } catch(e) { return JSON.stringify({ error: e.message }); }
+  })()`;
+  try {
+    const res = await sendLiveEval(expr);
+    if (res.error) throw new Error(res.error);
+    toast(currentLang==='th' ? `สั่งถอนของออกกระเป๋าแล้ว (${tabs} คลัง)` : `Sent: withdraw all to bag (${tabs} tab${tabs>1?'s':''})`);
+    forgeLogActivity(currentLang==='th' ? `📤 ถอนของทั้งหมดออกกระเป๋า (${tabs} คลัง)` : `📤 Withdrew all items to Bag (${tabs} tab${tabs>1?'s':''})`);
+  } catch(e) {
+    toast(currentLang==='th' ? 'สั่งงานไม่สำเร็จ (เกมไม่ได้เปิด/ไม่ได้เชื่อมต่อ หรือกระเป๋าเต็ม)' : 'Command failed (game not running / not connected, or Bag is full)');
+  }
+  setTimeout(() => { refreshForgeStatus(); refreshForgeEquipStatus(); refreshForgeStorageCapacity(); }, 600);
+}
+document.getElementById('btn-forge-storeall').addEventListener('click', forgeStoreAllToVault);
+document.getElementById('btn-forge-withdrawall').addEventListener('click', forgeWithdrawAllToBag);
+
+/* ---- Equip Best Weapon: real, via nn.services.preset.gear.reqEquipCurrentPreset
+   (the same call the reference site's own "auto-equip" feature uses).
+   Scoring is simplified to Tier (RatingType) first, then level requirement as
+   a tiebreak - this app already treats Tier as the primary power signal
+   everywhere else (Equipment tab colors, fusion progress, etc.), so this
+   keeps the same logic rather than re-deriving a separate stat formula. */
+async function forgeEquipBestWeapon(){
+  const expr = `(function(){
+    try {
+      var classType = nn.services.hero.getCurrentHeroClassType();
+      var lv = nn.net.data.user.lv;
+      var pGear = nn.services.preset.gear;
+      var allItems = nn.net.data.item.getAllItemNotStack();
+      function bestFor(partsType){
+        var best = null;
+        allItems.forEach(function(it){
+          if (it.location !== 1 && it.location !== 2 && it.location !== 3) return;
+          var d = nn.db.equip.get(it.itemTid);
+          if (!d || d.PartsType !== partsType) return;
+          if (d.LimitLevel && d.LimitLevel > lv) return;
+          try { if (!nn.db.equip.canEquipByHeroClass(it.itemTid, classType)) return; } catch(e){}
+          var score = (d.RatingType||0) * 100000 + (d.LimitLevel||0);
+          if (!best || score > best.score) best = { score: score, it: it, d: d };
+        });
+        return best;
+      }
+      var out = {};
+      [1,2].forEach(function(pt){
+        var best = bestFor(pt);
+        var label = pt === 1 ? 'main' : 'sub';
+        if (!best) { out[label] = { none: true }; return; }
+        if (best.it.location === 3) { out[label] = { already: true, tier: best.d.RatingType }; return; }
+        try {
+          pGear.reqEquipCurrentPreset(pt, best.it.itemTid, best.it.itemId);
+          out[label] = { changed: true, tier: best.d.RatingType, tid: best.it.itemTid };
+        } catch(err) { out[label] = { error: err.message }; }
+      });
+      return JSON.stringify(out);
+    } catch(e) { return JSON.stringify({ error: e.message }); }
+  })()`;
+  try {
+    const res = await sendLiveEval(expr);
+    if (res.error) throw new Error(res.error);
+    const parts = [];
+    ['main','sub'].forEach(label => {
+      const r = res[label];
+      if (!r) return;
+      const slotName = currentLang==='th' ? (label==='main'?'อาวุธหลัก':'อาวุธรอง') : (label==='main'?'main weapon':'sub weapon');
+      if (r.changed) parts.push(currentLang==='th' ? `${slotName} → Tier ${r.tier}` : `${slotName} → Tier ${r.tier}`);
+      else if (r.already) parts.push(currentLang==='th' ? `${slotName} ดีที่สุดอยู่แล้ว (Tier ${r.tier})` : `${slotName} already the best (Tier ${r.tier})`);
+      else if (r.none) parts.push(currentLang==='th' ? `${slotName}: ไม่พบไอเทมที่ใส่ได้` : `${slotName}: no equippable item found`);
+    });
+    toast((currentLang==='th' ? 'ใส่อาวุธที่ดีที่สุดแล้ว: ' : 'Equipped best weapons: ') + parts.join(', '));
+    forgeLogActivity((currentLang==='th' ? '🗡️ ใส่อาวุธที่ดีที่สุด: ' : '🗡️ Equipped best weapons: ') + parts.join(', '));
+  } catch(e) {
+    toast(currentLang==='th' ? 'สั่งงานไม่สำเร็จ (เกมไม่ได้เปิด/ไม่ได้เชื่อมต่อ)' : 'Command failed (game not running / not connected)');
+  }
+}
+document.getElementById('btn-forge-equipweapon').addEventListener('click', forgeEquipBestWeapon);
+
+// Everything below this line is still a UI preview only (real fusion execution,
+// standard-skill auto-equip, and the remaining automation switches) - clicking
+// just says so, nothing is wired.
 function forgeInertToast(){
   toast(currentLang==='th' ? '🚧 ยังไม่เปิดใช้งาน (รอต่อระบบจริง)' : "🚧 Not active yet (backend not wired up)");
 }
