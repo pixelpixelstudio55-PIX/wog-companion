@@ -471,7 +471,7 @@
   <div class="view" id="view-forge">
     <div class="forge-warn">
       <b>⚠️ <span data-i="forge-warn-title">ของจริงหลายจุดแล้ว แต่ยังไม่ใช่ทั้งหมด</span></b>
-      <p class="hint" style="margin-top:6px;" data-i="forge-warn-body">ของจริง: Auto Jewel Fuse, จำนวนอัญมณี/อุปกรณ์ตามเทียร์, ความจุคลัง, ปุ่มใส่อาวุธดีที่สุด, เก็บเข้าคลัง, ถอนออกกระเป๋า (ทุกอย่างผ่านฟังก์ชันทางการของเกม ไม่ใช่แก้ค่าตรงๆ) — ส่วน "หลอม Tier 3 เดี๋ยวนี้" ยังไม่ทำเพราะเสี่ยงเผาไอเทมจริงถ้าผิดขั้นตอน, "ใส่สกิลมาตรฐาน" ยังหาวิธีอ่าน "สกิลที่เรียนแล้ว" จากเกมไม่เจอ, สวิตช์ตั้งค่าอัตโนมัติอื่นๆ ที่เหลือยังเป็นหน้าตาเฉยๆ รอต่อระบบ</p>
+      <p class="hint" style="margin-top:6px;" data-i="forge-warn-body">ของจริง: Auto Jewel Fuse, จำนวนอัญมณี/อุปกรณ์ตามเทียร์, ความจุคลัง, ปุ่มใส่อาวุธดีที่สุด/เก็บเข้าคลัง/ถอนออกกระเป๋า, สวิตช์อัตโนมัติ "ใส่อาวุธดีที่สุดตอนสลับคลาส" กับ "เก็บอัญมณีเข้าคลังตอน AFK" (ทำงานเฉพาะตอนเปิดหน้านี้ค้างไว้ เช็คทุก 2 วิ ทุกอย่างผ่านฟังก์ชันทางการของเกม ไม่ใช่แก้ค่าตรงๆ) — ส่วน "หลอม Tier 3 เดี๋ยวนี้" ยังไม่ทำเพราะเสี่ยงเผาไอเทมจริงถ้าผิดขั้นตอน, "ใส่สกิลมาตรฐาน" ยังหาวิธีอ่าน "สกิลที่เรียนแล้ว" จากเกมไม่เจอ, "ยืนยันเชื่อมต่อใหม่อัตโนมัติ" ทำตามโครงสร้างที่เจอในโค้ดต้นฉบับแต่ยังไม่เคยเจอเหตุการณ์จริงให้ทดสอบ</p>
     </div>
 
     <div class="forge-actions">
@@ -514,7 +514,8 @@
 
     <div class="forge-columns">
       <div class="panel">
-        <h3 style="margin-bottom:10px;">⚙️ <span data-i="forge-settings-title">การตั้งค่าอัตโนมัติ</span></h3>
+        <h3 style="margin-bottom:6px;">⚙️ <span data-i="forge-settings-title">การตั้งค่าอัตโนมัติ</span></h3>
+        <p class="hint" style="margin:0 0 12px;color:var(--gold);" data-i="forge-settings-note">⚠️ สวิตช์ด้านล่างทำงานเฉพาะตอนเปิดหน้านี้ค้างไว้เท่านั้น (เช็คทุก 2 วิ) ปิดแท็บ = หยุดทำงานอัตโนมัติทันที</p>
         <div class="forge-toggle-row">
           <label class="switch"><input type="checkbox" id="forge-sw-main"><span class="slider"></span></label>
           <div style="flex:1;"><b data-i="forge-sw-main-t">หลอมอัตโนมัติเมื่ออัญมณีเทียร์เดียวกันครบ 6 ชิ้น</b>
@@ -570,12 +571,12 @@
           <div class="hint" data-i="forge-sw-usevault-d">ไม่ใช่แค่ในกระเป๋า รวมของจากคลังทุกแท็บมานับด้วย</div></div>
         </div>
         <div class="forge-toggle-row">
-          <label class="switch"><input type="checkbox" class="forge-inert-sw" checked><span class="slider"></span></label>
+          <label class="switch"><input type="checkbox" id="forge-sw-autostore"><span class="slider"></span></label>
           <div><b data-i="forge-sw-autostore-t">เก็บอัญมณีที่หลุดเข้าคลังอัตโนมัติ</b>
           <div class="hint" data-i="forge-sw-autostore-d">อัญมณีใหม่/ที่หลอมเสร็จ ย้ายเข้าคลังทันที กระเป๋าจะได้ไม่เต็มตอน AFK</div></div>
         </div>
         <div class="forge-toggle-row">
-          <label class="switch"><input type="checkbox" class="forge-inert-sw" checked><span class="slider"></span></label>
+          <label class="switch"><input type="checkbox" id="forge-sw-weapon"><span class="slider"></span></label>
           <div><b>⚔️ <span data-i="forge-sw-weapon-t">ใส่อาวุธที่ดีที่สุดอัตโนมัติตอนสลับคลาส</span></b>
           <div class="hint" data-i="forge-sw-weapon-d">หาอาวุธหลัก/รองที่แรงที่สุดจากกระเป๋าและคลังมาใส่ให้เอง</div></div>
         </div>
@@ -585,9 +586,9 @@
           <div class="hint" data-i="forge-sw-skills-d">ยังทำไม่ได้ตอนนี้ — หาวิธีอ่าน "สกิลที่เรียนแล้วจริง" จากเกมยังไม่เจอ (ต่างจากใส่อาวุธที่มีข้อมูลชัดเจนแล้ว)</div></div>
         </div>
         <div class="forge-toggle-row">
-          <label class="switch"><input type="checkbox" class="forge-inert-sw" checked><span class="slider"></span></label>
+          <label class="switch"><input type="checkbox" id="forge-sw-reconnect"><span class="slider"></span></label>
           <div><b>🌐 <span data-i="forge-sw-reconnect-t">ยืนยันเชื่อมต่อใหม่อัตโนมัติเมื่อเน็ตหลุด</span></b>
-          <div class="hint" data-i="forge-sw-reconnect-d">เจอกล่อง "Reconnect Failed" จะกด Confirm ให้เองไม่ให้ AFK สะดุด</div></div>
+          <div class="hint" data-i="forge-sw-reconnect-d">เจอกล่อง "Reconnect Failed" จะกด Confirm ให้เองไม่ให้ AFK สะดุด — จุดนี้ยังไม่เคยเจอเหตุการณ์จริงให้ทดสอบ ทำตามโครงสร้างที่เจอในโค้ดต้นฉบับ ถ้าเกมเปลี่ยนหน้าตา popup อาจไม่ทำงาน</div></div>
         </div>
       </div>
 
@@ -656,7 +657,7 @@ const UI_STRINGS = {
   sort_grade_desc: { th: 'เกรด (6★ → 1★)', en: 'Grade (6★ → 1★)' },
   sort_grade_asc: { th: 'เกรด (1★ → 6★)', en: 'Grade (1★ → 6★)' },
   'forge-warn-title': { th: 'ของจริงหลายจุดแล้ว แต่ยังไม่ใช่ทั้งหมด', en: 'Several parts are real now - but not everything yet' },
-  'forge-warn-body': { th: 'ของจริง: Auto Jewel Fuse, จำนวนอัญมณี/อุปกรณ์ตามเทียร์, ความจุคลัง, ปุ่มใส่อาวุธดีที่สุด, เก็บเข้าคลัง, ถอนออกกระเป๋า (ทุกอย่างผ่านฟังก์ชันทางการของเกม ไม่ใช่แก้ค่าตรงๆ) — ส่วน "หลอม Tier 3 เดี๋ยวนี้" ยังไม่ทำเพราะเสี่ยงเผาไอเทมจริงถ้าผิดขั้นตอน, "ใส่สกิลมาตรฐาน" ยังหาวิธีอ่าน "สกิลที่เรียนแล้ว" จากเกมไม่เจอ, สวิตช์ตั้งค่าอัตโนมัติอื่นๆ ที่เหลือยังเป็นหน้าตาเฉยๆ รอต่อระบบ', en: 'Real now: Auto Jewel Fuse, per-tier jewel/gear counts, Vault capacity, Equip Best Weapons, Store All, Withdraw All (all through the game\'s own official functions, never a raw value edit). "Fuse Tier 3 Now" is still not built - real fusion risks burning real items if a step goes wrong. "Equip Standard Skills" is blocked on finding a reliable way to read which skills are actually learned. The remaining automation switches are still a UI mockup waiting to be wired up.' },
+  'forge-warn-body': { th: 'ของจริง: Auto Jewel Fuse, จำนวนอัญมณี/อุปกรณ์ตามเทียร์, ความจุคลัง, ปุ่มใส่อาวุธดีที่สุด/เก็บเข้าคลัง/ถอนออกกระเป๋า, สวิตช์อัตโนมัติ "ใส่อาวุธดีที่สุดตอนสลับคลาส" กับ "เก็บอัญมณีเข้าคลังตอน AFK" (ทำงานเฉพาะตอนเปิดหน้านี้ค้างไว้ เช็คทุก 2 วิ ทุกอย่างผ่านฟังก์ชันทางการของเกม ไม่ใช่แก้ค่าตรงๆ) — ส่วน "หลอม Tier 3 เดี๋ยวนี้" ยังไม่ทำเพราะเสี่ยงเผาไอเทมจริงถ้าผิดขั้นตอน, "ใส่สกิลมาตรฐาน" ยังหาวิธีอ่าน "สกิลที่เรียนแล้ว" จากเกมไม่เจอ, "ยืนยันเชื่อมต่อใหม่อัตโนมัติ" ทำตามโครงสร้างที่เจอในโค้ดต้นฉบับแต่ยังไม่เคยเจอเหตุการณ์จริงให้ทดสอบ', en: 'Real now: Auto Jewel Fuse, per-tier jewel/gear counts, Vault capacity, Equip Best Weapons/Store All/Withdraw All, plus the "auto-equip on class switch" and "auto-store loose jewels while AFK" automation switches (only run while this tab stays open, checked every 2s - all through the game\'s own official functions, never a raw value edit). "Fuse Tier 3 Now" is still not built - real fusion risks burning real items if a step goes wrong. "Equip Standard Skills" is blocked on finding a reliable way to read which skills are actually learned. "Auto-confirm reconnect" is built from the reference site\'s own code structure but has never been tested against a real disconnect.' },
   'forge-btn-autofuse': { th: 'Auto Jewel Fuse', en: 'Auto Jewel Fuse' },
   'forge-btn-fusetier3': { th: 'หลอม Tier 3 เดี๋ยวนี้', en: 'Fuse Tier 3 Now' },
   'forge-btn-equipweapon': { th: 'ใส่อาวุธที่ดีที่สุด', en: 'Equip Best Weapons' },
@@ -675,6 +676,7 @@ const UI_STRINGS = {
   'forge-stat-conn': { th: 'สถานะเชื่อมต่อ', en: 'Connection Status' },
   'forge-stat-conn-sub': { th: 'อ่านทุก 2 วิ ตอนเปิดหน้านี้', en: 'Reads every 2s while this tab is open' },
   'forge-settings-title': { th: 'การตั้งค่าอัตโนมัติ', en: 'Automation Settings' },
+  'forge-settings-note': { th: '⚠️ สวิตช์ด้านล่างทำงานเฉพาะตอนเปิดหน้านี้ค้างไว้เท่านั้น (เช็คทุก 2 วิ) ปิดแท็บ = หยุดทำงานอัตโนมัติทันที', en: '⚠️ These switches only run while this tab stays open (checked every 2s). Closing the tab stops all automation immediately.' },
   'forge-sw-main-t': { th: 'หลอมอัตโนมัติเมื่ออัญมณีเทียร์เดียวกันครบ 6 ชิ้น', en: 'Auto-fuse when 6 jewels of the same tier are available' },
   'forge-sw-main-d': { th: 'รวม 6 ชิ้นในเทียร์เดียวกันให้กลายเป็นเทียร์ถัดไปทันที', en: 'Combines 6 same-tier jewels into the next tier automatically.' },
   'forge-sw-gear-t': { th: 'หลอมอุปกรณ์อัตโนมัติ (ต้องการ 6 ชิ้น)', en: 'Auto-fuse Gear (needs 6 items)' },
@@ -694,7 +696,7 @@ const UI_STRINGS = {
   'forge-sw-skills-t': { th: 'ใส่ชุดสกิลมาตรฐานอัตโนมัติตอนสลับคลาส', en: 'Auto-equip a standard skill set on class switch' },
   'forge-sw-skills-d': { th: 'ยังทำไม่ได้ตอนนี้ — หาวิธีอ่าน "สกิลที่เรียนแล้วจริง" จากเกมยังไม่เจอ (ต่างจากใส่อาวุธที่มีข้อมูลชัดเจนแล้ว)', en: "Not possible yet - haven't found a reliable way to read which skills are actually learned in the game (unlike weapons, where the data is clear)." },
   'forge-sw-reconnect-t': { th: 'ยืนยันเชื่อมต่อใหม่อัตโนมัติเมื่อเน็ตหลุด', en: 'Auto-confirm reconnect on network error' },
-  'forge-sw-reconnect-d': { th: 'เจอกล่อง "Reconnect Failed" จะกด Confirm ให้เองไม่ให้ AFK สะดุด', en: 'Clicks "Confirm" automatically when a "Reconnect Failed" dialog appears, so AFK farming isn\'t interrupted.' },
+  'forge-sw-reconnect-d': { th: 'เจอกล่อง "Reconnect Failed" จะกด Confirm ให้เองไม่ให้ AFK สะดุด — จุดนี้ยังไม่เคยเจอเหตุการณ์จริงให้ทดสอบ ทำตามโครงสร้างที่เจอในโค้ดต้นฉบับ ถ้าเกมเปลี่ยนหน้าตา popup อาจไม่ทำงาน', en: 'Clicks "Confirm" automatically when a "Reconnect Failed" dialog appears, so AFK farming isn\'t interrupted - built from the reference site\'s own code structure but never seen a real disconnect to test against, so it may silently not fire if the game\'s popup shape differs.' },
   'forge-log-title': { th: 'บันทึกการทำงาน', en: 'Activity Log' },
   'forge-btn-clearlog': { th: 'ล้างบันทึก', en: 'Clear Log' },
   'forge-log-empty': { th: 'ยังไม่มีบันทึก — เมื่อกดปุ่มด้านบน (ใส่อาวุธ/เก็บเข้าคลัง/ถอนออกกระเป๋า/เปิดปิด Auto Fuse) จะบันทึกไว้ที่นี่', en: "No activity yet - actions you trigger above (equip weapon / store / withdraw / toggle Auto Fuse) will be logged here." },
@@ -1991,6 +1993,140 @@ async function forgeEquipBestWeapon(){
   }
 }
 document.getElementById('btn-forge-equipweapon').addEventListener('click', forgeEquipBestWeapon);
+
+/* ---- Automation: runs every 2s while this tab stays open, only for whichever
+   switch below is on. There is no background service - closing this tab (or
+   the browser) stops it immediately, same as any other page-only script. Each
+   switch's on/off state is saved to localStorage so it survives a reload. ---- */
+const FORGE_AUTOMATION_SW_IDS = ['forge-sw-weapon', 'forge-sw-autostore', 'forge-sw-reconnect'];
+FORGE_AUTOMATION_SW_IDS.forEach(id => {
+  const el = document.getElementById(id);
+  el.checked = localStorage.getItem('wog_' + id) === '1';
+  el.addEventListener('change', () => localStorage.setItem('wog_' + id, el.checked ? '1' : '0'));
+});
+
+let forgeLastClassType = null;
+let forgeLastAutoStoreAt = 0;
+function buildForgeAutomationProbeExpr(jewelTids){
+  return `(function(){
+    try {
+      var out = {};
+      out.classType = nn.services.hero.getCurrentHeroClassType();
+      var jewelTids = ${JSON.stringify(jewelTids)};
+      var bagJewelIds = [];
+      var used = 0;
+      nn.net.data.item.getAllItemNotStack().forEach(function(it){
+        if (it.location === 2) used++;
+        if (it.location === 1 && jewelTids.indexOf(it.itemTid) !== -1) bagJewelIds.push(String(it.itemId));
+      });
+      out.bagJewelIds = bagJewelIds;
+      out.usedStorage = used;
+      out.slotCnt = nn.db.config.gen.Storage_Slot_Cnt || 42;
+      var popupInfo = null;
+      try {
+        var panels = nn.uiManager._showingPanels;
+        Object.keys(panels).forEach(function(pk){
+          if (popupInfo) return;
+          var p = panels[pk];
+          if (!p) return;
+          var view = p.ArrBtn ? p : (p.View && p.View.ArrBtn ? p.View : null);
+          if (!view) return;
+          var title = ((view.TxtTitle && view.TxtTitle.text) || '').toLowerCase();
+          var errMsg = ((view.TxtErrorMessage && view.TxtErrorMessage.text) || '').toLowerCase();
+          var combined = title + ' ' + errMsg;
+          var keywords = ['kết nối','máy chủ','reconnect','connection','server','เชื่อมต่อ','เซิร์ฟเวอร์','เน็ต','network'];
+          var isNetError = keywords.some(function(k){ return combined.indexOf(k) !== -1; });
+          if (!isNetError) return;
+          var arr = view.ArrBtn;
+          var len = arr.length !== undefined ? arr.length : (arr.Count || 0);
+          var btns = [];
+          for (var i = 0; i < len; i++) {
+            var btn = arr.get_Item ? arr.get_Item(i) : arr[i];
+            if (!btn) continue;
+            var isActive = btn.gameObject ? (btn.gameObject.activeSelf !== undefined ? btn.gameObject.activeSelf : true) : true;
+            if (!isActive) continue;
+            var txt = (btn.TxtLabel && btn.TxtLabel.text) || (btn.Text && btn.Text.text) || (btn.txtLabel && btn.txtLabel.text) || '';
+            btns.push({ idx: i, text: String(txt).trim() });
+          }
+          popupInfo = { btns: btns };
+        });
+      } catch(e){}
+      out.popupInfo = popupInfo;
+      return JSON.stringify(out);
+    } catch(e) { return JSON.stringify({ error: e.message }); }
+  })()`;
+}
+async function forgeAutomationTick(){
+  if (!liveWs || liveWs.readyState !== WebSocket.OPEN) return;
+  const wantWeapon = document.getElementById('forge-sw-weapon').checked;
+  const wantAutostore = document.getElementById('forge-sw-autostore').checked;
+  const wantReconnect = document.getElementById('forge-sw-reconnect').checked;
+  if (!wantWeapon && !wantAutostore && !wantReconnect) return;
+  const jewelTids = Object.values(JEWEL_TIDS_BY_GRADE).flat();
+  let data;
+  try { data = await sendLiveEval(buildForgeAutomationProbeExpr(jewelTids)); } catch(e) { return; }
+  if (!data || data.error) return;
+
+  if (wantWeapon) {
+    if (forgeLastClassType !== null && data.classType !== forgeLastClassType) {
+      forgeLogActivity(currentLang==='th' ? '🤖 ตรวจพบสลับคลาส → กำลังใส่อาวุธที่ดีที่สุดให้' : '🤖 Class switch detected → auto-equipping best weapons');
+      await forgeEquipBestWeapon();
+    }
+    forgeLastClassType = data.classType;
+  }
+
+  if (wantAutostore && data.bagJewelIds.length > 0 && Date.now() - forgeLastAutoStoreAt > 15000) {
+    const total = (forgeVaultTabs || 1) * data.slotCnt;
+    const avail = Math.max(0, total - data.usedStorage);
+    const toMove = data.bagJewelIds.slice(0, avail);
+    if (toMove.length > 0) {
+      forgeLastAutoStoreAt = Date.now();
+      const moveExpr = `(function(){
+        try {
+          var gs = nn.net.manager.gameSession;
+          gs.reqStorageMoveInList(${JSON.stringify(toMove)});
+          return JSON.stringify({ ok: true });
+        } catch(e) { return JSON.stringify({ error: e.message }); }
+      })()`;
+      try {
+        const res = await sendLiveEval(moveExpr);
+        if (!res.error) {
+          forgeLogActivity(currentLang==='th' ? `🤖 เก็บอัญมณีที่หลุดในกระเป๋าเข้าคลังอัตโนมัติ (${toMove.length} ชิ้น)` : `🤖 Auto-stored ${toMove.length} loose jewel(s) into the Vault`);
+          refreshForgeStorageCapacity();
+        }
+      } catch(e){}
+    }
+  }
+
+  if (wantReconnect && data.popupInfo) {
+    const confirmTexts = ['xác nhận', 'confirm', 'ok', '확인', '确认', '確認', 'ยืนยัน', 'ตกลง'];
+    const match = data.popupInfo.btns.find(b => confirmTexts.includes(b.text.toLowerCase()));
+    if (match) {
+      const clickExpr = `(function(){
+        try {
+          var panels = nn.uiManager._showingPanels;
+          var clicked = false;
+          Object.keys(panels).forEach(function(pk){
+            if (clicked) return;
+            var p = panels[pk];
+            if (!p) return;
+            var view = p.ArrBtn ? p : (p.View && p.View.ArrBtn ? p.View : null);
+            if (!view) return;
+            var arr = view.ArrBtn;
+            var btn = arr.get_Item ? arr.get_Item(${match.idx}) : arr[${match.idx}];
+            if (btn && btn.onClick && typeof btn.onClick.Invoke === 'function') { btn.onClick.Invoke(); clicked = true; }
+          });
+          return JSON.stringify({ ok: clicked });
+        } catch(e) { return JSON.stringify({ error: e.message }); }
+      })()`;
+      try {
+        const res = await sendLiveEval(clickExpr);
+        if (res.ok) forgeLogActivity(currentLang==='th' ? '🤖 เจอกล่องแจ้งปัญหาการเชื่อมต่อ → กด Confirm ให้อัตโนมัติ' : '🤖 Detected a connection-error dialog → auto-clicked Confirm');
+      } catch(e){}
+    }
+  }
+}
+setInterval(forgeAutomationTick, 2000);
 
 // Everything below this line is still a UI preview only (real fusion execution,
 // standard-skill auto-equip, and the remaining automation switches) - clicking
