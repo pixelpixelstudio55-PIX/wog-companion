@@ -74,6 +74,56 @@ testing/bookmarking.
   search across skill-point allocations against real stat formulas, which needs the DPS
   model above to be more trustworthy first.
 
+## 2026-09-15: Live Sync, sidebar rebuild, and the Jewel Forge write feature
+
+Boss asked for the site to go public (GitHub Pages, repo `wog-companion`) and to match the
+reference site's *systems*, not just its data — including live-updating gold/level/DPS.
+Investigated the reference site's own JS (read-only, for understanding — never executed its
+code) and found the real mechanism: the game itself ("War of Genesis: Idle Loot", a Unity game
+scripted via Puerts/V8) opens a debug WebSocket at `ws://127.0.0.1:10998` on **every launch, by
+default** — not something either site turns on. Each visitor's own browser connects to their
+own `127.0.0.1`, so hosting this publicly never exposes anyone else's game.
+
+**What Live Sync reads** (`LIVE_SYNC_EXPR` in `index.html`), all via getters, nothing mutated:
+- UI Text components already on screen (`nn.uiManager._showingPanels[n].TxtStageNum.text` etc.)
+  for stage name/progress/boss HP — literally reading what's rendered, nothing more.
+- `nn.netData._mapContainer` / `nn.services._mapService` are Map-likes (need `.entries()`, not
+  `Object.keys()` — this was the missing piece for a while). `NetContainerItem._mapItemStack`
+  holds currency/item counts by tid (1000=gold, 6000=diamond); `ServiceUser.getCurrentExpInfo()`
+  gives level/EXP; `ServiceContentState.getValue(id)` gives live combat stats by the same
+  `E_AbilityType` ids documented in the game's own enum table (101=attack, 104=attack speed,
+  106/107=crit rate/damage, 1054/1057/1058=PvE/Boss/general damage bonus).
+- Fed into a persistent top bar (own design, not the reference site's layout) shown on every
+  tab, plus three new computed tabs — Skill DPS Breakdown, Smart Analysis (skill-upgrade
+  ranking), Stage Run History (local log starting from now, can't backfill or detect
+  clear-vs-fail) — all pure client-side math on data already in `game_data.js`.
+
+**Real game icons**: equipment/jewel/training items share the *same* base64 icon atlas as
+skills (`skillIconsBase64` in the reference page), keyed by each item's own `icon` field which
+was already in our extracted raw data. Fetched at runtime from the reference site's own URL
+(CORS is wide open there) and never committed to this repo — see `loadRemoteSkillIcons()`.
+
+**Jewel Forge & Storage — the one write-capable feature.** Boss explicitly asked for this and
+was warned clearly, twice, about real ban risk from a game potentially detecting access outside
+its own client; boss's own words: "ทำเลย รับความเสี่ยงได้" (do it, I accept the risk). Scoped to
+the safest slice on purpose:
+- Read-only jewel counts per fusion tier (`ServiceItem.getOwnedItemCount(tid)`, summed by grade
+  from our own `jewelDatabase`, excluding item 9600 which is a synthesis-EXP material, not a
+  fusable jewel) — zero risk, just numbers.
+- One write action: `ServiceWorkshop.setAutoFusionOn(true/false)` — a real, developer-provided
+  toggle (confirmed via the game's own save-data fields, `_workShopAutoFusionOn` etc., which
+  have proper `_key`/`_defaultValue` structure — this is a shipped QoL feature of the game, not
+  cheat-injected state) called through its own official service method, not a raw field poke.
+  Tested end-to-end against the real running game: toggled true, confirmed via reading the raw
+  setting back, restored to false.
+- Explicitly **not** built: the actual "fuse now" flow (`reqFusionAsync` and friends). It needs
+  staging several items through interdependent methods first, calling several prototype methods
+  that errored unpredictably in testing (`isAutoFusionOn()` etc. threw "not a function" despite
+  existing on the prototype — the C#↔JS bridge here is not fully reliable), and getting the
+  sequence wrong risks actually consuming real jewels, not just showing a wrong number like
+  everywhere else in this app. Boss agreed to defer this specifically until it can be tested
+  more carefully.
+
 ## Verified 2026-09-14
 
 Screenshotted every tab via headless Chrome against the real generated `game_data.js` (not a

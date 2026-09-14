@@ -366,12 +366,18 @@
 
   <div class="view" id="view-forge">
     <div style="background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin-bottom:18px;">
-      <b style="color:#ff9d6c;">⚠️ ส่วนนี้จะสั่งงานเข้าเกมจริง (ไม่ใช่แค่อ่านค่า)</b>
-      <p class="hint" style="margin-top:6px;">ต่างจากเมนูอื่นทั้งหมดในเว็บนี้ที่อ่านอย่างเดียว — ส่วนนี้จะเขียนค่ากลับเข้าเกม (เปิด/ปิด auto-fuse ฯลฯ) มีความเสี่ยงบัญชีโดนแบนถ้าเกมตรวจจับการเข้าถึงนอกช่องทางปกติได้ (บอสรับทราบและยอมรับความเสี่ยงนี้แล้ว) — กำลังสำรวจโครงสร้างจริงของช่องเก็บของ/ฟังก์ชันหลอมอัญมณีอยู่ จะทยอยเปิดใช้ทีละส่วนเพื่อลดโอกาสเขียนค่าผิดพลาดใส่เซฟจริง</p>
+      <b style="color:#ff9d6c;">⚠️ ปุ่มเปิด/ปิด Auto-Fuse ด้านล่างสั่งงานเข้าเกมจริง</b>
+      <p class="hint" style="margin-top:6px;">ใช้ฟังก์ชันทางการของเกมเอง (เหมือนกดสวิตช์ในเกม) ไม่ได้ไปยิงคำสั่งหลอมอัญมณีเองโดยตรง (ส่วนนั้นยังไม่ทำ เพราะเสี่ยงเผาของจริงถ้าเรียกผิดขั้นตอน) — จำนวนอัญมณีด้านล่างเป็นค่าจริงจากกระเป๋า อ่านอย่างเดียว ปลอดภัย 100%</p>
     </div>
-    <div class="profile-grid" id="forge-status">
-      <div class="profile-field"><label>สถานะ</label><div>🚧 กำลังสำรวจ API หลอมอัญมณี</div></div>
+    <div class="profile-grid" id="forge-status" style="margin-bottom:18px;">
+      <div class="profile-field"><label>Auto-Fuse (ทั่วไป)</label><div id="forge-autofusion-status">—</div></div>
     </div>
+    <div style="margin-bottom:18px;display:flex;gap:10px;flex-wrap:wrap;">
+      <button class="btn" id="btn-forge-on">✅ เปิด Auto-Fuse</button>
+      <button class="btn btn-outline" id="btn-forge-off">⏹ ปิด Auto-Fuse</button>
+      <button class="btn btn-outline" id="btn-forge-refresh">🔄 รีเฟรชจำนวน</button>
+    </div>
+    <div class="grid-cards" id="forge-jewel-counts"></div>
   </div>
 
 </div>
@@ -531,7 +537,7 @@ document.getElementById('gamedata-toggle').addEventListener('click', () => {
 });
 function renderCurrentView(){
   ({ skills: renderSkills, training: renderTraining, equipment: renderEquipment, jewels: renderJewels, farm: renderFarm, profile: renderProfile,
-     dpsbreak: renderDpsBreakdown, history: renderHistory, smart: renderSmartAnalysis, forge: () => {} })[currentView]();
+     dpsbreak: renderDpsBreakdown, history: renderHistory, smart: renderSmartAnalysis, forge: refreshForgeStatus })[currentView]();
 }
 
 /* ================= SKILL TREE ================= */
@@ -857,6 +863,16 @@ const LIVE_SYNC_EXPR = `(function(){
 let lastLiveData = null;
 
 let liveWs = null, liveEvalId = 1, liveRetryMs = 2000;
+const pendingLiveRequests = {}; // id -> {resolve, reject}
+function sendLiveEval(expression){
+  return new Promise((resolve, reject) => {
+    if (!liveWs || liveWs.readyState !== WebSocket.OPEN) { reject(new Error('offline')); return; }
+    const reqId = liveEvalId++;
+    pendingLiveRequests[reqId] = { resolve, reject };
+    liveWs.send(JSON.stringify({ id: reqId, method: 'Runtime.evaluate', params: { expression, returnByValue: true } }));
+    setTimeout(() => { if (pendingLiveRequests[reqId]) { delete pendingLiveRequests[reqId]; reject(new Error('timeout')); } }, 5000);
+  });
+}
 function setLiveDot(state){
   const dot = document.getElementById('live-sync-dot');
   if (dot) {
@@ -882,6 +898,13 @@ function connectLiveSync(){
   liveWs.onopen = () => { liveRetryMs = 2000; pollLiveOnce(); };
   liveWs.onmessage = (ev) => {
     let msg; try { msg = JSON.parse(ev.data); } catch(e) { return; }
+    if (msg && msg.id != null && pendingLiveRequests[msg.id]) {
+      const { resolve, reject } = pendingLiveRequests[msg.id];
+      delete pendingLiveRequests[msg.id];
+      const val2 = msg.result && msg.result.result && msg.result.result.value;
+      try { resolve(val2 != null ? JSON.parse(val2) : null); } catch(e) { resolve(val2); }
+      return;
+    }
     const val = msg && msg.result && msg.result.result && msg.result.result.value;
     if (!val) return;
     let data; try { data = JSON.parse(val); } catch(e) { return; }
@@ -1027,6 +1050,89 @@ function renderSmartAnalysis(){
     rows.map((r,i) => `<tr><td>${i+1}</td><td>${esc(r.name)}</td><td>${r.from} → ${r.to}</td><td>${r.fromPct}% → ${r.toPct}%</td><td style="color:var(--gold-bright);">+${Math.round(r.delta).toLocaleString()}</td></tr>`).join('') +
     `</tbody>`;
 }
+
+/* ================= JEWEL FORGE & STORAGE (read-only counts + one safe toggle) ================= */
+const JEWEL_TIDS_BY_GRADE = (() => {
+  const out = {};
+  GAME_DATA.jewelDatabase.forEach(j => {
+    if (j.name_vi === 'EXP Tổng Hợp Ngọc') return; // synthesis-EXP material, not a fusable jewel
+    (out[j.grade] = out[j.grade] || []).push(j.id);
+  });
+  return out;
+})();
+function buildForgeStatusExpr(){
+  return `(function(){
+    try {
+      var sItem;
+      for (var e of nn.services._mapService.entries()) {
+        var name = e[0].name || e[0].toString();
+        if (name === 'ServiceItem') sItem = e[1];
+      }
+      var byGrade = ${JSON.stringify(JEWEL_TIDS_BY_GRADE)};
+      var totals = {};
+      Object.keys(byGrade).forEach(function(g){
+        var sum = 0;
+        byGrade[g].forEach(function(tid){ try { sum += (sItem.getOwnedItemCount(tid) || 0); } catch(e){} });
+        totals[g] = sum;
+      });
+      var autoFusionOn = null;
+      try {
+        var lc = nn.localSaveManager._userData._listChild;
+        var contentNode = lc.find(function(c){ return c._key === 'UserData_Content'; });
+        if (contentNode && contentNode._workShopAutoFusionOn) autoFusionOn = contentNode._workShopAutoFusionOn._value;
+      } catch(e){}
+      return JSON.stringify({ totals: totals, autoFusionOn: autoFusionOn });
+    } catch(e) { return JSON.stringify({ error: e.message }); }
+  })()`;
+}
+async function refreshForgeStatus(){
+  const statusEl = document.getElementById('forge-autofusion-status');
+  const gridEl = document.getElementById('forge-jewel-counts');
+  statusEl.textContent = currentLang==='th' ? 'กำลังโหลด...' : 'Loading...';
+  try {
+    const data = await sendLiveEval(buildForgeStatusExpr());
+    if (data.error) throw new Error(data.error);
+    statusEl.innerHTML = data.autoFusionOn
+      ? `<span style="color:#38c172;">🟢 ${currentLang==='th'?'เปิดอยู่':'ON'}</span>`
+      : `<span style="color:var(--text-dim);">⚪ ${currentLang==='th'?'ปิดอยู่':'OFF'}</span>`;
+    const gradeLabels = { 1:['Tier 1','Basic'], 2:['Tier 2','Common'], 3:['Tier 3','Advanced'], 4:['Tier 4','Superior'], 5:['Tier 5','Rare'], 6:['Tier 6','Divine'] };
+    gridEl.innerHTML = Object.keys(gradeLabels).map(g => {
+      const cnt = data.totals[g] || 0;
+      const ready = cnt >= 6;
+      return `<div class="jewel-card"><div class="jc-name">${gradeLabels[g][0]} (${gradeLabels[g][1]})</div>
+        <div class="jc-desc" style="font-size:20px;font-weight:700;color:${ready?'var(--gold-bright)':'var(--text)'};">${cnt} <span class="hint" style="font-size:11px;">/ 6</span></div>
+        ${ready ? `<div class="hint" style="color:#38c172;">${currentLang==='th'?'พร้อมหลอมแล้ว':'ready to fuse'}</div>` : ''}
+      </div>`;
+    }).join('');
+  } catch(e) {
+    statusEl.innerHTML = `<span style="color:var(--text-dim);">${currentLang==='th'?'อ่านค่าไม่ได้ (เกมไม่ได้เปิด/ไม่ได้เชื่อมต่อ)':'Unavailable (game not running / not connected)'}</span>`;
+    gridEl.innerHTML = '';
+  }
+}
+async function toggleAutoFusion(on){
+  const expr = `(function(){
+    try {
+      var sWorkshop;
+      for (var e of nn.services._mapService.entries()) {
+        var name = e[0].name || e[0].toString();
+        if (name === 'ServiceWorkshop') sWorkshop = e[1];
+      }
+      sWorkshop.setAutoFusionOn(${on});
+      return JSON.stringify({ ok: true });
+    } catch(e) { return JSON.stringify({ error: e.message }); }
+  })()`;
+  try {
+    const res = await sendLiveEval(expr);
+    if (res.error) throw new Error(res.error);
+    toast(currentLang==='th' ? (on ? 'เปิด Auto-Fuse แล้ว' : 'ปิด Auto-Fuse แล้ว') : (on ? 'Auto-Fuse turned ON' : 'Auto-Fuse turned OFF'));
+  } catch(e) {
+    toast(currentLang==='th' ? 'สั่งงานไม่สำเร็จ (เกมไม่ได้เปิด/ไม่ได้เชื่อมต่อ)' : 'Command failed (game not running / not connected)');
+  }
+  refreshForgeStatus();
+}
+document.getElementById('btn-forge-on').addEventListener('click', () => toggleAutoFusion(true));
+document.getElementById('btn-forge-off').addEventListener('click', () => toggleAutoFusion(false));
+document.getElementById('btn-forge-refresh').addEventListener('click', refreshForgeStatus);
 
 /* ---------- init ---------- */
 applyStaticI18n();
