@@ -652,8 +652,9 @@ function renderSkills(){
 // Numbers that stay the same across every level of a skill (e.g. a fixed
 // duration) are left plain; only the ones that actually change per level are
 // colored, since those are what a player deciding whether to level up cares
-// about. 1-2 varying numbers all go red; 3+ each get their own color so it's
-// still readable which value is which across a run-on sentence.
+// about. Each distinct varying value gets its own color from the palette
+// (first one red, second green, ...) so it's clear which value is which even
+// when two or more change in the same sentence.
 const NUM_COLOR_PALETTE = ['#ff6b6b', '#7ee787', '#6cb6ff', '#ffd166', '#c792ea'];
 // Matches a number plus an immediately-attached unit (%, or a lone trailing
 // "s" for seconds like "10s") so the whole "330%"/"10s" gets colored, not
@@ -680,7 +681,7 @@ function colorizeVaryingNumbers(text, varyingPositions){
     out += esc(text.slice(lastIndex, m.index));
     idx++;
     if (idx in rank) {
-      const color = varyingPositions.length <= 2 ? '#ff6b6b' : NUM_COLOR_PALETTE[rank[idx] % NUM_COLOR_PALETTE.length];
+      const color = NUM_COLOR_PALETTE[rank[idx] % NUM_COLOR_PALETTE.length];
       out += `<span style="color:${color};font-weight:700;">${m[0]}</span>`;
     } else {
       out += m[0];
