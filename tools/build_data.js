@@ -375,11 +375,29 @@ stageData.forEach(s => {
 // from the source data itself - only add a `_th` where we have real translations;
 // otherwise fall back to English (a proper noun in English reads fine to a Thai
 // player - matches how the boss's own game client shows skill names).
+const JEWEL_OPTION_NAME_MAP = {
+  "Tấn công": "โจมตี", "Sát thương Chí mạng": "ความเสียหายคริติคอล", "Sát thương": "ความเสียหาย",
+  "Sát thương Boss": "ความเสียหายบอส", "Sát thương Điện": "ความเสียหายไฟฟ้า", "Sát thương Độc": "ความเสียหายพิษ",
+  "Sát thương Lửa": "ความเสียหายไฟ", "Phòng thủ": "ป้องกัน", "Kháng sát thương Chí mạng": "ต้านความเสียหายคริติคอล",
+  "HP": "HP", "Sát thương nhận vào": "ความเสียหายที่ได้รับ", "Kháng sát thương Điện": "ต้านความเสียหายไฟฟ้า",
+  "Kháng sát thương Độc": "ต้านความเสียหายพิษ", "Kháng sát thương Lửa": "ต้านความเสียหายไฟ",
+  "Kháng Sát Thương Tất Cả Nguyên Tố": "ต้านความเสียหายธาตุทั้งหมด", "Tốc độ Đánh": "ความเร็วโจมตี",
+  "Chính xác": "ความแม่นยำ", "Đòn Chí mạng trúng đích": "ค่าคำนวณคริติคอล", "Hồi phục tự nhiên": "ฟื้นฟูตามธรรมชาติ",
+  "Sét trúng đích": "ค่าคำนวณสายฟ้า", "Độc trúng đích": "ค่าคำนวณพิษ", "Lửa trúng đích": "ค่าคำนวณไฟ",
+  "Tốc độ Di chuyển": "ความเร็วเคลื่อนที่", "Né tránh": "หลบหลีก", "Kháng Chí mạng": "ต้านคริติคอล",
+  "Kháng Choáng": "ต้านมึนงง", "Kháng Sét": "ต้านสายฟ้า", "Kháng Độc": "ต้านพิษ", "Kháng Lửa": "ต้านไฟ",
+  "Kháng Tất Cả Nguyên Tố": "ต้านธาตุทั้งหมด", "Cấp yêu cầu của Trang bị": "เลเวลที่ต้องการของอุปกรณ์",
+  "Tỷ lệ rơi trang bị": "อัตราดรอปอุปกรณ์", "Lượng Vàng Nhận Được": "ปริมาณทองที่ได้รับ", "Lượng EXP Nhận Được": "ปริมาณ EXP ที่ได้รับ",
+};
 jewelDatabase.forEach(j => {
   j.name_th = j.name_en; // proper nouns - already English-style in-game, reads fine to a Thai player
   j.desc_th = translateSimple(j.desc_vi, JEWEL_DESC_MAP).th;
   j.grade_name_th = translateSimple(j.grade_name_vi, JEWEL_GRADE_MAP).th;
   j.category_th = translateSimple(j.category_vi, JEWEL_CATEGORY_MAP).th;
+  (j.options || []).forEach(o => {
+    const nameTh = JEWEL_OPTION_NAME_MAP[o.name_vi] || o.name_en;
+    o.text_th = `${nameTh}: +${o.min}${o.unit} ~ +${o.max}${o.unit}`;
+  });
 });
 equipments.forEach(e => { e.name_th = e.name_en; });
 trainingSkills.forEach(t => { t.name_th = t.name_en; });

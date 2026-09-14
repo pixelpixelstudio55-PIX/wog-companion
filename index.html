@@ -305,9 +305,17 @@
   </div>
 
   <div class="view" id="view-jewels">
-    <div class="controls"><div class="search-box"><span class="ic">🔍</span><input type="text" id="jewel-search" data-i-ph="search_jewel"></div></div>
+    <div class="controls">
+      <div class="search-box"><span class="ic">🔍</span><input type="text" id="jewel-search" data-i-ph="search_jewel"></div>
+      <select id="jewel-cat-filter"></select>
+      <select id="jewel-grade-filter"></select>
+      <select id="jewel-market-filter"></select>
+      <select id="jewel-sort"></select>
+      <button class="btn btn-outline" id="btn-jewel-reset">↺ <span data-i="reset_btn">รีเซ็ต</span></button>
+    </div>
     <div class="result-count" id="jewel-count"></div>
-    <div class="grid-cards" id="jewel-content"></div>
+    <div class="table-scroll"><table class="data-table" id="jewel-table"></table></div>
+    <div id="jewel-pagination" style="display:flex;gap:8px;align-items:center;justify-content:center;margin-top:16px;"></div>
   </div>
 
   <div class="view" id="view-farm">
@@ -429,6 +437,12 @@ const UI_STRINGS = {
   sort_name: { th: 'ชื่อ A-Z', en: 'Name A-Z' },
   sort_steam_desc: { th: 'Steam: สูง → ต่ำ', en: 'Steam: High → Low' },
   sort_steam_asc: { th: 'Steam: ต่ำ → สูง', en: 'Steam: Low → High' },
+  jewel_all_cat: { th: '📌 ทุกประเภทอัญมณี', en: '📌 All Jewel Types' },
+  jewel_all_grade: { th: '🏅 ทุกเกรด', en: '🏅 All Grades' },
+  jewel_market_all: { th: '🌐 ทั้งหมด (85 ชนิด)', en: '🌐 All (85 jewels)' },
+  jewel_market_only: { th: '💵 เฉพาะที่มีราคา Steam', en: '💵 Only jewels with a Steam price' },
+  sort_grade_desc: { th: 'เกรด (6★ → 1★)', en: 'Grade (6★ → 1★)' },
+  sort_grade_asc: { th: 'เกรด (1★ → 6★)', en: 'Grade (1★ → 6★)' },
   search_skill: { th: 'ค้นหาชื่อสกิล...', en: 'Search skill name...' },
   search_training: { th: 'ค้นหาการฝึกฝน...', en: 'Search training...' },
   search_equip: { th: 'ค้นหาอุปกรณ์...', en: 'Search equipment...' },
@@ -510,18 +524,6 @@ function skillIconHtml(sk, branchNum){
   return `<span class="sk-icon-fallback">${BRANCH_EMOJI[branchNum] || '✦'}</span>`;
 }
 
-// Jewel/equipment icons: the reference site itself uses plain emoji for these
-// (no real art), chosen by grade/slot - we pick our own emoji the same way.
-const JEWEL_GRADE_EMOJI = {
-  'Cấp Thấp (1★)': '⚪', 'Cấp Trung (2★)': '🟢', 'Cấp Cao (3★)': '🔵',
-  'Cao Cấp (4★)': '🟣', 'Đặc Biệt (5★)': '🟠', 'Thượng Hạng (6★)': '🔴',
-};
-function jewelIconHtml(j){
-  if (REMOTE_SKILL_ICONS && j.icon && REMOTE_SKILL_ICONS[j.icon]) {
-    return `<img src="${REMOTE_SKILL_ICONS[j.icon]}" alt="" class="jc-icon-img">`;
-  }
-  return `<span class="jc-icon">${JEWEL_GRADE_EMOJI[j.grade_name_vi] || '💎'}</span>`;
-}
 const SLOT_EMOJI = {
   'Vũ khí chính': '⚔️', 'Vũ khí phụ': '🗡️', 'Nón / Mũ': '⛑️', 'Áo giáp': '🎽',
   'Găng tay': '🧤', 'Giày / Ủng': '👢', 'Áo choàng': '🧣', 'Giáp vai': '🪖',
@@ -777,18 +779,134 @@ document.getElementById('btn-equip-reset').addEventListener('click', equipResetF
 document.getElementById('equip-search').addEventListener('keydown', (e) => { if (e.key === 'Enter') { equipHasSearched = true; equipPage = 1; renderEquipment(); } });
 
 /* ================= JEWELS ================= */
-function renderJewels(){
-  const q = document.getElementById('jewel-search').value.trim().toLowerCase();
-  const list = GAME_DATA.jewelDatabase.filter(j => !q || j.name_en.toLowerCase().includes(q));
-  document.getElementById('jewel-count').innerHTML = `${t('showing')} <b>${list.length}</b> ${t('items')}`;
-  document.getElementById('jewel-content').innerHTML = list.map(j => `
-    <div class="jewel-card">
-      <div class="jc-name">${jewelIconHtml(j)}${esc(j.name_en)}</div>
-      <div class="jc-grade">${esc(fld(j,'grade_name'))} · ${esc(fld(j,'category'))}</div>
-      <div class="jc-desc">${esc(fld(j,'desc'))}</div>
-      ${j.steam_price_text ? `<div class="jc-price">Steam: ${esc(j.steam_price_text)}</div>` : ''}
-    </div>`).join('') || `<div class="empty-state">—</div>`;
+const GRADE_STYLE = {
+  1: { color: '#9aa4b5', bg: 'rgba(154,164,181,0.10)', border: '#5a6478' },
+  2: { color: '#3fb950', bg: 'rgba(63,185,80,0.10)',  border: '#2ea043' },
+  3: { color: '#58a6ff', bg: 'rgba(88,166,255,0.10)', border: '#388bfd' },
+  4: { color: '#bc8cff', bg: 'rgba(188,140,255,0.10)',border: '#a371f7' },
+  5: { color: '#ffa657', bg: 'rgba(255,166,87,0.12)', border: '#f0883e' },
+  6: { color: '#ff7b72', bg: 'rgba(255,123,114,0.12)',border: '#f85149' },
+};
+function gradeBadgeHtml(grade, label){
+  const s = GRADE_STYLE[grade] || GRADE_STYLE[1];
+  return `<span class="tier-badge" style="color:${s.color};border-color:${s.border};background:${s.bg};">${esc(label)}</span>`;
 }
+function jewelIconBoxHtml(j){
+  const s = GRADE_STYLE[j.grade] || GRADE_STYLE[1];
+  const inner = (REMOTE_SKILL_ICONS && j.icon && REMOTE_SKILL_ICONS[j.icon])
+    ? `<img src="${REMOTE_SKILL_ICONS[j.icon]}" alt="">`
+    : `<span class="ec-icon">💎</span>`;
+  return `<span class="ec-icon-box" style="background:${s.bg};border-color:${s.border};">${inner}</span>`;
+}
+let jewelPage = 1;
+const JEWEL_PAGE_SIZE = 25;
+function initJewelFilters(){
+  const catSel = document.getElementById('jewel-cat-filter');
+  const gradeSel = document.getElementById('jewel-grade-filter');
+  const marketSel = document.getElementById('jewel-market-filter');
+  const sortSel = document.getElementById('jewel-sort');
+  if (catSel.children.length === 0) {
+    const cats = [...new Map(GAME_DATA.jewelDatabase.map(j=>[j.category_vi, fld(j,'category')])).entries()];
+    catSel.innerHTML = `<option value="">${t('jewel_all_cat')}</option>` + cats.map(([v,label])=>`<option value="${esc(v)}">${esc(label)}</option>`).join('');
+  } else {
+    catSel.options[0].textContent = t('jewel_all_cat');
+  }
+  if (gradeSel.children.length === 0) {
+    gradeSel.innerHTML = `<option value="">${t('jewel_all_grade')}</option>` + [1,2,3,4,5,6].map(g=>`<option value="${g}">${g}★</option>`).join('');
+  } else {
+    gradeSel.options[0].textContent = t('jewel_all_grade');
+  }
+  if (marketSel.children.length === 0) {
+    marketSel.innerHTML = `<option value="all">${t('jewel_market_all')}</option><option value="market_only">${t('jewel_market_only')}</option>`;
+  } else {
+    marketSel.options[0].textContent = t('jewel_market_all');
+    marketSel.options[1].textContent = t('jewel_market_only');
+  }
+  if (sortSel.children.length === 0) {
+    sortSel.innerHTML = [
+      ['steam_desc', t('sort_steam_desc')], ['steam_asc', t('sort_steam_asc')],
+      ['grade_desc', t('sort_grade_desc')], ['grade_asc', t('sort_grade_asc')], ['name', t('sort_name')],
+    ].map(([v,label])=>`<option value="${v}">${esc(label)}</option>`).join('');
+  } else {
+    const cur = sortSel.value;
+    const labels = { steam_desc:t('sort_steam_desc'), steam_asc:t('sort_steam_asc'), grade_desc:t('sort_grade_desc'), grade_asc:t('sort_grade_asc'), name:t('sort_name') };
+    [...sortSel.options].forEach(o => o.textContent = labels[o.value] || o.textContent);
+    sortSel.value = cur;
+  }
+}
+function jewelResetFilters(){
+  document.getElementById('jewel-search').value = '';
+  initJewelFilters();
+  document.getElementById('jewel-cat-filter').value = '';
+  document.getElementById('jewel-grade-filter').value = '';
+  document.getElementById('jewel-market-filter').value = 'all';
+  document.getElementById('jewel-sort').value = 'steam_desc';
+  jewelPage = 1;
+  renderJewels();
+}
+function renderJewels(){
+  initJewelFilters();
+  const q = document.getElementById('jewel-search').value.trim().toLowerCase();
+  const cat = document.getElementById('jewel-cat-filter').value;
+  const grade = document.getElementById('jewel-grade-filter').value;
+  const market = document.getElementById('jewel-market-filter').value;
+  const sortKey = document.getElementById('jewel-sort').value;
+  let list = GAME_DATA.jewelDatabase.filter(j => {
+    if (q) {
+      const optText = (j.options||[]).map(o=>(o.name_vi+' '+o.name_en).toLowerCase()).join(' ');
+      if (!j.name_vi.toLowerCase().includes(q) && !j.name_en.toLowerCase().includes(q) && !optText.includes(q)) return false;
+    }
+    if (cat && j.category_vi !== cat) return false;
+    if (grade && String(j.grade) !== grade) return false;
+    if (market === 'market_only' && !(j.steam_price_usd > 0)) return false;
+    return true;
+  });
+  const sorters = {
+    steam_desc: (a,b) => (b.steam_price_usd||0) - (a.steam_price_usd||0) || (b.grade-a.grade),
+    steam_asc: (a,b) => { const av=a.steam_price_usd||999999, bv=b.steam_price_usd||999999; return av-bv || (b.grade-a.grade); },
+    grade_desc: (a,b) => b.grade - a.grade || ((b.steam_price_usd||0)-(a.steam_price_usd||0)),
+    grade_asc: (a,b) => a.grade - b.grade || ((b.steam_price_usd||0)-(a.steam_price_usd||0)),
+    name: (a,b) => a.name_en.localeCompare(b.name_en),
+  };
+  list = [...list].sort(sorters[sortKey] || sorters.steam_desc);
+
+  const totalPages = Math.max(1, Math.ceil(list.length / JEWEL_PAGE_SIZE));
+  jewelPage = Math.min(Math.max(1, jewelPage), totalPages);
+  const pageList = list.slice((jewelPage-1)*JEWEL_PAGE_SIZE, jewelPage*JEWEL_PAGE_SIZE);
+
+  document.getElementById('jewel-count').innerHTML = `${t('showing')} <b>${pageList.length}</b> / ${list.length} ${t('items')}`;
+  const table = document.getElementById('jewel-table');
+  table.innerHTML = `<thead><tr><th>${currentLang==='th'?'ชื่ออัญมณี':'Jewel Name'}</th><th>${currentLang==='th'?'ประเภท':'Category'}</th><th>${currentLang==='th'?'เกรด':'Grade'}</th><th>${currentLang==='th'?'ช่วงค่าสถานะ':'Stat Range'}</th><th>${currentLang==='th'?'คำอธิบาย':'Description'}</th><th style="text-align:right;">Steam Price ($)</th></tr></thead><tbody></tbody>`;
+  const tbody = table.querySelector('tbody');
+  tbody.innerHTML = pageList.map(j => {
+    const opts = (j.options||[]).length
+      ? j.options.map(o => `<div style="color:#7ee787;font-size:12px;margin-bottom:2px;">• ${esc(fld(o,'text'))}</div>`).join('')
+      : `<span class="hint">${currentLang==='th'?'ค่าคงที่หรือโบนัสยกระดับ':'Fixed stats or enhancement bonus'}</span>`;
+    return `<tr>
+      <td><div class="ec-name-cell">${jewelIconBoxHtml(j)}<div class="ec-name-text"><b>${esc(j.name_en)}</b><span class="ec-sub">${esc(j.name_vi)}</span></div></div></td>
+      <td><span class="tier-badge" style="color:var(--text);border-color:var(--navy-line);background:var(--bg3);">${esc(fld(j,'category'))}</span></td>
+      <td>${gradeBadgeHtml(j.grade, fld(j,'grade_name'))}</td>
+      <td>${opts}</td>
+      <td style="font-size:12px;color:var(--text-dim);">${esc(fld(j,'desc'))}</td>
+      <td style="text-align:right;">${j.steam_price_text ? `<a href="${j.steam_url}" target="_blank" rel="noopener" style="color:#3fb950;font-weight:700;text-decoration:none;">${esc(j.steam_price_text)}</a><div class="hint" style="font-size:10px;">${j.steam_listings} listings</div>` : '<span class="hint">—</span>'}</td>
+    </tr>`;
+  }).join('') || `<tr><td class="empty-state">—</td></tr>`;
+
+  const pager = document.getElementById('jewel-pagination');
+  pager.innerHTML = `
+    <button class="btn btn-outline" id="jewel-prev" ${jewelPage<=1?'disabled':''}>← ${currentLang==='th'?'ก่อนหน้า':'Prev'}</button>
+    <span class="hint">${currentLang==='th'?'หน้า':'Page'} ${jewelPage} / ${totalPages}</span>
+    <button class="btn btn-outline" id="jewel-next" ${jewelPage>=totalPages?'disabled':''}>${currentLang==='th'?'ถัดไป':'Next'} →</button>`;
+  const prevBtn = document.getElementById('jewel-prev'), nextBtn = document.getElementById('jewel-next');
+  if (prevBtn) prevBtn.addEventListener('click', () => { jewelPage--; renderJewels(); });
+  if (nextBtn) nextBtn.addEventListener('click', () => { jewelPage++; renderJewels(); });
+}
+document.getElementById('jewel-search').addEventListener('input', () => { jewelPage = 1; renderJewels(); });
+document.getElementById('jewel-cat-filter').addEventListener('change', () => { jewelPage = 1; renderJewels(); });
+document.getElementById('jewel-grade-filter').addEventListener('change', () => { jewelPage = 1; renderJewels(); });
+document.getElementById('jewel-market-filter').addEventListener('change', () => { jewelPage = 1; renderJewels(); });
+document.getElementById('jewel-sort').addEventListener('change', renderJewels);
+document.getElementById('btn-jewel-reset').addEventListener('click', jewelResetFilters);
 
 /* ================= FARM RANKING ================= */
 let farmSortKey = 'gold_per_sec', farmSortDir = 1; // 1 = highest first (most useful default for a farm-ranking list)
