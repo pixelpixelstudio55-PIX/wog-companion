@@ -7,10 +7,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #120a08; --bg2: #1a1210; --bg3: #241815;
+    --bg: #0a101c; --bg2: #101a2b; --bg3: #17233a;
     --gold: #d4a94a; --gold-bright: #f0c869;
-    --crimson: #7a1f1f; --crimson-bright: #b0342f;
-    --text: #ecdfce; --text-dim: #a08d7a; --line: rgba(212,169,74,0.2);
+    --navy-line: #24344f;
+    --text: #f5f7fb; --text-dim: #90a0ba; --line: rgba(212,169,74,0.2);
     --accent-bg: rgba(212,169,74,0.12);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -18,7 +18,7 @@
   h1, h2, h3, .display { font-family: 'Cinzel', serif; }
 
   header {
-    background: linear-gradient(180deg, #1a0e0c, var(--bg));
+    background: linear-gradient(180deg, #0e1729, var(--bg));
     border-bottom: 1px solid var(--line);
     padding: 16px 26px; display: flex; align-items: center; justify-content: space-between;
     position: sticky; top: 0; z-index: 50; flex-wrap: wrap; gap: 10px;
@@ -27,7 +27,7 @@
   header h1 span { color: var(--text-dim); font-size: 11px; display: block; font-family: 'Sarabun', sans-serif; letter-spacing: 2px; margin-top: 2px; }
   .lang-toggle { display: flex; gap: 4px; background: var(--bg3); border-radius: 8px; padding: 3px; }
   .lang-toggle button { border: none; background: transparent; color: var(--text-dim); padding: 7px 16px; border-radius: 6px; cursor: pointer; font-family: inherit; font-weight: 600; font-size: 13px; }
-  .lang-toggle button.active { background: var(--gold); color: #2a1a06; }
+  .lang-toggle button.active { background: var(--gold); color: #0e1729; }
 
   .tabs { display: flex; gap: 2px; padding: 0 26px; background: var(--bg2); border-bottom: 1px solid var(--line); overflow-x: auto; }
   .tab-btn { background: transparent; border: none; border-bottom: 3px solid transparent; color: var(--text-dim); padding: 13px 16px; cursor: pointer; font-family: inherit; font-weight: 600; font-size: 13.5px; white-space: nowrap; }
@@ -61,7 +61,11 @@
   .skill-row-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
 
   .card { background: var(--bg2); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; }
-  .skill-card .sk-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+  .skill-card .sk-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; gap: 8px; }
+  .skill-card .sk-head-l { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .sk-icon-img { width: 32px; height: 32px; object-fit: contain; border-radius: 6px; background: var(--bg3); flex-shrink: 0; }
+  .sk-icon-fallback { width: 32px; height: 32px; border-radius: 6px; background: var(--bg3); display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+  .jc-icon, .ec-icon { font-size: 20px; margin-right: 6px; }
   .skill-card .sk-name { font-weight: 700; color: var(--gold-bright); font-size: 13.5px; }
   .skill-card .sk-type { font-size: 9.5px; padding: 2px 7px; border-radius: 999px; background: var(--accent-bg); color: var(--gold); }
   .skill-card .sk-req { font-size: 11px; color: var(--text-dim); margin-bottom: 6px; }
@@ -93,13 +97,13 @@
   .profile-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-top: 12px; }
   .profile-field label { display: block; font-size: 11.5px; color: var(--text-dim); margin-bottom: 4px; }
   .profile-field input { width: 100%; background: var(--bg3); border: 1px solid var(--line); color: var(--text); padding: 8px 10px; border-radius: 6px; font-family: inherit; }
-  .btn { background: var(--gold); color: #2a1a06; border: none; border-radius: 6px; padding: 9px 18px; font-weight: 700; cursor: pointer; font-family: inherit; }
+  .btn { background: var(--gold); color: #0e1729; border: none; border-radius: 6px; padding: 9px 18px; font-weight: 700; cursor: pointer; font-family: inherit; }
   .btn-outline { background: transparent; border: 1px solid var(--line); color: var(--text); }
 
   .dps-result { font-family: 'Cinzel', serif; font-size: 26px; color: var(--gold-bright); }
   .empty-state { text-align: center; padding: 50px 20px; color: var(--text-dim); }
 
-  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(20px); background: #2a1a06; color: var(--gold-bright); padding: 10px 20px; border-radius: 8px; font-size: 13px; opacity: 0; pointer-events: none; transition: .2s; z-index: 999; }
+  .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(20px); background: #0e1729; color: var(--gold-bright); padding: 10px 20px; border-radius: 8px; font-size: 13px; opacity: 0; pointer-events: none; transition: .2s; z-index: 999; }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 </style>
 </head>
@@ -244,6 +248,60 @@ function applyStaticI18n(){
 }
 function fld(obj, base){ return obj[base + '_' + currentLang] ?? obj[base + '_en'] ?? obj[base]; }
 
+/* ---------- icons ----------
+   Real per-skill art is copyrighted game art, not factual data - we don't
+   ship copies of it in this repo. Instead we fetch the reference site's own
+   page at runtime (its CORS is wide open) and read its icon lookup table
+   straight out of memory, per-session, never saving a copy to disk here.
+   If that fails (offline, site down, blocked), every skill still gets a
+   themed emoji fallback chosen by our own branch-based scheme below. */
+let REMOTE_SKILL_ICONS = null;
+let remoteSkillIconsPromise = null;
+function loadRemoteSkillIcons(){
+  if (remoteSkillIconsPromise) return remoteSkillIconsPromise;
+  remoteSkillIconsPromise = (async () => {
+    try {
+      const cached = sessionStorage.getItem('wog_remote_icons_v1');
+      if (cached) { REMOTE_SKILL_ICONS = JSON.parse(cached); if(currentView==='skills') renderSkills(); return; }
+    } catch(e) {}
+    try {
+      const res = await fetch('https://titlee2111.github.io/war-of-genesis-helper/');
+      const html = await res.text();
+      const m = html.match(/skillIconsBase64\s*=\s*(\{[\s\S]*?\})\s*;/);
+      if (!m) return;
+      REMOTE_SKILL_ICONS = new Function('return ' + m[1])();
+      try { sessionStorage.setItem('wog_remote_icons_v1', JSON.stringify(REMOTE_SKILL_ICONS)); } catch(e) {}
+      if (currentView === 'skills') renderSkills();
+    } catch(e) { console.warn('Remote skill icons unavailable, using emoji fallback.', e); }
+  })();
+  return remoteSkillIconsPromise;
+}
+
+// Fallback emoji per branch archetype (1=single-target, 2=AoE, 3=atk/spd buff,
+// 4=defense, 5=support/utility) - our own scheme, not copied from anywhere.
+const BRANCH_EMOJI = { 1: '🎯', 2: '💥', 3: '⚡', 4: '🛡️', 5: '✨' };
+function skillIconHtml(sk, branchNum){
+  if (REMOTE_SKILL_ICONS && sk.icon && REMOTE_SKILL_ICONS[sk.icon]) {
+    return `<img src="${REMOTE_SKILL_ICONS[sk.icon]}" alt="" class="sk-icon-img">`;
+  }
+  return `<span class="sk-icon-fallback">${BRANCH_EMOJI[branchNum] || '✦'}</span>`;
+}
+
+// Jewel/equipment icons: the reference site itself uses plain emoji for these
+// (no real art), chosen by grade/slot - we pick our own emoji the same way.
+const JEWEL_GRADE_EMOJI = {
+  'Cấp Thấp (1★)': '⚪', 'Cấp Trung (2★)': '🟢', 'Cấp Cao (3★)': '🔵',
+  'Cao Cấp (4★)': '🟣', 'Đặc Biệt (5★)': '🟠', 'Thượng Hạng (6★)': '🔴',
+};
+function jewelIconHtml(j){ return `<span class="jc-icon">${JEWEL_GRADE_EMOJI[j.grade_name_vi] || '💎'}</span>`; }
+const SLOT_EMOJI = {
+  'Vũ khí chính': '⚔️', 'Vũ khí phụ': '🗡️', 'Nón / Mũ': '⛑️', 'Áo giáp': '🎽',
+  'Găng tay': '🧤', 'Giày / Ủng': '👢', 'Áo choàng': '🧣', 'Giáp vai': '🪖',
+  'Nhẫn': '💍', 'Khuyên tai': '👂', 'Dây chuyền': '📿', 'Vòng tay': '⛓️',
+  'Dây thắt lưng': '🎗️', 'Trâm cài / Huy hiệu': '🎖️',
+};
+function equipIconHtml(e){ return `<span class="ec-icon">${SLOT_EMOJI[e.slot_name] || '⚙️'}</span>`; }
+
 document.getElementById('lang-th').addEventListener('click', () => { currentLang='th'; localStorage.setItem('wog_lang','th'); applyStaticI18n(); renderCurrentView(); });
 document.getElementById('lang-en').addEventListener('click', () => { currentLang='en'; localStorage.setItem('wog_lang','en'); applyStaticI18n(); renderCurrentView(); });
 
@@ -286,8 +344,8 @@ function renderSkills(){
   const q = document.getElementById('skill-search').value.trim();
   const cls = GAME_DATA.skillTrees[currentClass];
   const box = document.getElementById('skill-content');
-  box.innerHTML = cls.branches.map(b => {
-    const skillsHtml = b.skills.filter(sk => skillMatches(sk, q)).map(sk => skillCardHtml(sk)).join('');
+  box.innerHTML = cls.branches.map((b, bi) => {
+    const skillsHtml = b.skills.filter(sk => skillMatches(sk, q)).map(sk => skillCardHtml(sk, bi+1)).join('');
     if(!skillsHtml) return '';
     return `<div class="branch-block"><div class="branch-title">${esc(fld(b,'branch_title'))}</div><div class="skill-row-grid">${skillsHtml}</div></div>`;
   }).join('') || `<div class="empty-state">—</div>`;
@@ -296,7 +354,7 @@ function renderSkills(){
   box.querySelectorAll('[data-alloc-minus]').forEach(btn => btn.addEventListener('click', () => allocSkill(btn.dataset.allocMinus, -1)));
 }
 
-function skillCardHtml(sk){
+function skillCardHtml(sk, branchNum){
   const lvl = skillAllocations[sk.id] || 0;
   const maxLvl = sk.levels.length;
   const cur = sk.levels[Math.max(0, lvl-1)] || sk.levels[0];
@@ -304,7 +362,7 @@ function skillCardHtml(sk){
   return `
     <div class="card skill-card">
       <div class="sk-head">
-        <span class="sk-name">${esc(sk.name_en)}</span>
+        <div class="sk-head-l">${skillIconHtml(sk, branchNum)}<span class="sk-name">${esc(sk.name_en)}</span></div>
         <span class="sk-type">${sk.is_passive ? t('passive') : t('active')}</span>
       </div>
       <div class="sk-req">${t('req_level')}: ${sk.req_player_level}${sk.pre_req ? ' · ' + esc(fld(sk.pre_req,'parent_name')) + ' Lv.' + sk.pre_req.req_level : ''}</div>
@@ -375,7 +433,7 @@ function renderEquipment(){
   function chunk(){
     if(myToken !== equipRenderToken) return;
     const rows = list.slice(idx, idx+CHUNK).map(e => `<tr>
-      <td>${esc(e.name_en)}</td><td>${esc(fld(e,'slot_name'))}</td><td><span class="tier-pill">T${e.tier}</span></td><td>${e.level_req}</td>
+      <td>${equipIconHtml(e)}${esc(e.name_en)}</td><td>${esc(fld(e,'slot_name'))}</td><td><span class="tier-pill">T${e.tier}</span></td><td>${e.level_req}</td>
       <td>${(e.stats||[]).map(s=>esc(fld(s,'text'))).join(', ')}</td><td>${e.price_gold ? e.price_gold.toLocaleString() : '-'}</td>
     </tr>`).join('');
     tbody.insertAdjacentHTML('beforeend', rows);
@@ -392,7 +450,7 @@ function renderJewels(){
   document.getElementById('jewel-count').innerHTML = `${t('showing')} <b>${list.length}</b> ${t('items')}`;
   document.getElementById('jewel-content').innerHTML = list.map(j => `
     <div class="jewel-card">
-      <div class="jc-name">${esc(j.name_en)}</div>
+      <div class="jc-name">${jewelIconHtml(j)}${esc(j.name_en)}</div>
       <div class="jc-grade">${esc(fld(j,'grade_name'))} · ${esc(fld(j,'category'))}</div>
       <div class="jc-desc">${esc(fld(j,'desc'))}</div>
       ${j.steam_price_text ? `<div class="jc-price">Steam: ${esc(j.steam_price_text)}</div>` : ''}
@@ -503,6 +561,7 @@ function computeDps(){
 /* ---------- init ---------- */
 applyStaticI18n();
 renderSkills();
+loadRemoteSkillIcons();
 // deep-linkable tabs, e.g. index.html#equipment - also just handy for testing
 if (location.hash) {
   const target = location.hash.slice(1);
