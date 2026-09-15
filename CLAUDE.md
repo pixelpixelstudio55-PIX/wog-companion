@@ -199,6 +199,28 @@ testing/bookmarking.
   back-off), started hidden by `start-local-relay.vbs`. The site tries relays in order — saved URL →
   local → Cloudflare — and fails over on unreachable or 429. The bar's Test button sends a real
   price request, because `/health` alone passed on the blocked Worker.
+  **Gear is listed once per tier: the Steam market name is `"<name_en> (Tier <tier>)"`** (e.g.
+  `Light Gloves (Tier 4)`), jewels and other items use the plain English name. Verified 499/499
+  priced gear rows in `raw/data_steamMarketPrices.js`; tier = last digit of the gear id on all
+  1,872 rows. The bare `Light Gloves` listing is a *different* entry ($3.39 vs $0.10–$12.71 per
+  tier), so before 2026-09-16 the live column asked Steam for the bare name and priced every tier
+  of a gear with one wrong number. Always go through `priceMarketName(item)` — cache keys, the
+  `data-price-name` attribute and listing links all use it.
+- **Bag & Vault Value** (`#inventory`, built 2026-09-16) — every item at location 1 (bag) and 2
+  (vault) read live, grouped by tid/location/lock/sockets, sorted by live price (per piece or
+  × quantity), live-priced first, then 14 Sep snapshot, then not listed, then untradeable.
+  Tradeability is the game's own `nn.services.steamMarket.isTradePossibleItem(tid, itemId)`
+  (gear: TradeType 1 and no level-down/rolled option; items: TradeType 1); listing also needs the
+  item unlocked (`canRegister`), so locked items are priced but flagged. Tier 1–2 gear and
+  low/mid jewels come back untradeable. Stackables (gold, fragments, skill points) have no
+  bag/vault location and are all TradeType 2 today — shown as chips, not priced.
+  ⚠️ **Boss's rule: prices on this page are manual only — one press per 15 minutes per browser
+  (`wog_inv_price_last`), with a countdown on the button. Never auto-queue a Steam request from
+  this page** (opening it, the 10 s item re-read and incoming prices only redraw from the cache).
+  A press that gets zero prices (relay off, Steam down) refunds the 15 minutes, and any names that
+  press left in the shared queue are dropped so they can't fire later by themselves. On
+  2026-09-16 Steam Community itself returned 503 for hours (the market page too, not just
+  `priceoverview`), so the flow was verified against a mock relay, not live Steam.
 - **Phone layout (fixed 2026-09-16, pre-existing bug).** At ≤860px `.app-shell` becomes a column,
   but its base rule kept `align-items: flex-start`, so the content column sized itself to its widest
   table instead of the screen and every `.table-scroll` grew rather than scrolled — on a 375px

@@ -191,6 +191,17 @@
   .opt-tag.warn { border-color: rgba(255,166,87,.45); color: #ffa657; }
   .opt-tag.bad { border-color: rgba(248,81,73,.45); color: #f85149; }
   @media (max-width: 900px) { .opt-grid { grid-template-columns: 1fr; } }
+  .inv-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin-bottom: 12px; }
+  .inv-stat { background: var(--bg2); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+  .inv-stat .k { font-size: 11.5px; color: var(--text-dim); }
+  .inv-stat .v { font-size: 18px; font-weight: 700; color: var(--gold-bright); margin-top: 2px; }
+  .inv-stat .s { font-size: 11.5px; color: var(--text-dim); }
+  .inv-tools { display: flex; flex-wrap: wrap; gap: 6px 14px; align-items: center; margin-bottom: 10px; font-size: 12.5px; }
+  .inv-tools .grp { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .inv-note { font-size: 11.5px; color: var(--text-dim); margin-top: 2px; }
+  .inv-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .inv-chip { background: var(--bg2); border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px; font-size: 12px; }
+  #btn-inv-price:disabled { opacity: .6; cursor: not-allowed; }
 
   /* ---- Live Steam prices ---- */
   .price-bar { display: flex; align-items: center; gap: 8px 12px; flex-wrap: wrap; background: var(--bg2); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; margin-bottom: 14px; font-size: 12.5px; }
@@ -484,6 +495,7 @@
   <button class="sidebar-link" data-view="history">📜 <span data-i="tab_history">Stage Run History</span></button>
   <button class="sidebar-link" data-view="smart">🧠 <span data-i="tab_smart">Smart Analysis</span><span class="sidebar-badge">Live</span></button>
   <button class="sidebar-link" data-view="optimize">🧬 <span data-i="tab_optimize">Resource Optimizer</span><span class="sidebar-badge">New</span></button>
+  <button class="sidebar-link" data-view="inventory">💰 <span data-i="tab_inventory">Bag &amp; Vault Value</span><span class="sidebar-badge">New</span></button>
   <button class="sidebar-link" data-view="profile">👤 <span data-i="tab_profile">Profile &amp; EXP</span></button>
   <button class="sidebar-link" data-view="forge">🔨 <span data-i="tab_forge">Jewel Forge &amp; Storage</span></button>
 </aside>
@@ -725,6 +737,18 @@
     <p class="hint" style="margin-top:14px;" data-i="opt-foot">ที่มาของข้อมูล: ของที่มี กฎการใส่ของ ค่าอัปสกิล และค่าฮีโร่ อ่านจากเกมโดยตรง · ผลแมพวัดจากรอบจริง · "คะแนน" เป็นค่าประมาณที่แปลงค่าสถานะเป็น "% เทียบเท่า" ตามเป้าหมายที่เลือก ใช้จัดอันดับ ไม่ใช่ตัวเลขในเกม</p>
   </div>
 
+  <div class="view" id="view-inventory">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
+      <div>
+        <h3 style="margin:0;color:var(--gold-bright);" id="inv-title"></h3>
+        <p class="hint" style="margin:4px 0 0;" id="inv-sub"></p>
+      </div>
+      <button class="btn btn-outline" id="btn-inv-reload"></button>
+    </div>
+    <div id="inv-bar"></div>
+    <div id="inv-body"></div>
+  </div>
+
   <div class="view" id="view-forge">
     <div class="forge-warn">
       <b>⚠️ <span data-i="forge-warn-title">ของจริงทุกปุ่มแล้ว</span></b>
@@ -955,6 +979,7 @@ const UI_STRINGS = {
   'forge-sw-reconnect-t': { th: 'ยืนยันเชื่อมต่อใหม่อัตโนมัติเมื่อเน็ตหลุด', en: 'Auto-confirm reconnect on network error' },
   'forge-sw-reconnect-d': { th: 'เจอกล่อง "Reconnect Failed" จะกด Confirm ให้เองไม่ให้ AFK สะดุด — จุดนี้ยังไม่เคยเจอเหตุการณ์จริงให้ทดสอบ ทำตามโครงสร้างที่เจอในโค้ดต้นฉบับ ถ้าเกมเปลี่ยนหน้าตา popup อาจไม่ทำงาน', en: 'Clicks "Confirm" automatically when a "Reconnect Failed" dialog appears, so AFK farming isn\'t interrupted - built from the reference site\'s own code structure but never seen a real disconnect to test against, so it may silently not fire if the game\'s popup shape differs.' },
   tab_optimize: { th: 'รีดศักยภาพทรัพยากร', en: 'Resource Optimizer' },
+  tab_inventory: { th: 'ของในกระเป๋า & คลัง', en: 'Bag & Vault Value' },
   'opt-head-title': { th: '🧬 รีดศักยภาพทรัพยากร', en: '🧬 Resource Optimizer' },
   'opt-head-sub': { th: 'อ่านของทุกชิ้น สกิล และแต้มที่บอสมีอยู่จริงจากเกม แล้วบอกว่าควรเล่นอาชีพไหน อัปอะไร ใส่อะไร และฟาร์มที่ไหนคุ้มที่สุด — แนะนำอย่างเดียว ไม่แตะเกม', en: 'Reads every item, skill and point you actually own from the game, then tells you which class to play, what to upgrade, what to wear and where to farm - recommendations only, nothing is changed in the game.' },
   'opt-btn-refresh': { th: '🔄 รีเฟรช', en: '🔄 Refresh' },
@@ -1116,7 +1141,8 @@ document.getElementById('gamedata-toggle').addEventListener('click', () => {
 });
 function renderCurrentView(){
   ({ skills: renderSkills, training: renderTraining, equipment: renderEquipment, jewels: renderJewels, farm: renderFarm, profile: renderProfile,
-     dpsbreak: renderDpsBreakdown, history: renderHistory, smart: renderSmartAnalysis, forge: renderForge, optimize: renderOptimizer })[currentView]();
+     dpsbreak: renderDpsBreakdown, history: renderHistory, smart: renderSmartAnalysis, forge: renderForge, optimize: renderOptimizer,
+     inventory: renderInventory })[currentView]();
 }
 
 /* ================= SKILL TREE ================= */
@@ -4588,11 +4614,22 @@ function priceParseThb(s){
 function priceFmtThb(n){ return '฿' + Number(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
 function priceFmtUsd(n){ return '$' + Number(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: n < 1 ? 3 : 2 }); }
 
+// Steam lists gear once per tier, as "Light Gloves (Tier 4)". Checked against
+// the 14 Sep snapshot: 499 of 499 priced gear rows match "<name_en> (Tier <tier>)".
+// The bare "Light Gloves" listing is a different entry, so asking for the bare
+// name (as this code did before 2026-09-16) priced every tier of a gear with
+// one wrong number. Jewels and other items use their plain English name.
+function priceMarketName(item){
+  if (!item) return '';
+  if (item.market_name) return item.market_name;
+  return item.tier != null && item.slot != null ? `${item.name_en} (Tier ${item.tier})` : item.name_en;
+}
+
 // What the price column shows for one item.
 function priceOf(item){
   if (!item) return null;
   const rate = priceFx && priceFx.rate;
-  const live = priceCache[item.name_en];
+  const live = priceCache[priceMarketName(item)];
   if (live && Date.now() - live.at < 24 * 60 * 60 * 1000) {
     if (!live.listed || live.thb == null) return { source: 'live', listed: false, at: live.at };
     return { source: 'live', listed: true, thb: live.thb, usd: rate ? live.thb * rate : null, volume: live.volume,
@@ -4611,7 +4648,8 @@ function priceUsdForSort(item){
 function priceCellHtml(item){
   const th = currentLang === 'th';
   const p = priceOf(item);
-  const attr = `data-price-name="${esc(item.name_en)}"`;
+  const market = priceMarketName(item);
+  const attr = `data-price-name="${esc(market)}"`;
   if (!p) return `<td style="text-align:right;" ${attr}><span class="hint">—</span></td>`;
   if (!p.listed) {
     return `<td style="text-align:right;" ${attr}><span class="hint">${th ? 'ไม่มีขายบนตลาด' : 'not listed'}</span><div style="font-size:10px;color:#7ee787;">● ${th ? 'เช็คสดแล้ว' : 'checked live'}</div></td>`;
@@ -4622,12 +4660,18 @@ function priceCellHtml(item){
   const tag = p.source === 'live'
     ? `<span style="color:#7ee787;">● ${th ? 'สด' : 'live'}</span>${p.stale ? ` <span class="hint">(${th ? 'เกิน 30 นาที' : '>30 min old'})</span>` : ''}${p.volume ? ` <span class="hint">· ${th ? 'ขายใน 24 ชม.' : '24h sold'} ${esc(p.volume)}</span>` : ''}`
     : `<span class="hint">${th ? 'ราคาชุด 14 ก.ย.' : '14 Sep snapshot'}${p.listings ? ` · ${p.listings} listings` : ''}</span>`;
-  const url = item.steam_url || `https://steamcommunity.com/market/search?appid=4891320&q=${encodeURIComponent(item.name_en)}`;
+  const url = `https://steamcommunity.com/market/listings/4891320/${encodeURIComponent(market)}`;
   return `<td style="text-align:right;" ${attr}><a href="${esc(url)}" target="_blank" rel="noopener" style="color:#3fb950;font-weight:700;text-decoration:none;">${esc(main)}</a>${sub ? `<div style="font-size:11px;color:var(--text-dim);">${esc(sub)}</div>` : ''}<div style="font-size:10px;">${tag}</div></td>`;
 }
 
+let priceItemByName = null;
 function priceFindItem(name){
-  return GAME_DATA.equipments.find(e => e.name_en === name) || GAME_DATA.jewelDatabase.find(j => j.name_en === name) || null;
+  if (!priceItemByName) {
+    priceItemByName = new Map();
+    GAME_DATA.jewelDatabase.forEach(j => priceItemByName.set(priceMarketName(j), j));
+    GAME_DATA.equipments.forEach(e => priceItemByName.set(priceMarketName(e), e));
+  }
+  return priceItemByName.get(name) || invExtraItems.get(name) || null;
 }
 function priceRefreshCells(name){
   const item = priceFindItem(name);
@@ -4695,6 +4739,7 @@ async function priceRunQueue(){
         priceSaveCache();
         priceLastError = null;
         priceRefreshCells(name);
+        if (currentView === 'inventory') invRenderBody();   // totals and order depend on the new price
       } else {
         priceLastError = r.error;
       }
@@ -4723,6 +4768,7 @@ function priceStatusText(){
     : (th ? 'พร้อมเช็คราคาสด' : 'Ready to check live prices');
 }
 function priceUpdateBars(){
+  invUpdateBar();
   document.querySelectorAll('.price-bar').forEach(bar => {
     const st = bar.querySelector('.price-status');
     if (st) st.textContent = priceStatusText();
@@ -4828,6 +4874,369 @@ function priceAfterRender(viewId){
     timer = setTimeout(() => { if (view.classList.contains('active')) priceAfterRender(viewId); }, 350);
   }).observe(view, { childList: true, subtree: true });
 });
+
+/* ================= BAG & VAULT VALUE =================
+   Every item in the bag (location 1) and the vault (location 2), with its live
+   Steam price, most expensive first. Whether an item can go on the market is
+   the game's own rule, nn.services.steamMarket.isTradePossibleItem(tid, itemId):
+   gear needs TradeType 1 and no level-down / rolled option, other items
+   TradeType 1. Listing also needs the item unlocked (canRegister), so locked
+   items are priced but flagged.
+   Price checks on this page are manual only (boss's rule, 2026-09-16): one
+   press per 15 minutes per browser, with a countdown on the button. Nothing
+   here queues a Steam request by itself - opening the view, the 10 s item
+   re-read and incoming prices only redraw from the shared cache. A press that
+   gets no price at all (relay not running, Steam down) gives the 15 minutes
+   back, and whatever that press left in the queue is dropped so it can't run
+   later on its own.
+   Stackable items (gold, fragments, skill points...) have no bag/vault
+   location in the game; they're listed separately, and only enter the priced
+   table if the game says they can be traded. */
+const INV_PRICE_COOLDOWN_MS = 15 * 60 * 1000;
+const INV_PRICE_LAST_KEY = 'wog_inv_price_last';
+function invLoadPref(key, fallback){ try { return localStorage.getItem(key) || fallback; } catch(e) { return fallback; } }
+function invSavePref(key, v){ try { localStorage.setItem(key, v); } catch(e) {} }
+let invData = null, invSig = '', invError = null, invLoading = false;
+let invSort = invLoadPref('wog_inv_sort', 'unit');       // unit | total
+let invScope = invLoadPref('wog_inv_scope', 'all');      // all | bag | vault
+let invHideUntradeable = invLoadPref('wog_inv_hide', '0') === '1';
+let invBatch = null;         // the press in progress: { names, started }
+let invLastResult = null;    // { got, total, refunded, error }
+const invExtraItems = new Map();   // market name -> stand-in item for things GAME_DATA doesn't list
+
+function invLastCheck(){ return Number(invLoadPref(INV_PRICE_LAST_KEY, '0')) || 0; }
+function invCooldownLeft(){ return Math.max(0, invLastCheck() + INV_PRICE_COOLDOWN_MS - Date.now()); }
+function invFmtClock(ms){ const sec = Math.ceil(ms / 1000); return Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0'); }
+
+function buildInventoryExpr(){
+  return `(function(){
+    try {
+      var loc = function(key){ try { var l = nn.db.locale.get(key); return l ? (l.EN || '') : ''; } catch(e){ return ''; } };
+      var sm = nn.services.steamMarket;
+      var items = nn.net.data.item.getAllItemNotStack().filter(function(it){ return it.location === 1 || it.location === 2; }).map(function(it){
+        var er = null, ir = null;
+        try { er = nn.db.equip.get(it.itemTid); } catch(e){}
+        if (!er) { try { ir = nn.db.item.get(it.itemTid); } catch(e){} }
+        var row = er || ir, trade = false;
+        try { trade = !!sm.isTradePossibleItem(it.itemTid, it.itemId); } catch(e){}
+        return {
+          tid: it.itemTid, loc: it.location, lock: !!it.isLock, trade: trade,
+          kind: er ? 'gear' : (ir && ir.ItemType === 6 ? 'jewel' : 'item'),
+          name: row ? loc(row.ItemName) : '', lv: er ? er.LimitLevel : null,
+          sockets: (it.randomOptions || []).filter(function(o){ return o.slotIdx > 0 && o.itemTid; }).map(function(o){ return o.itemTid; })
+        };
+      });
+      var stacks = [];
+      try {
+        var st = nn.net.data.item.getAllItemStack();
+        (st && st.getValuesArray ? st.getValuesArray() : Array.from(st || [])).forEach(function(v){
+          var ir = null; try { ir = nn.db.item.get(v._itemTid); } catch(e){}
+          var trade = false; try { trade = !!(ir && sm.isTradePossibleItem(v._itemTid, 0n)); } catch(e){}
+          stacks.push({ tid: v._itemTid, cnt: String(v._cnt), name: ir ? loc(ir.ItemName) : '', itemType: ir ? ir.ItemType : null, trade: trade });
+        });
+      } catch(e){}
+      return JSON.stringify({ items: items, stacks: stacks });
+    } catch(e) { return JSON.stringify({ error: e.message }); }
+  })()`;
+}
+
+// The object the shared price code works with: the GAME_DATA row when there is
+// one (so the 14 Sep snapshot still shows before a live check), otherwise a
+// stand-in named the way Steam names it.
+function invPriceItem(r){
+  const e = GAME_DATA.equipments.find(z => z.id === r.tid) || GAME_DATA.jewelDatabase.find(z => z.id === r.tid);
+  if (e) return e;
+  const nm = r.name || ('#' + r.tid);
+  const market = r.kind === 'gear' ? nm + ' (Tier ' + (r.tid % 10) + ')' : nm;   // tier = last id digit on all 1,872 gear rows
+  let it = invExtraItems.get(market);
+  if (!it) { it = { name_en: nm, market_name: market }; invExtraItems.set(market, it); }
+  return it;
+}
+
+function invRows(){
+  if (!invData) return [];
+  const groups = new Map();
+  (invData.items || []).forEach(x => {
+    const key = [x.tid, x.loc, x.lock ? 1 : 0, x.trade ? 1 : 0, (x.sockets || []).join('.')].join('|');
+    const g = groups.get(key);
+    if (g) g.qty++; else groups.set(key, { ...x, qty: 1 });
+  });
+  (invData.stacks || []).filter(x => x.trade && Number(x.cnt) > 0).forEach(x => {
+    groups.set('stack|' + x.tid, { tid: x.tid, loc: 0, lock: false, trade: true, kind: 'item', name: x.name, sockets: [], qty: Number(x.cnt) });
+  });
+  return [...groups.values()].map(r => {
+    const item = invPriceItem(r);
+    return { ...r, item, market: priceMarketName(item), price: r.trade ? priceOf(item) : null };
+  });
+}
+
+// Live prices first (highest first), then items only the 14 Sep snapshot
+// prices, then ones Steam has no listing for, then unchecked, then untradeable.
+function invRank(r){
+  if (!r.trade) return 4;
+  const pr = r.price;
+  if (pr && pr.source === 'live' && pr.listed) return 0;
+  if (pr && pr.source === 'snapshot') return 1;
+  if (pr && pr.source === 'live') return 2;
+  return 3;
+}
+function invSortValue(r){
+  const pr = r.price;
+  if (!pr || !pr.listed) return 0;
+  const unit = invRank(r) === 0 ? (pr.thb || 0) : (pr.usd || 0);
+  return invSort === 'total' ? unit * r.qty : unit;
+}
+function invCompare(a, b){
+  return invRank(a) - invRank(b) || invSortValue(b) - invSortValue(a) || String(a.market).localeCompare(String(b.market));
+}
+
+function invMoneyHtml(thb){
+  const th = currentLang === 'th';
+  const usd = priceFx && priceFx.rate ? thb * priceFx.rate : null;
+  const main = th || usd == null ? priceFmtThb(thb) : priceFmtUsd(usd);
+  const sub = usd == null ? '' : (th ? '≈ ' + priceFmtUsd(usd) : '≈ ' + priceFmtThb(thb));
+  return '<b style="color:#3fb950;">' + esc(main) + '</b>' + (sub ? '<div style="font-size:11px;color:var(--text-dim);">' + esc(sub) + '</div>' : '');
+}
+
+function invTotalCellHtml(r){
+  const th = currentLang === 'th';
+  const pr = r.price;
+  if (!r.trade || !pr || !pr.listed) return '<td style="text-align:right;"><span class="hint">—</span></td>';
+  if (pr.source === 'live') return '<td style="text-align:right;">' + invMoneyHtml(pr.thb * r.qty) + '</td>';
+  const usd = pr.usd * r.qty;
+  return '<td style="text-align:right;"><span class="hint">' + esc(priceFmtUsd(usd)) + '<br>' + (th ? 'ราคาชุด 14 ก.ย.' : '14 Sep snapshot') + '</span></td>';
+}
+
+function invNameCellHtml(r){
+  const th = currentLang === 'th';
+  const gd = GAME_DATA.equipments.find(z => z.id === r.tid) || GAME_DATA.jewelDatabase.find(z => z.id === r.tid);
+  const name = gd ? fld(gd, 'name') : (r.name || '#' + r.tid);
+  const tier = r.kind === 'gear' ? r.tid % 10 : null;
+  const color = tier ? (TIER_STYLE[tier] || TIER_STYLE[1]).color : 'var(--text)';
+  let extra = '';
+  if (tier) extra += ' ' + tierBadgeHtml(tier) + (r.lv ? ' <span class="hint">Lv ' + r.lv + '</span>' : '');
+  else if (r.kind === 'jewel' && gd) extra += ' <span class="hint">' + esc(fld(gd, 'grade_name') || '') + '</span>';
+  const notes = [];
+  if (!r.trade) notes.push('⛔ ' + (th ? 'ขายบนตลาดไม่ได้ (เกมกำหนด)' : "can't be sold on the market (game rule)"));
+  else if (r.lock) notes.push('🔒 ' + (th ? 'ล็อกอยู่ ต้องปลดล็อกในเกมก่อนถึงจะตั้งขายได้' : 'locked - unlock it in the game before listing'));
+  if (r.sockets && r.sockets.length) {
+    const js = r.sockets.map(t => { const j = GAME_DATA.jewelDatabase.find(z => z.id === t); return j ? fld(j, 'name') : '#' + t; });
+    notes.push('💎 ' + (th ? 'ฝังอยู่: ' : 'socketed: ') + esc(js.join(', ')) + (th ? ' (ไม่ได้รวมในราคา)' : ' (not included in the price)'));
+  }
+  if (r.trade) notes.push('Steam: ' + esc(r.market));
+  return '<td><b style="color:' + color + ';">' + esc(name) + '</b>' + extra + notes.map(n => '<div class="inv-note">' + n + '</div>').join('') + '</td>';
+}
+
+function invLocHtml(loc, th){
+  return loc === 0 ? (th ? '📦 ไอเทมกองรวม' : '📦 Stack') : optLocTag(loc, th);
+}
+
+function invRenderHead(){
+  const th = currentLang === 'th';
+  const title = document.getElementById('inv-title');
+  if (!title) return;
+  title.textContent = th ? '💰 ของในกระเป๋า & คลัง + ราคาสด' : '💰 Bag & Vault - live value';
+  document.getElementById('inv-sub').textContent = th
+    ? 'อ่านของทุกชิ้นในกระเป๋าและคลังจากเกมโดยตรง แล้วเรียงตามราคาสดบนตลาด Steam จากแพงสุด · อ่านอย่างเดียว ไม่แตะของในเกม'
+    : 'Reads every item in your bag and vault straight from the game and sorts it by live Steam market price, highest first - read-only, nothing in the game is touched.';
+  document.getElementById('btn-inv-reload').textContent = th ? '🔄 อ่านของจากเกมใหม่' : '🔄 Re-read items';
+}
+
+function invMountBar(){
+  const host = document.getElementById('inv-bar');
+  if (!host || host.dataset.lang === currentLang) return;
+  const th = currentLang === 'th';
+  host.dataset.lang = currentLang;
+  host.innerHTML = '<div class="price-bar">'
+    + '<button class="btn" id="btn-inv-price"></button>'
+    + '<div style="flex:1 1 260px;min-width:0;"><div id="inv-price-status"></div>'
+    + '<div class="hint" style="font-size:11.5px;margin-top:2px;">' + (th
+      ? 'เช็คเป็นเงินบาทจากตลาด Steam แล้วแปลงเป็น USD · กดเองเท่านั้น ได้ 1 ครั้งทุก 15 นาทีต่อเครื่อง · ตั้งค่าตัวช่วยเช็คราคาได้ที่หน้าอุปกรณ์'
+      : 'Checked in THB on the Steam market, converted to USD · manual only, once every 15 minutes per computer · relay settings are on the Equipment page')
+    + '</div></div><span class="hint" id="inv-fx"></span></div>';
+  document.getElementById('btn-inv-price').addEventListener('click', invStartPriceCheck);
+}
+
+function invUpdateBar(){
+  const btn = document.getElementById('btn-inv-price');
+  if (!btn) return;
+  const th = currentLang === 'th';
+  const left = invCooldownLeft();
+  const tradeNames = [...new Set(invRows().filter(r => r.trade).map(r => r.market))];
+  if (invBatch) {
+    const pending = priceQueue.filter(n => invBatch.names.includes(n)).length;
+    btn.disabled = true;
+    btn.textContent = th ? '⏳ กำลังเช็คราคา… เหลือ ' + pending : '⏳ Checking… ' + pending + ' left';
+  } else if (left > 0) {
+    btn.disabled = true;
+    btn.textContent = th ? '⏳ เช็คได้อีกครั้งใน ' + invFmtClock(left) : '⏳ Next check in ' + invFmtClock(left);
+  } else {
+    btn.disabled = !tradeNames.length;
+    btn.textContent = th ? '💱 เช็คราคาสดตอนนี้ (' + tradeNames.length + ' รายการ)' : '💱 Check live prices now (' + tradeNames.length + ' items)';
+  }
+  const st = document.getElementById('inv-price-status');
+  if (st) {
+    let msg;
+    const last = invLastCheck();
+    const lastTxt = last ? new Date(last).toLocaleTimeString(th ? 'th-TH' : 'en-GB', { hour: '2-digit', minute: '2-digit' }) : '';
+    if (invBatch) {
+      const pending = priceQueue.filter(n => invBatch.names.includes(n)).length;
+      msg = (th ? 'กำลังเช็คราคาสด เหลืออีก ' + pending + ' รายการ (~' + Math.ceil(pending * PRICE_GAP_MS / 1000) + ' วิ)' : 'Checking live prices - ' + pending + ' left (~' + Math.ceil(pending * PRICE_GAP_MS / 1000) + 's)')
+        + (priceLastError === 'rate' ? (th ? ' · Steam ขอให้รอ จะเช็คต่อเองใน 1 นาที (ยังเป็นการกดครั้งนี้)' : ' · Steam asked us to wait; this same press resumes in a minute') : '')
+        + (priceActiveRelay ? ' · ' + (th ? 'ผ่าน' : 'via ') + priceRelayLabel(priceActiveRelay, th) : '');
+    } else if (invLastResult && invLastResult.refunded) {
+      const why = invLastResult.error === 'network'
+        ? (th ? 'ไม่มีตัวช่วยเช็คราคาตัวไหนตอบ — ดับเบิลคลิก start-local-relay.vbs (ในโฟลเดอร์ workers/steam-price-relay) แล้วกดใหม่' : 'no price relay answered - double-click start-local-relay.vbs (in workers/steam-price-relay) and press again')
+        : (th ? 'Steam ไม่ตอบราคา (' + (invLastResult.error || '?') + ') มักเป็นตลาด Steam ขัดข้องชั่วคราว ลองใหม่ภายหลัง' : 'Steam returned no prices (' + (invLastResult.error || '?') + '), usually a temporary Steam outage - try again later');
+      msg = '⚠️ ' + (th ? 'เช็คราคาไม่ได้เลย จึงคืนเวลารอ 15 นาทีให้ · ' : "No price came back, so the 15-minute wait was given back · ") + why;
+    } else if (invLastResult) {
+      msg = '✅ ' + (th ? 'เช็คล่าสุด ' + lastTxt + ' · ได้ราคา ' + invLastResult.got + '/' + invLastResult.total + ' รายการ' : 'Last check ' + lastTxt + ' · ' + invLastResult.got + '/' + invLastResult.total + ' prices')
+        + (invLastResult.got < invLastResult.total ? (th ? ' (ที่เหลือ Steam ไม่ตอบ)' : ' (Steam gave no answer for the rest)') : '');
+    } else {
+      msg = last ? (th ? 'เช็คล่าสุด ' + lastTxt + ' · ราคาที่แสดงมาจากที่เช็คเก็บไว้' : 'Last check ' + lastTxt + ' · prices shown are from saved checks')
+                 : (th ? 'ยังไม่เคยเช็คราคาสดในเมนูนี้ · ตอนนี้แสดงราคาที่เคยเช็คไว้ หรือราคาชุด 14 ก.ย.' : 'No live check from this page yet · showing saved checks or the 14 Sep snapshot');
+    }
+    st.textContent = msg;
+  }
+  const fx = document.getElementById('inv-fx');
+  if (fx) fx.textContent = priceFx && priceFx.rate ? '1 ฿ = $' + priceFx.rate.toFixed(5) : '';
+}
+
+async function invStartPriceCheck(){
+  const th = currentLang === 'th';
+  if (invBatch || invCooldownLeft() > 0) return;
+  if (!invData) { toast(th ? 'ยังอ่านของจากเกมไม่ได้ — เปิดเกมและเชื่อมต่อ Live Sync ก่อน' : "Items couldn't be read yet - start the game and connect Live Sync first"); return; }
+  const names = [...new Set(invRows().filter(r => r.trade).map(r => r.market))];
+  if (!names.length) { toast(th ? 'ไม่มีของที่ขายบนตลาดได้ในกระเป๋าและคลัง' : 'Nothing in the bag or vault can be sold on the market'); return; }
+  const prevLast = invLastCheck();
+  const started = Date.now();
+  invSavePref(INV_PRICE_LAST_KEY, String(started));
+  invBatch = { names, started };
+  invLastResult = null;
+  priceLastError = null;
+  names.forEach(n => { if (!priceQueue.includes(n)) priceQueue.push(n); });
+  invUpdateBar();
+  priceRunQueue();
+  // Wait until this press's names have all been tried, or the queue stopped
+  // (it stops early when no relay answers).
+  while (priceQueue.some(n => names.includes(n)) && priceBusy) await new Promise(res => setTimeout(res, 1000));
+  for (let i = priceQueue.length - 1; i >= 0; i--) if (names.includes(priceQueue[i])) priceQueue.splice(i, 1);
+  const got = names.filter(n => priceCache[n] && priceCache[n].at >= started).length;
+  const refunded = got === 0;
+  if (refunded) {
+    try { prevLast ? localStorage.setItem(INV_PRICE_LAST_KEY, String(prevLast)) : localStorage.removeItem(INV_PRICE_LAST_KEY); } catch(e) {}
+  }
+  invLastResult = { got, total: names.length, refunded, error: priceLastError };
+  invBatch = null;
+  invRenderBody();
+  invUpdateBar();
+}
+
+function invRenderBody(){
+  const host = document.getElementById('inv-body');
+  if (!host) return;
+  const th = currentLang === 'th';
+  if (!invData) {
+    host.innerHTML = '<div class="empty-state">' + (invError
+      ? (th ? 'อ่านของไม่ได้ (เกมไม่ได้เปิด หรือยังไม่ได้เชื่อมต่อ Live Sync)' : 'Unavailable (game not running / not connected)')
+      : (th ? 'กำลังอ่านของจากเกม…' : 'Reading items from the game…')) + '</div>';
+    invUpdateBar();
+    return;
+  }
+  const all = invRows();
+  const scoped = all.filter(r => invScope === 'all' || (invScope === 'bag' ? r.loc === 1 : r.loc === 2));
+  const rows = scoped.filter(r => r.trade || !invHideUntradeable).sort(invCompare);
+
+  const pieces = loc => all.filter(r => r.loc === loc).reduce((a, r) => a + r.qty, 0);
+  const tradeRows = scoped.filter(r => r.trade);
+  const liveRows = tradeRows.filter(r => r.price && r.price.source === 'live' && r.price.listed);
+  const liveTotal = liveRows.reduce((a, r) => a + r.price.thb * r.qty, 0);
+  const sellNow = liveRows.filter(r => !r.lock).reduce((a, r) => a + r.price.thb * r.qty, 0);
+  const noLive = tradeRows.filter(r => !(r.price && r.price.source === 'live')).length;
+  const stat = (k, v, sub) => '<div class="inv-stat"><div class="k">' + k + '</div><div class="v">' + v + '</div>' + (sub ? '<div class="s">' + sub + '</div>' : '') + '</div>';
+  const usdSub = thb => priceFx && priceFx.rate ? '≈ ' + esc(priceFmtUsd(thb * priceFx.rate)) : '';
+
+  let html = '<div class="inv-stats">'
+    + stat(th ? 'ของทั้งหมด' : 'Items', (pieces(1) + pieces(2)) + (th ? ' ชิ้น' : ''), (th ? '🎒 กระเป๋า ' : '🎒 Bag ') + pieces(1) + ' · ' + (th ? '🏛 คลัง ' : '🏛 Vault ') + pieces(2))
+    + stat(th ? 'ขายบนตลาดได้' : 'Sellable on market', tradeRows.reduce((a, r) => a + r.qty, 0) + (th ? ' ชิ้น' : ''), (th ? 'ในขอบเขตที่เลือก · ขายไม่ได้ ' : 'in this view · not sellable ') + scoped.filter(r => !r.trade).reduce((a, r) => a + r.qty, 0))
+    + stat(th ? 'มูลค่ารวม (ราคาสด)' : 'Total (live prices)', esc(priceFmtThb(liveTotal)), usdSub(liveTotal) + (noLive ? (th ? ' · ยังไม่มีราคาสด ' + noLive + ' รายการ' : ' · ' + noLive + ' without a live price') : ''))
+    + stat(th ? 'ขายได้ทันที (ไม่ติดล็อก)' : 'Sellable right now (unlocked)', esc(priceFmtThb(sellNow)), usdSub(sellNow))
+    + '</div>';
+
+  const btn = (grp, val, label, active) => '<button class="filter-btn' + (active ? ' active' : '') + '" data-' + grp + '="' + val + '">' + label + '</button>';
+  html += '<div class="inv-tools">'
+    + '<div class="grp">' + btn('scope', 'all', th ? 'ทั้งหมด' : 'All', invScope === 'all') + btn('scope', 'bag', th ? '🎒 กระเป๋า' : '🎒 Bag', invScope === 'bag') + btn('scope', 'vault', th ? '🏛 คลัง' : '🏛 Vault', invScope === 'vault') + '</div>'
+    + '<div class="grp"><span class="hint">' + (th ? 'เรียงตาม' : 'Sort by') + '</span>' + btn('sort', 'unit', th ? 'ราคาสดต่อชิ้น' : 'Live price each', invSort === 'unit') + btn('sort', 'total', th ? 'มูลค่ารวม (× จำนวน)' : 'Total value (× qty)', invSort === 'total') + '</div>'
+    + '<label class="grp" style="cursor:pointer;"><input type="checkbox" id="inv-hide"' + (invHideUntradeable ? ' checked' : '') + '> ' + (th ? 'ซ่อนของที่ขายไม่ได้' : 'Hide unsellable') + '</label>'
+    + '</div>';
+
+  if (!rows.length) {
+    html += '<div class="empty-state" style="padding:24px 10px;">' + (th ? 'ไม่มีของในขอบเขตนี้' : 'Nothing here') + '</div>';
+  } else {
+    html += '<div style="overflow-x:auto;"><table class="data-table"><thead><tr>'
+      + '<th>#</th><th>' + (th ? 'ไอเทม' : 'Item') + '</th><th>' + (th ? 'อยู่ที่' : 'Where') + '</th>'
+      + '<th style="text-align:right;">' + (th ? 'จำนวน' : 'Qty') + '</th>'
+      + '<th style="text-align:right;">' + (th ? 'ราคาสด / ชิ้น' : 'Live price each') + '</th>'
+      + '<th style="text-align:right;">' + (th ? 'มูลค่ารวม' : 'Total') + '</th>'
+      + '</tr></thead><tbody>'
+      + rows.map((r, i) => '<tr' + (r.trade ? '' : ' style="opacity:.6;"') + '><td class="hint">' + (i + 1) + '</td>' + invNameCellHtml(r)
+        + '<td style="white-space:nowrap;">' + invLocHtml(r.loc, th) + '</td>'
+        + '<td style="text-align:right;">' + r.qty.toLocaleString() + '</td>'
+        + (r.trade ? priceCellHtml(r.item) : '<td style="text-align:right;"><span class="hint">' + (th ? 'ขายไม่ได้' : 'not sellable') + '</span></td>')
+        + invTotalCellHtml(r) + '</tr>').join('')
+      + '</tbody></table></div>';
+  }
+
+  const res = (invData.stacks || []).filter(x => !x.trade && x.itemType !== 3 && Number(x.cnt) > 0);
+  if (res.length) {
+    html += '<h4 style="margin:18px 0 6px;color:var(--gold);">' + (th ? '📦 ทรัพยากรและวัสดุ' : '📦 Currencies & materials') + '</h4>'
+      + '<p class="hint" style="margin:0 0 8px;">' + (th ? 'ของแบบกองรวม เกมไม่ได้แยกว่าอยู่กระเป๋าหรือคลัง และขายบนตลาดไม่ได้ทั้งหมด (เกมกำหนด) จึงไม่มีราคา' : "Stackable items: the game doesn't place them in the bag or vault, and none can be sold on the market (game rule), so they have no price.") + '</p>'
+      + '<div class="inv-chips">' + res.map(x => '<span class="inv-chip">' + esc(x.name || '#' + x.tid) + ' <b>' + Number(x.cnt).toLocaleString() + '</b></span>').join('') + '</div>';
+  }
+
+  html += '<p class="hint" style="margin-top:14px;">' + (th
+    ? 'ราคาสด = ราคาต่ำสุดที่มีคนตั้งขายบน Steam ตอนเช็ค (ถ้าไม่มีคนตั้งขายจะใช้ราคากลาง) ยังไม่หักค่าธรรมเนียม Steam เงินที่ได้จริงจะน้อยกว่านี้ · ถ้าขายพร้อมกันหลายชิ้น ราคามักลดลง · ของที่ติดล็อกต้องปลดล็อกในเกมก่อนตั้งขาย · ราคาที่เก่ากว่า 24 ชม. จะไม่นับเป็นราคาสด'
+    : "Live price = the lowest current Steam listing when checked (median if none), before Steam's fees - you'll receive less · selling many at once usually pushes the price down · locked items must be unlocked in the game before listing · prices older than 24 h aren't treated as live.")
+    + '</p>';
+
+  host.innerHTML = html;
+  host.querySelectorAll('[data-scope]').forEach(b => b.addEventListener('click', () => { invScope = b.dataset.scope; invSavePref('wog_inv_scope', invScope); invRenderBody(); }));
+  host.querySelectorAll('[data-sort]').forEach(b => b.addEventListener('click', () => { invSort = b.dataset.sort; invSavePref('wog_inv_sort', invSort); invRenderBody(); }));
+  const hide = host.querySelector('#inv-hide');
+  if (hide) hide.addEventListener('change', () => { invHideUntradeable = hide.checked; invSavePref('wog_inv_hide', hide.checked ? '1' : '0'); invRenderBody(); });
+  invUpdateBar();
+}
+
+async function refreshInventoryLive(){
+  if (invLoading) return;
+  invLoading = true;
+  try {
+    const r = await sendLiveEval(buildInventoryExpr());
+    if (!r || r.error) throw new Error((r && r.error) || 'no data');
+    invError = null;
+    const sig = JSON.stringify(r);
+    if (sig !== invSig) { invSig = sig; invData = r; invRenderBody(); }
+  } catch(e) {
+    invError = e.message || String(e);
+    if (!invData) invRenderBody();
+  } finally {
+    invLoading = false;
+  }
+}
+
+function renderInventory(){
+  invRenderHead();
+  invMountBar();
+  invRenderBody();
+  refreshInventoryLive();
+  // Exchange rate only (not a Steam request) so the THB -> USD figures appear.
+  priceEnsureFx().then(() => { if (currentView === 'inventory') invRenderBody(); });
+}
+document.getElementById('btn-inv-reload').addEventListener('click', () => { invSig = ''; refreshInventoryLive(); });
+// Countdown on the button, and a cheap re-read of the items (from the game, not
+// Steam) while the page is open.
+setInterval(() => { if (currentView === 'inventory') invUpdateBar(); }, 1000);
+setInterval(() => { if (currentView === 'inventory') refreshInventoryLive(); }, 10000);
 
 /* ================= JEWEL FORGE & STORAGE (read-only counts + one safe toggle) ================= */
 const JEWEL_TIDS_BY_GRADE = (() => {
