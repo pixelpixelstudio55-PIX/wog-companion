@@ -68,11 +68,17 @@ testing/bookmarking.
   3750), vs. ~17% off with multiplicative stacking. Good enough to **rank skills against each
   other**, not to promise an exact in-game number — the UI says so directly next to the
   result, keep that caveat if this section is ever redesigned.
-- **The "Smart Analysis: what class/upgrade is optimal" feature the boss asked for is
-  deliberately not built yet** (`ในอนาคต` - boss's own words, future phase) — this pass is the
-  reference database + a basic per-skill DPS comparator; a real optimizer would need to
-  search across skill-point allocations against real stat formulas, which needs the DPS
-  model above to be more trustworthy first.
+- **Smart Analysis** (`#smart`) — built 2026-09-15 on top of Live Sync, so it no longer needs
+  the manual profile form at all. Four cards, all driven by one `buildProfileExpr()` snapshot:
+  Account Overview, Real DPS Analysis (real DPS from ability 103 + normal-attack vs skill
+  share), Skill Tree Optimization, and Optimal Gold/EXP Farming (best unlocked stage, ≥3%
+  threshold before it suggests switching).
+  ⚠️ **The upgrade ranking deliberately scores the DPS you'd actually gain, not raw skill
+  damage.** With all 6 skill slots full, learning a 7th skill adds nothing until it replaces
+  an equipped one, so an unequipped skill is scored against the *weakest equipped* skill and
+  labelled with what it would replace. Ranking by raw damage (what the reference site does)
+  puts every unlearned skill above every real upgrade, which is simply wrong advice — keep
+  this behaviour if the card is ever rewritten.
 
 ## 2026-09-15: Live Sync, sidebar rebuild, and the Jewel Forge write feature
 

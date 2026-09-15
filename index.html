@@ -177,6 +177,43 @@
   .prof-cur-val { font-size: 14px; font-weight: 700; color: var(--gold-bright); font-family: 'Cinzel', serif; white-space: nowrap; }
   .empty-state { text-align: center; padding: 50px 20px; color: var(--text-dim); }
 
+  /* ---- Smart Analysis ---- */
+  .sa-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(420px,1fr)); gap: 16px; align-items: start; }
+  .sa-card { background: var(--bg2); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+  .sa-card-head { font-size: 14.5px; font-weight: 700; padding: 12px 16px; border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .sa-h-blue { color: #58a6ff; background: linear-gradient(90deg, rgba(88,166,255,.13), transparent); }
+  .sa-h-red { color: #f85149; background: linear-gradient(90deg, rgba(248,81,73,.13), transparent); }
+  .sa-h-green { color: #7ee787; background: linear-gradient(90deg, rgba(126,231,135,.13), transparent); }
+  .sa-h-gold { color: var(--gold-bright); background: linear-gradient(90deg, rgba(212,175,55,.15), transparent); }
+  .sa-card-body { padding: 14px 16px 16px; }
+  .sa-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 7px 0; border-bottom: 1px dashed rgba(255,255,255,.06); font-size: 12.5px; }
+  .sa-row:last-child { border-bottom: none; }
+  .sa-row .k { color: var(--text-dim); }
+  .sa-row .v { font-weight: 700; color: var(--text); font-family: 'Cinzel', serif; white-space: nowrap; }
+  .sa-row .v.gold { color: var(--gold-bright); }
+  .sa-row .v.gem { color: #58a6ff; }
+  .sa-row .v.dps { color: #f85149; }
+  .sa-row .v.good { color: #7ee787; }
+  .sa-row .v.warn { color: #ffa657; }
+  .sa-row .v.sm { font-size: 12px; font-family: inherit; white-space: normal; text-align: right; }
+  .sa-bar { height: 9px; border-radius: 999px; background: var(--bg3); overflow: hidden; margin: 5px 0 2px; }
+  .sa-bar-fill { height: 100%; border-radius: 999px; transition: width .4s; }
+  .sa-bar-label { display: flex; justify-content: space-between; font-size: 11.5px; color: var(--text-dim); }
+  .sa-sub { font-size: 11.5px; color: var(--text-dim); margin: 10px 0 6px; font-weight: 700; letter-spacing: .3px; text-transform: uppercase; }
+  .sa-item { display: flex; align-items: center; gap: 10px; background: var(--bg3); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; margin-bottom: 7px; }
+  .sa-item.top { border-color: var(--gold); }
+  .sa-rank { width: 20px; height: 20px; flex: 0 0 20px; border-radius: 50%; background: var(--line); color: var(--text-dim); font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+  .sa-item.top .sa-rank { background: var(--gold); color: #1a1408; }
+  .sa-item-name { font-size: 12.5px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sa-item-meta { font-size: 11px; color: var(--text-dim); margin-top: 2px; line-height: 1.5; }
+  .sa-item-val { font-size: 13px; font-weight: 700; font-family: 'Cinzel', serif; color: #7ee787; white-space: nowrap; text-align: right; }
+  .sa-item-val small { display: block; font-size: 10.5px; color: var(--text-dim); font-weight: 400; font-family: inherit; }
+  .sa-advice { margin-top: 12px; border-radius: 8px; padding: 10px 12px; font-size: 12px; line-height: 1.6; border: 1px solid; }
+  .sa-advice.go { background: rgba(126,231,135,.08); border-color: rgba(126,231,135,.35); color: #7ee787; }
+  .sa-advice.hold { background: rgba(255,166,87,.08); border-color: rgba(255,166,87,.35); color: #ffa657; }
+  .sa-advice.info { background: rgba(88,166,255,.08); border-color: rgba(88,166,255,.35); color: #79c0ff; }
+  @media (max-width: 900px) { .sa-grid { grid-template-columns: 1fr; } }
+
   .toast { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%) translateY(20px); background: #0e1729; color: var(--gold-bright); padding: 10px 20px; border-radius: 8px; font-size: 13px; opacity: 0; pointer-events: none; transition: .2s; z-index: 999; }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
@@ -388,7 +425,7 @@
   <button class="sidebar-link" data-view="farm">🏆 <span data-i="tab_farm">Farm Ranking</span></button>
   <button class="sidebar-link" data-view="dpsbreak">⚔️ <span data-i="tab_dpsbreak">Skill DPS (Combat Breakdown)</span></button>
   <button class="sidebar-link" data-view="history">📜 <span data-i="tab_history">Stage Run History</span></button>
-  <button class="sidebar-link" data-view="smart">🧠 <span data-i="tab_smart">Smart Analysis</span><span class="sidebar-badge">In Dev</span></button>
+  <button class="sidebar-link" data-view="smart">🧠 <span data-i="tab_smart">Smart Analysis</span><span class="sidebar-badge">Live</span></button>
   <button class="sidebar-link" data-view="profile">👤 <span data-i="tab_profile">Profile &amp; EXP</span></button>
   <button class="sidebar-link" data-view="forge">🔨 <span data-i="tab_forge">Jewel Forge &amp; Storage</span></button>
 </aside>
@@ -529,11 +566,20 @@
   </div>
 
   <div class="view" id="view-smart">
-    <div style="background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin-bottom:18px;">
-      <b style="color:var(--gold-bright);">🚧 กำลังพัฒนา</b>
-      <p class="hint" style="margin-top:6px;">คำนวณจากสถิติสด/สกิลปัจจุบันเท่านั้น ยังไม่ครอบคลุมการวางแผนอัพเกรดข้ามหลายเลเวลพร้อมกัน หรือเทียบข้ามคลาส</p>
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px;">
+      <div>
+        <h3 style="margin:0;color:var(--gold-bright);" data-i="smart-head-title">🧠 วิเคราะห์อัจฉริยะ</h3>
+        <p class="hint" style="margin:4px 0 0;" data-i="smart-head-sub">อ่านสดจากเกมที่รันอยู่ (Genesis.exe) — เลเวลสกิลจริง สถิติจริง ด่านที่ฟาร์มอยู่จริง แล้วคำนวณให้ว่าควรอัปสกิลตัวไหน และฟาร์มด่านไหนคุ้มที่สุด</p>
+      </div>
+      <button class="btn btn-outline" id="btn-smart-refresh" data-i="smart-btn-refresh">🔄 รีเฟรช</button>
     </div>
-    <div class="table-scroll"><table class="data-table" id="smart-table"></table></div>
+    <div class="sa-grid" id="sa-grid">
+      <div class="sa-card"><div class="sa-card-head sa-h-blue" id="sa-head-account"></div><div class="sa-card-body" id="sa-account"></div></div>
+      <div class="sa-card"><div class="sa-card-head sa-h-red" id="sa-head-dps"></div><div class="sa-card-body" id="sa-dps"></div></div>
+      <div class="sa-card"><div class="sa-card-head sa-h-green" id="sa-head-skill"></div><div class="sa-card-body" id="sa-skill"></div></div>
+      <div class="sa-card"><div class="sa-card-head sa-h-gold" id="sa-head-farm"></div><div class="sa-card-body" id="sa-farm"></div></div>
+    </div>
+    <p class="hint" style="margin-top:14px;" data-i="smart-foot">หมายเหตุ: "DPS จริง" และสถิติทุกตัวอ่านจากเกมโดยตรง ส่วน "+DPS ที่จะได้" เป็นการประมาณจาก % ดาเมจและคูลดาวน์ในฐานข้อมูลสกิล ใช้เพื่อจัดลำดับว่าควรอัปตัวไหนก่อน ไม่ใช่ตัวเลขเป๊ะจากเกม</p>
   </div>
 
   <div class="view" id="view-forge">
@@ -765,6 +811,10 @@ const UI_STRINGS = {
   'forge-sw-skills-d': { th: 'ใส่สกิล Active ที่เรียนแล้วจริงของคลาสนั้น เรียงตามเลเวลที่ลงไว้มากสุดก่อน (สกิล Passive ไม่ต้องใส่ช่อง ใช้งานอัตโนมัติอยู่แล้ว)', en: "Equips the real learned Active skills for that class, highest invested level first (Passive skills don't need a slot - they apply automatically)." },
   'forge-sw-reconnect-t': { th: 'ยืนยันเชื่อมต่อใหม่อัตโนมัติเมื่อเน็ตหลุด', en: 'Auto-confirm reconnect on network error' },
   'forge-sw-reconnect-d': { th: 'เจอกล่อง "Reconnect Failed" จะกด Confirm ให้เองไม่ให้ AFK สะดุด — จุดนี้ยังไม่เคยเจอเหตุการณ์จริงให้ทดสอบ ทำตามโครงสร้างที่เจอในโค้ดต้นฉบับ ถ้าเกมเปลี่ยนหน้าตา popup อาจไม่ทำงาน', en: 'Clicks "Confirm" automatically when a "Reconnect Failed" dialog appears, so AFK farming isn\'t interrupted - built from the reference site\'s own code structure but never seen a real disconnect to test against, so it may silently not fire if the game\'s popup shape differs.' },
+  'smart-head-title': { th: '🧠 วิเคราะห์อัจฉริยะ', en: '🧠 Smart Analysis' },
+  'smart-head-sub': { th: 'อ่านสดจากเกมที่รันอยู่ (Genesis.exe) — เลเวลสกิลจริง สถิติจริง ด่านที่ฟาร์มอยู่จริง แล้วคำนวณให้ว่าควรอัปสกิลตัวไหน และฟาร์มด่านไหนคุ้มที่สุด', en: 'Read live from the running game (Genesis.exe) - real skill levels, real stats, the real stage being farmed - then ranks which skill to upgrade and which stage to farm.' },
+  'smart-btn-refresh': { th: '🔄 รีเฟรช', en: '🔄 Refresh' },
+  'smart-foot': { th: 'หมายเหตุ: "DPS จริง" และสถิติทุกตัวอ่านจากเกมโดยตรง ส่วน "+DPS ที่จะได้" เป็นการประมาณจาก % ดาเมจและคูลดาวน์ในฐานข้อมูลสกิล ใช้เพื่อจัดลำดับว่าควรอัปตัวไหนก่อน ไม่ใช่ตัวเลขเป๊ะจากเกม', en: 'Note: "Real DPS" and every stat come straight from the game. The "+DPS" figures are estimated from each skill\'s damage % and cooldown in the database - they exist to rank upgrades against each other, not to promise an exact in-game number.' },
   'prof-head-title': { th: 'โปรไฟล์ตัวละคร & ความคืบหน้าเลเวล', en: 'Character Profile & Level Progress' },
   'prof-head-sub': { th: 'อ่านสดจากเกมที่รันอยู่ในเครื่องนี้ (Genesis.exe) อัปเดตทุก 2 วิ', en: 'Read live from the game running on this PC (Genesis.exe), refreshed every 2s' },
   'prof-btn-refresh': { th: '🔄 รีเฟรช', en: '🔄 Refresh' },
@@ -1914,6 +1964,11 @@ function connectLiveSync(){
       lastProfileRefreshAt = Date.now();
       refreshProfileLive();
     }
+    // Smart Analysis reads the same heavy snapshot - same slower cadence.
+    if (currentView === 'smart' && Date.now() - lastSmartRefreshAt > 4000) {
+      lastSmartRefreshAt = Date.now();
+      refreshSmartLive();
+    }
     setTimeout(pollLiveOnce, 2000);
   };
   liveWs.onerror = () => {};
@@ -1997,31 +2052,291 @@ function renderHistory(){
     }).join('') + `</tbody>`;
 }
 
-/* ================= SMART ANALYSIS (skill upgrade ranking) ================= */
-function renderSmartAnalysis(){
-  const st = activeStatsForCalc();
-  const critMult = 1 + (st.critRate/100) * (st.critDamage/100);
-  const bonusMult = 1 + st.damageBonus/100 + st.pveBonus/100 + st.bossBonus/100;
-  const cls = GAME_DATA.skillTrees[currentClass];
-  const rows = [];
-  cls.branches.forEach(b => b.skills.forEach(sk => {
-    if (sk.is_passive) return;
-    const lvl = skillAllocations[sk.id] || 0;
-    if (lvl >= sk.levels.length) return; // maxed
-    const curLvl = sk.levels[Math.max(0, lvl-1)] || sk.levels[0];
-    const nextLvl = sk.levels[lvl];
-    if (!nextLvl || !nextLvl.damage_percent) return;
-    const curDps = lvl===0 ? 0 : st.attack * (curLvl.damage_percent/100) * critMult * bonusMult * (60/curLvl.cooldown_sec) / 60;
-    const nextDps = st.attack * (nextLvl.damage_percent/100) * critMult * bonusMult * (60/nextLvl.cooldown_sec) / 60;
-    rows.push({ name: sk.name_en, from: lvl, to: lvl+1, fromPct: lvl===0?0:curLvl.damage_percent, toPct: nextLvl.damage_percent, delta: nextDps-curDps });
-  }));
-  rows.sort((a,b) => b.delta - a.delta);
-  const table = document.getElementById('smart-table');
-  if (!rows.length) { table.innerHTML = `<tbody><tr><td class="empty-state">${currentLang==='th'?'สกิลทั้งหมดเต็มเลเวลแล้ว หรือยังไม่มีข้อมูลสถิติ':'All skills maxed, or no stats available yet'}</td></tr></tbody>`; return; }
-  table.innerHTML = `<thead><tr><th>#</th><th>${currentLang==='th'?'สกิล':'Skill'}</th><th>Lv.${currentLang==='th'?'จาก→ไป':' from→to'}</th><th>Dmg%</th><th>+DPS</th></tr></thead><tbody>` +
-    rows.map((r,i) => `<tr><td>${i+1}</td><td>${esc(r.name)}</td><td>${r.from} → ${r.to}</td><td>${r.fromPct}% → ${r.toPct}%</td><td style="color:var(--gold-bright);">+${Math.round(r.delta).toLocaleString()}</td></tr>`).join('') +
-    `</tbody>`;
+/* ================= SMART ANALYSIS =================
+   Reads the SAME live snapshot the Profile page uses (buildProfileExpr), so every
+   input here is the game's own: real skill levels from getTreeAllInfo(4), real
+   stats from ServiceContentState, the real stage being farmed, real currencies.
+   The only DERIVED numbers are the per-skill DPS estimates - they exist to RANK
+   upgrades against each other, and the page says so out loud rather than
+   pretending to be the game's exact formula. */
+let lastSmartData = null;
+let lastSmartRefreshAt = 0;
+
+function saRow(k, v, cls){
+  return `<div class="sa-row"><span class="k">${k}</span><span class="v ${cls||''}">${v}</span></div>`;
 }
+function saBar(label, pct, color, right){
+  const w = Math.max(0, Math.min(100, isFinite(pct) ? pct : 0));
+  return `<div style="margin:8px 0 12px;">
+    <div class="sa-bar-label"><span>${label}</span><span>${right}</span></div>
+    <div class="sa-bar"><div class="sa-bar-fill" style="width:${w.toFixed(1)}%;background:${color};"></div></div>
+  </div>`;
+}
+function saFmt(n, dp){
+  if (n == null || !isFinite(n)) return '—';
+  return Number(n).toLocaleString(undefined, { maximumFractionDigits: dp == null ? 0 : dp });
+}
+function saExpPerSec(s){ return (s && s.est_clear_sec) ? s.total_exp / s.est_clear_sec : 0; }
+
+// Same DPS model as the top bar (calibrated additive stacking of the three
+// "increased %" categories), applied per skill instead of once overall.
+function smartDpsModel(d){
+  const ab = d.ability || {};
+  const attack = ab.attack || 0;
+  const critMult = 1 + ((ab.critRate || 0) / 100) * ((ab.critDmg || 0) / 100);
+  const bonusMult = 1 + ((ab.dmg || 0) + (ab.pve || 0) + (ab.boss || 0)) / 100;
+  const basicDps = attack * critMult * bonusMult * ((ab.atkSpeed || 0) / 100);
+  const allSk = allSkillsFlatList();
+  const lvByGroup = {};
+  (d.skills || []).forEach(s => { lvByGroup[s.g] = s.lv; });
+  const equippedSet = new Set((d.skillSlots || []).filter(Boolean));
+  const equipped = [...equippedSet].map(gid => {
+    const meta = allSk.find(x => x.group_id === gid || x.id === gid);
+    if (!meta || meta.is_passive) return null;
+    // Level 0 = learned but no extra points spent; it still fights at the
+    // level-1 numbers, so the maths clamps but the label keeps the real level.
+    const lv = lvByGroup[meta.group_id] != null ? lvByGroup[meta.group_id] : 0;
+    const lvObj = meta.levels[Math.max(0, lv - 1)] || meta.levels[0];
+    if (!lvObj || !lvObj.damage_percent || !lvObj.cooldown_sec) return null;
+    return { meta, lv, dmgPct: lvObj.damage_percent, cd: lvObj.cooldown_sec,
+             dps: attack * (lvObj.damage_percent / 100) * critMult * bonusMult / lvObj.cooldown_sec };
+  }).filter(Boolean).sort((a, b) => b.dps - a.dps);
+  const skillDps = equipped.reduce((s, x) => s + x.dps, 0);
+  const freeSlots = (d.skillSlots || []).filter(x => !x).length;
+  return { ab, attack, critMult, bonusMult, basicDps, equipped, equippedSet, skillDps, freeSlots,
+           weakest: equipped.length ? equipped[equipped.length - 1] : null,
+           totalDps: basicDps + skillDps, lvByGroup, allSk };
+}
+
+function renderSmartAnalysis(){ refreshSmartLive(); }
+
+async function refreshSmartLive(){
+  const th = currentLang === 'th';
+  const heads = {
+    'sa-head-account': th ? '👤 ภาพรวมบัญชี' : '👤 Account Overview',
+    'sa-head-dps': th ? '⚔️ วิเคราะห์ DPS จริง' : '⚔️ Real DPS Analysis',
+    'sa-head-skill': th ? '🌳 อัปสกิลตัวไหนคุ้มที่สุด' : '🌳 Skill Tree Optimization',
+    'sa-head-farm': th ? '🌾 ด่านฟาร์มทอง & EXP ที่คุ้มที่สุด' : '🌾 Optimal Gold & EXP Farming',
+  };
+  Object.keys(heads).forEach(id => { const el = document.getElementById(id); if (el) el.textContent = heads[id]; });
+  const bodies = ['sa-account', 'sa-dps', 'sa-skill', 'sa-farm'];
+  if (!document.getElementById('sa-account')) return;
+  let d;
+  try {
+    d = await sendLiveEval(buildProfileExpr());
+    if (!d || d.error) throw new Error(d && d.error || 'no data');
+  } catch(e) {
+    bodies.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = `<div class="empty-state" style="padding:24px 10px;">${th ? 'อ่านไม่ได้ (เกมไม่ได้เปิด หรือยังไม่ได้เชื่อมต่อ Live Sync)' : 'Unavailable (game not running / not connected)'}</div>`;
+    });
+    return;
+  }
+  lastSmartData = d;
+  const m = smartDpsModel(d);
+  saRenderAccount(d, m, th);
+  saRenderDps(d, m, th);
+  saRenderSkill(d, m, th);
+  saRenderFarm(d, th);
+}
+
+function saCurOf(d, tid){ const c = (d.currencies || []).find(x => x.tid === tid); return c ? Number(c.cnt) : null; }
+
+/* ---- card 1: account overview ---- */
+function saRenderAccount(d, m, th){
+  const lv = d.level || 0, cur = d.curExp || 0, max = d.maxExp || 0;
+  const rem = Math.max(0, max - cur);
+  const pct = max > 0 ? 100 * cur / max : 0;
+  const eps = profFarmEps(d.stageTid);
+  const lvInfo = (GAME_DATA.userLevels || {})[String(lv)] || {};
+  const nextInfo = (GAME_DATA.userLevels || {})[String(lv + 1)] || {};
+  const rw = (nextInfo.rewards || []).map(r => `${fld(r, 'name')} ×${r.count}`).join(', ');
+  document.getElementById('sa-account').innerHTML =
+    saBar(d.isMaxLevel ? (th ? `เลเวล ${lv} (สูงสุดแล้ว)` : `Level ${lv} (Max)`) : (th ? `เลเวล ${lv} ➡️ ${lv + 1}` : `Level ${lv} ➡️ ${lv + 1}`),
+          pct, 'linear-gradient(90deg, var(--gold), var(--gold-bright))', pct.toFixed(1) + '%')
+    + saRow(th ? 'ชื่อผู้เล่น' : 'Player', esc(d.nick || '—'), 'sm')
+    + saRow(th ? 'พลังต่อสู้ (Combat Power)' : 'Combat Power', saFmt(d.combatPower), 'gem')
+    + saRow('EXP', `${saFmt(cur)} / ${saFmt(max)}`, 'sm')
+    + saRow(th ? 'ขาดอีก' : 'EXP remaining', saFmt(rem), 'warn')
+    + saRow(th ? 'EXP/วินาที (ด่านที่ฟาร์มอยู่)' : 'EXP/sec (current stage)', eps ? saFmt(eps, 1) : '—', 'good')
+    + saRow(th ? 'คาดว่าจะขึ้นเลเวลใน' : 'Est. time to next level', (eps && rem > 0) ? profEta(rem / eps) : '—', 'good')
+    + saRow(th ? 'ทอง' : 'Gold', saFmt(saCurOf(d, 1000)), 'gold')
+    + saRow(th ? 'เพชร' : 'Diamond', saFmt(saCurOf(d, 6000)), 'gem')
+    + saRow(th ? 'เทียร์อุปกรณ์สูงสุดที่ใส่ได้' : 'Max gear tier usable', lvInfo.max_equip_tier ? `Tier ${lvInfo.max_equip_tier}` : '—', 'sm')
+    + (rw ? `<div class="sa-advice info">🎁 ${th ? `รางวัลเมื่อถึงเลเวล ${lv + 1}` : `Level ${lv + 1} reward`}: <b>${esc(rw)}</b>${nextInfo.max_equip_tier && nextInfo.max_equip_tier !== lvInfo.max_equip_tier ? (th ? ` — และจะใส่อุปกรณ์ Tier ${nextInfo.max_equip_tier} ได้` : ` — unlocks Tier ${nextInfo.max_equip_tier} gear`) : ''}</div>` : '');
+}
+
+/* ---- card 2: real DPS analysis ---- */
+function saRenderDps(d, m, th){
+  const ab = m.ab;
+  const clsCode = HERO_CLASSTYPE_TO_SKILLCLASS[d.classType];
+  const clsLabel = (CLASS_LABELS[clsCode] || {})[currentLang] || '—';
+  const tot = m.totalDps || 1;
+  const basicPct = 100 * m.basicDps / tot;
+  const skillPct = 100 * m.skillDps / tot;
+  const real = ab.dps;
+  const devPct = (real && m.totalDps) ? 100 * (m.totalDps - real) / real : null;
+  const top = m.equipped.slice(0, 4);
+  document.getElementById('sa-dps').innerHTML =
+    saRow(th ? 'DPS จริงจากเกม' : 'Real DPS (from the game)', saFmt(real), 'dps')
+    + saRow(th ? 'คลาสที่เล่นอยู่' : 'Active class', esc(clsLabel), 'sm')
+    + saBar(th ? '🗡️ ส่วนที่มาจากโจมตีปกติ' : '🗡️ From normal attacks', basicPct, 'linear-gradient(90deg,#3d6fa8,#79c0ff)', saFmt(m.basicDps) + ' (' + basicPct.toFixed(1) + '%)')
+    + saBar(th ? '✨ ส่วนที่มาจากสกิล' : '✨ From skills', skillPct, 'linear-gradient(90deg,#8957e5,#bc8cff)', saFmt(m.skillDps) + ' (' + skillPct.toFixed(1) + '%)')
+    + saRow(th ? 'พลังโจมตี' : 'Attack', saFmt(ab.attack), '')
+    + saRow(th ? 'ความเร็วโจมตี' : 'Attack speed', ab.atkSpeed != null ? (ab.atkSpeed / 100).toFixed(2) + (th ? ' ครั้ง/วิ' : ' hits/s') : '—', '')
+    + saRow(th ? 'อัตราคริ / ดาเมจคริ' : 'Crit rate / damage', `${saFmt(ab.critRate, 1)}% / ${saFmt(ab.critDmg, 1)}%`, 'sm')
+    + saRow(th ? 'ตัวคูณจากคริ' : 'Crit multiplier', '×' + m.critMult.toFixed(3), 'good')
+    + saRow(th ? 'โบนัสดาเมจรวม (ทั่วไป+PvE+บอส)' : 'Total damage amp (general+PvE+boss)', `+${saFmt((ab.dmg || 0) + (ab.pve || 0) + (ab.boss || 0), 1)}% → ×${m.bonusMult.toFixed(3)}`, 'good')
+    + saRow(th ? 'DPS ตามสูตรของเรา (ไว้เทียบ)' : 'Model DPS (for comparison)', saFmt(m.totalDps) + (devPct != null ? ` (${devPct >= 0 ? '+' : ''}${devPct.toFixed(1)}%)` : ''), 'sm')
+    + `<div class="sa-sub">${th ? 'สกิลที่ใส่อยู่ เรียงตาม DPS' : 'Equipped skills, ranked by DPS'}</div>`
+    + (top.length ? top.map((s, i) => `<div class="sa-item ${i === 0 ? 'top' : ''}">
+        <span class="sa-rank">${i + 1}</span>
+        ${profIconHtml(s.meta.icon, '⚔️')}
+        <div style="flex:1;min-width:0;">
+          <div class="sa-item-name">${esc(fld(s.meta, 'name'))}</div>
+          <div class="sa-item-meta">${th ? 'เลเวล' : 'Lv.'} ${s.lv} · ${s.dmgPct}% · ${th ? 'คูลดาวน์' : 'CD'} ${s.cd}s</div>
+        </div>
+        <div class="sa-item-val">${saFmt(s.dps)}<small>${(100 * s.dps / tot).toFixed(1)}% ${th ? 'ของ DPS รวม' : 'of total'}</small></div>
+      </div>`).join('')
+      : `<div class="empty-state" style="padding:16px 8px;">${th ? 'ยังไม่ได้ใส่สกิลโจมตีในช่องสกิล' : 'No damaging skills equipped'}</div>`);
+}
+
+/* ---- card 3: which skill upgrade pays the most ---- */
+function saRenderSkill(d, m, th){
+  const clsCode = HERO_CLASSTYPE_TO_SKILLCLASS[d.classType] || currentClass;
+  const tree = GAME_DATA.skillTrees[clsCode] || GAME_DATA.skillTrees[currentClass];
+  const spTid = { Melee: 8000, Ranged: 8100, Mage: 8200 }[clsCode];
+  const sp = spTid ? saCurOf(d, spTid) : null;
+  const rows = [];
+  tree.branches.forEach(b => b.skills.forEach(sk => {
+    if (sk.is_passive) return;
+    const lv = m.lvByGroup[sk.group_id] != null ? m.lvByGroup[sk.group_id] : 0;
+    if (lv >= sk.levels.length) return;                       // already maxed
+    const nextL = sk.levels[lv];
+    if (!nextL || !nextL.damage_percent || !nextL.cooldown_sec) return;
+    const curL = lv > 0 ? sk.levels[lv - 1] : null;
+    const curDps = curL ? m.attack * (curL.damage_percent / 100) * m.critMult * m.bonusMult / curL.cooldown_sec : 0;
+    const nextDps = m.attack * (nextL.damage_percent / 100) * m.critMult * m.bonusMult / nextL.cooldown_sec;
+    const equipped = m.equippedSet.has(sk.group_id);
+    // The honest number is the DPS you'd ACTUALLY gain. A skill sitting outside
+    // the 6 slots contributes nothing until it's equipped - and with every slot
+    // full, equipping it means dropping the weakest one, so its real gain is
+    // only the difference against that skill, not its whole damage output.
+    // Ranking by raw damage (what the reference site does) makes every unlearned
+    // skill look better than any real upgrade, which is simply wrong advice.
+    let delta, note = '';
+    if (equipped) {
+      delta = nextDps - curDps;
+    } else if (m.freeSlots > 0) {
+      delta = nextDps;
+      note = th ? 'ยังมีช่องสกิลว่าง ใส่ได้เลย' : 'a skill slot is still free';
+    } else if (m.weakest) {
+      delta = nextDps - m.weakest.dps;
+      note = delta > 0
+        ? (th ? `ต้องสลับแทน ${fld(m.weakest.meta, 'name')}` : `would replace ${fld(m.weakest.meta, 'name')}`)
+        : (th ? `ยังสู้ ${fld(m.weakest.meta, 'name')} ที่ใส่อยู่ไม่ได้` : `still weaker than equipped ${fld(m.weakest.meta, 'name')}`);
+    } else {
+      delta = nextDps;
+    }
+    rows.push({ sk, lv, max: sk.levels.length, curL, nextL, delta, note, equipped, learned: lv > 0 });
+  }));
+  rows.sort((a, b) => b.delta - a.delta);
+  const el = document.getElementById('sa-skill');
+  if (!rows.length) {
+    el.innerHTML = `<div class="empty-state" style="padding:24px 10px;">${th ? 'สกิลโจมตีของคลาสนี้เต็มเลเวลหมดแล้ว 🎉' : 'Every damaging skill of this class is maxed 🎉'}</div>`;
+    return;
+  }
+  const top = rows.slice(0, 6);
+  const best = top[0];
+  const bestPct = m.totalDps > 0 ? 100 * best.delta / m.totalDps : 0;
+  el.innerHTML =
+    saRow(th ? 'แต้มสกิลที่ใช้ได้ตอนนี้' : 'Skill points available', sp != null ? saFmt(sp) : '—', 'good')
+    + saRow(th ? 'สกิลโจมตีที่ยังอัปได้' : 'Upgradable damaging skills', saFmt(rows.length), 'sm')
+    + `<div class="sa-sub">${th ? 'เรียงตาม DPS ที่จะเพิ่มขึ้นจริง' : 'Ranked by actual DPS gained'}</div>`
+    + top.map((r, i) => `<div class="sa-item ${i === 0 ? 'top' : ''}">
+        <span class="sa-rank">${i + 1}</span>
+        ${profIconHtml(r.sk.icon, '⚔️')}
+        <div style="flex:1;min-width:0;">
+          <div class="sa-item-name">${esc(fld(r.sk, 'name'))}
+            ${r.equipped ? `<span class="sidebar-badge">${th ? 'ใส่อยู่' : 'Equipped'}</span>` : ''}
+            ${!r.learned ? `<span class="prof-train-lv">· ${th ? 'ยังไม่ได้เรียน' : 'not learned'}</span>` : ''}
+          </div>
+          <div class="sa-item-meta">
+            ${th ? 'เลเวล' : 'Lv.'} ${r.lv} → ${r.lv + 1} <span style="opacity:.6;">(${th ? 'สูงสุด' : 'max'} ${r.max})</span>
+            · ${r.curL ? r.curL.damage_percent + '%' : '—'} → ${r.nextL.damage_percent}%
+            · ${th ? 'คูลดาวน์' : 'CD'} ${r.curL ? r.curL.cooldown_sec + 's' : '—'} → ${r.nextL.cooldown_sec}s
+            ${r.note ? `<br><span style="color:#ffa657;">↪ ${esc(r.note)}</span>` : ''}
+          </div>
+        </div>
+        <div class="sa-item-val" style="${r.delta <= 0 ? 'color:var(--text-dim);' : ''}">${r.delta >= 0 ? '+' : ''}${saFmt(r.delta)}<small>${r.delta >= 0 ? '+' : ''}${m.totalDps > 0 ? (100 * r.delta / m.totalDps).toFixed(1) : '0.0'}% ${th ? 'ของ DPS รวม' : 'of total'}</small></div>
+      </div>`).join('')
+    + (bestPct > 5
+      ? `<div class="sa-advice go">💡 ${th ? `อัป <b>${esc(fld(best.sk, 'name'))}</b> เป็นเลเวล ${best.lv + 1} ก่อนเลย — คุ้มที่สุด เพิ่ม DPS ราว <b>+${bestPct.toFixed(1)}%</b>` : `Upgrade <b>${esc(fld(best.sk, 'name'))}</b> to level ${best.lv + 1} first — biggest gain, about <b>+${bestPct.toFixed(1)}%</b> DPS`}</div>`
+      : `<div class="sa-advice hold">💡 ${th ? `ตอนนี้อัปสกิลตัวไหนก็ได้ผลใกล้กัน (ตัวที่ดีที่สุดเพิ่มแค่ ${bestPct.toFixed(1)}%) — กระจายแต้มเท่าๆ กัน แล้วเอาแรงไปดันอุปกรณ์/หลอมเทียร์แทนจะคุ้มกว่า` : `Every upgrade is worth about the same right now (best is only +${bestPct.toFixed(1)}%) — spread points evenly and push gear/fusion tiers instead`}</div>`)
+    + (!best.equipped ? `<div class="sa-advice hold" style="margin-top:8px;">⚠️ ${th ? `<b>${esc(fld(best.sk, 'name'))}</b> ยังไม่ได้อยู่ในช่องสกิล — อัปแล้วต้องเอาไปใส่ด้วย ไม่งั้น DPS จริงไม่ขยับ${best.note ? ` (${esc(best.note)})` : ''}` : `<b>${esc(fld(best.sk, 'name'))}</b> is not in a skill slot — upgrading it changes nothing until you equip it${best.note ? ` (${esc(best.note)})` : ''}`}</div>` : '')
+    + `<div class="sa-advice info" style="margin-top:8px;">ℹ️ ${th ? `ตัวเลข "+DPS" ด้านบนคือ<b>ส่วนที่เพิ่มขึ้นจริง</b> ไม่ใช่ดาเมจดิบของสกิล — ช่องสกิลมี ${(d.skillSlots || []).length} ช่อง ว่างอยู่ ${m.freeSlots} ช่อง สกิลที่ยังไม่ได้ใส่จึงถูกคิดเป็น "ได้เพิ่มเท่าไหร่ถ้าสลับเข้าไปแทนตัวที่อ่อนที่สุด"` : `The "+DPS" figures above are the gain you'd ACTUALLY see, not each skill's raw damage - you have ${(d.skillSlots || []).length} skill slots with ${m.freeSlots} free, so an unequipped skill is scored by what it adds over the weakest equipped one.`}</div>`;
+}
+
+/* ---- card 4: best gold / EXP farming stage ---- */
+function saRenderFarm(d, th){
+  const stages = GAME_DATA.stageData || [];
+  const cur = stages.find(s => s.stage_id === d.stageTid);
+  const cleared = stages.find(s => s.stage_id === d.clearStageTid);
+  // The next stage after the highest cleared one is playable too, so +1.
+  const maxNum = cleared ? cleared.stage_num + 1 : (cur ? cur.stage_num : Infinity);
+  const unlocked = stages.filter(s => s.stage_num <= maxNum);
+  const byGold = [...unlocked].sort((a, b) => b.gold_per_sec - a.gold_per_sec);
+  const byExp = [...unlocked].sort((a, b) => saExpPerSec(b) - saExpPerSec(a));
+  const bestGold = byGold[0], bestExp = byExp[0];
+  const curGps = cur ? cur.gold_per_sec : 0;
+  const gain = (bestGold && curGps > 0) ? 100 * (bestGold.gold_per_sec - curGps) / curGps : 0;
+  const stageLine = (s) => `<div class="sa-item" data-stage-id="${s.stage_id}" style="cursor:pointer;">
+      <span class="sa-rank">▸</span>
+      <div style="flex:1;min-width:0;">
+        <div class="sa-item-name">${esc(fld(s, 'display_tag'))}</div>
+        <div class="sa-item-meta">${esc(fld(s, 'area_name'))} · ${th ? 'เคลียร์ ~' : '~'}${s.est_clear_sec}s</div>
+      </div>
+      <div class="sa-item-val">${saFmt(s.gold_per_sec, 1)}<small>${saFmt(saExpPerSec(s), 1)} EXP/s</small></div>
+    </div>`;
+  const el = document.getElementById('sa-farm');
+  el.innerHTML =
+    saRow(th ? 'ด่านที่ฟาร์มอยู่' : 'Currently farming', cur ? esc(fld(cur, 'display_tag')) : '—', 'sm')
+    + saRow(th ? 'ด่านที่ผ่านสูงสุด' : 'Highest cleared', cleared ? esc(fld(cleared, 'display_tag')) : '—', 'sm')
+    + saRow(th ? 'ทอง/วินาที' : 'Gold/sec', cur ? saFmt(cur.gold_per_sec, 2) : '—', 'gold')
+    + saRow(th ? 'ทอง/ชั่วโมง (ทิ้ง AFK)' : 'Gold/hour (AFK)', cur ? saFmt(cur.gold_per_sec * 3600) : '—', 'gold')
+    + saRow(th ? 'EXP/วินาที' : 'EXP/sec', cur ? saFmt(saExpPerSec(cur), 2) : '—', 'good')
+    + saRow(th ? 'EXP/ชั่วโมง (ทิ้ง AFK)' : 'EXP/hour (AFK)', cur ? saFmt(saExpPerSec(cur) * 3600) : '—', 'good')
+    + saRow(th ? 'ด่านที่ปลดล็อกแล้ว' : 'Stages unlocked', `${saFmt(unlocked.length)} / ${saFmt(stages.length)}`, 'sm')
+    + (bestGold && cur && gain > 3
+      ? `<div class="sa-advice go">💰 ${th ? `ย้ายไปฟาร์ม <b>${esc(fld(bestGold, 'display_tag'))}</b> ได้ทองมากกว่าราว <b>+${gain.toFixed(1)}%</b> (${saFmt(bestGold.gold_per_sec, 2)} ทอง/วิ)` : `Switch to <b>${esc(fld(bestGold, 'display_tag'))}</b> for about <b>+${gain.toFixed(1)}%</b> more gold (${saFmt(bestGold.gold_per_sec, 2)}/s)`}</div>`
+      : `<div class="sa-advice info">✅ ${th ? 'ด่านที่ฟาร์มอยู่ให้ทองดีที่สุดเท่าที่ปลดล็อกแล้ว (หรือต่างกันไม่ถึง 3% ไม่คุ้มย้าย)' : 'Your current stage is already the best unlocked gold stage (or within 3%, not worth switching)'}</div>`)
+    + (bestExp && cur && bestExp.stage_id !== cur.stage_id
+      ? `<div class="sa-advice info" style="margin-top:8px;">📈 ${th ? `ถ้าอยากดันเลเวล ด่าน EXP ดีที่สุดที่ปลดล็อกแล้วคือ <b>${esc(fld(bestExp, 'display_tag'))}</b> (${saFmt(saExpPerSec(bestExp), 1)} EXP/วิ)` : `For leveling, the best unlocked EXP stage is <b>${esc(fld(bestExp, 'display_tag'))}</b> (${saFmt(saExpPerSec(bestExp), 1)} EXP/s)`}</div>`
+      : '')
+    + `<div class="sa-sub">${th ? 'ทอง/วินาที สูงสุด 3 อันดับ (ที่ปลดล็อกแล้ว)' : 'Top 3 gold/sec (unlocked)'}</div>`
+    + byGold.slice(0, 3).map(stageLine).join('')
+    + `<div class="sa-sub">${th ? 'EXP/วินาที สูงสุด 3 อันดับ (ที่ปลดล็อกแล้ว)' : 'Top 3 EXP/sec (unlocked)'}</div>`
+    + byExp.slice(0, 3).map(stageLine).join('');
+  // Navigation is sidebar-click driven (no hash router) - same pattern the
+  // Profile page's gear cards use.
+  el.querySelectorAll('[data-stage-id]').forEach(node => node.addEventListener('click', () => {
+    const s = stages.find(x => x.stage_id === parseInt(node.dataset.stageId, 10));
+    if (!s) return;
+    const link = document.querySelector('[data-view="farm"]');
+    if (link) link.click();
+    setTimeout(() => {
+      const box = document.getElementById('farm-search');
+      const diff = document.getElementById('farm-difficulty-filter');
+      if (box) box.value = s.chapter_stage;
+      if (diff) diff.value = s.difficulty;
+      renderFarm();
+    }, 60);
+  }));
+}
+document.getElementById('btn-smart-refresh').addEventListener('click', () => {
+  refreshSmartLive();
+  toast(currentLang === 'th' ? 'กำลังอ่านค่าใหม่จากเกม' : 'Re-reading from the game');
+});
 
 /* ================= JEWEL FORGE & STORAGE (read-only counts + one safe toggle) ================= */
 const JEWEL_TIDS_BY_GRADE = (() => {
