@@ -471,14 +471,14 @@
 
   <div class="view" id="view-forge">
     <div class="forge-warn">
-      <b>⚠️ <span data-i="forge-warn-title">ของจริงเกือบทั้งหมดแล้ว เหลือจุดเดียว</span></b>
-      <p class="hint" style="margin-top:6px;" data-i="forge-warn-body">ของจริงทั้งหมด: หลอมอัญมณี 85 ชนิด (ระบบ "JewelConvert" คนละตัวกับหลอมอุปกรณ์/เครื่องประดับ - ต้อง 3 ชิ้นชนิดเดียวกันเป๊ะ), หลอมอุปกรณ์+เครื่องประดับ (ระบบ "Fusion" ต้องการ 6/3 ชิ้นแค่เทียร์เดียวกัน ไม่ต้องเลเวลตรง), ทั้งกดเองและอัตโนมัติตามเทียร์ที่ติ๊กไว้, ใส่อาวุธดีที่สุด, เก็บเข้าคลัง/ถอนออกกระเป๋า, ความจุคลัง, auto-store อัญมณีตอน AFK, auto-equip อาวุธตอนสลับคลาส, auto-confirm reconnect (ยังไม่เคยเจอเหตุการณ์จริงให้ทดสอบ) — ทั้งหมดผ่านฟังก์ชันทางการของเกม ไม่ใช่แก้ค่าตรงๆ, ตั้งค่าทุกอันจำการติ๊กไว้ข้ามการรีเฟรช, สวิตช์อัตโนมัติทำงานเฉพาะตอนเปิดหน้านี้ค้างไว้เท่านั้น — เหลือจุดเดียวที่ยังไม่ทำ: "ใส่สกิลมาตรฐาน" ยังหาวิธีอ่าน "สกิลที่เรียนแล้วจริง" จากเกมไม่เจอ</p>
+      <b>⚠️ <span data-i="forge-warn-title">ของจริงทุกปุ่มแล้ว</span></b>
+      <p class="hint" style="margin-top:6px;" data-i="forge-warn-body">ของจริงทั้งหมด: หลอมอัญมณี 85 ชนิด (ระบบ "JewelConvert" คนละตัวกับหลอมอุปกรณ์/เครื่องประดับ - ต้อง 3 ชิ้นชนิดเดียวกันเป๊ะ), หลอมอุปกรณ์+เครื่องประดับ (ระบบ "Fusion" ต้องการ 6/3 ชิ้นแค่เทียร์เดียวกัน ไม่ต้องเลเวลตรง), ใส่อาวุธดีที่สุด, ใส่สกิลมาตรฐาน (อ่านสกิลที่เรียนแล้วจริงจาก tree data, ใส่เฉพาะ Active เรียงตามเลเวลที่ลงมากสุดก่อน), ทั้งกดเองและอัตโนมัติตามเทียร์/สลับคลาสที่ติ๊กไว้, เก็บเข้าคลัง/ถอนออกกระเป๋า, ความจุคลัง, auto-store อัญมณีตอน AFK, auto-confirm reconnect (ยังไม่เคยเจอเหตุการณ์จริงให้ทดสอบ) — ทั้งหมดผ่านฟังก์ชันทางการของเกม ไม่ใช่แก้ค่าตรงๆ, ตั้งค่าทุกอันจำการติ๊กไว้ข้ามการรีเฟรช, สวิตช์อัตโนมัติทำงานเฉพาะตอนเปิดหน้านี้ค้างไว้เท่านั้น</p>
     </div>
 
     <div class="forge-actions">
       <button class="btn forge-toggle-btn" id="btn-forge-toggle" title="เปิด/ปิดระบบหลอมอัตโนมัติของเกมเอง (มาสเตอร์สวิตช์ ไม่ใช่ปุ่มเฉพาะอัญมณี 85 ชนิดด้านล่าง)">⚡ <span data-i="forge-btn-autofuse">เกมส์หลอมอัตโนมัติ (มาสเตอร์สวิตช์)</span>: <span id="forge-toggle-state">—</span></button>
       <button class="btn btn-outline" id="btn-forge-equipweapon" data-i="forge-btn-equipweapon">🗡️ Equip Best Weapons</button>
-      <button class="btn btn-outline forge-inert" id="btn-forge-equipskills" data-i="forge-btn-equipskills">📘 Equip Standard Skills</button>
+      <button class="btn btn-outline" id="btn-forge-equipskills" data-i="forge-btn-equipskills">📘 Equip Standard Skills</button>
       <button class="btn btn-outline" id="btn-forge-storeall" data-i="forge-btn-storeall">📦 Store All in Vault</button>
       <button class="btn btn-outline" id="btn-forge-withdrawall" data-i="forge-btn-withdrawall">📤 Withdraw All to Bag</button>
     </div>
@@ -579,9 +579,9 @@
           <div class="hint" data-i="forge-sw-weapon-d">หาอาวุธหลัก/รองที่แรงที่สุดจากกระเป๋าและคลังมาใส่ให้เอง</div></div>
         </div>
         <div class="forge-toggle-row">
-          <label class="switch"><input type="checkbox" class="forge-inert-sw" checked><span class="slider"></span></label>
+          <label class="switch"><input type="checkbox" id="forge-sw-skills"><span class="slider"></span></label>
           <div><b>📘 <span data-i="forge-sw-skills-t">ใส่ชุดสกิลมาตรฐานอัตโนมัติตอนสลับคลาส</span></b>
-          <div class="hint" data-i="forge-sw-skills-d">ยังทำไม่ได้ตอนนี้ — หาวิธีอ่าน "สกิลที่เรียนแล้วจริง" จากเกมยังไม่เจอ (ต่างจากใส่อาวุธที่มีข้อมูลชัดเจนแล้ว)</div></div>
+          <div class="hint" data-i="forge-sw-skills-d">ใส่สกิล Active ที่เรียนแล้วจริงของคลาสนั้น เรียงตามเลเวลที่ลงไว้มากสุดก่อน (สกิล Passive ไม่ต้องใส่ช่อง ใช้งานอัตโนมัติอยู่แล้ว)</div></div>
         </div>
         <div class="forge-toggle-row">
           <label class="switch"><input type="checkbox" id="forge-sw-reconnect"><span class="slider"></span></label>
@@ -658,8 +658,8 @@ const UI_STRINGS = {
   jewel_market_only: { th: '💵 เฉพาะที่มีราคา Steam', en: '💵 Only jewels with a Steam price' },
   sort_grade_desc: { th: 'เกรด (6★ → 1★)', en: 'Grade (6★ → 1★)' },
   sort_grade_asc: { th: 'เกรด (1★ → 6★)', en: 'Grade (1★ → 6★)' },
-  'forge-warn-title': { th: 'ของจริงเกือบทั้งหมดแล้ว เหลือจุดเดียว', en: 'Almost everything is real now - one piece left' },
-  'forge-warn-body': { th: 'ของจริงทั้งหมด: หลอมอัญมณี 85 ชนิด (ระบบ "JewelConvert" คนละตัวกับหลอมอุปกรณ์/เครื่องประดับ - ต้อง 3 ชิ้นชนิดเดียวกันเป๊ะ), หลอมอุปกรณ์+เครื่องประดับ (ระบบ "Fusion" ต้องการ 6/3 ชิ้นแค่เทียร์เดียวกัน ไม่ต้องเลเวลตรง), ทั้งกดเองและอัตโนมัติตามเทียร์ที่ติ๊กไว้, ใส่อาวุธดีที่สุด, เก็บเข้าคลัง/ถอนออกกระเป๋า, ความจุคลัง, auto-store อัญมณีตอน AFK, auto-equip อาวุธตอนสลับคลาส, auto-confirm reconnect (ยังไม่เคยเจอเหตุการณ์จริงให้ทดสอบ) — ทั้งหมดผ่านฟังก์ชันทางการของเกม ไม่ใช่แก้ค่าตรงๆ, ตั้งค่าทุกอันจำการติ๊กไว้ข้ามการรีเฟรช, สวิตช์อัตโนมัติทำงานเฉพาะตอนเปิดหน้านี้ค้างไว้เท่านั้น — เหลือจุดเดียวที่ยังไม่ทำ: "ใส่สกิลมาตรฐาน" ยังหาวิธีอ่าน "สกิลที่เรียนแล้วจริง" จากเกมไม่เจอ', en: 'Everything real now: 85-item jewel conversion ("JewelConvert" - a separate system from gear/jewelry fusion, needs 3 of the exact same jewel type), Gear + Jewelry fusion ("Fusion" system, needs 6/3 items of just the same tier, no level match needed) - both manual button and automatic per ticked tier, Equip Best Weapons, Store All/Withdraw All, Vault capacity, auto-store jewels while AFK, auto-equip weapon on class switch, auto-confirm reconnect (never tested against a real disconnect yet) - all through the game\'s own official functions, never a raw value edit. Every setting remembers what was ticked across a refresh; the automation switches only run while this tab stays open. One piece still not built: "Equip Standard Skills" - haven\'t found a reliable way to read which skills are actually learned in the game.' },
+  'forge-warn-title': { th: 'ของจริงทุกปุ่มแล้ว', en: 'Every button is real now' },
+  'forge-warn-body': { th: 'ของจริงทั้งหมด: หลอมอัญมณี 85 ชนิด (ระบบ "JewelConvert" คนละตัวกับหลอมอุปกรณ์/เครื่องประดับ - ต้อง 3 ชิ้นชนิดเดียวกันเป๊ะ), หลอมอุปกรณ์+เครื่องประดับ (ระบบ "Fusion" ต้องการ 6/3 ชิ้นแค่เทียร์เดียวกัน ไม่ต้องเลเวลตรง), ใส่อาวุธดีที่สุด, ใส่สกิลมาตรฐาน (อ่านสกิลที่เรียนแล้วจริงจาก tree data, ใส่เฉพาะ Active เรียงตามเลเวลที่ลงมากสุดก่อน), ทั้งกดเองและอัตโนมัติตามเทียร์/สลับคลาสที่ติ๊กไว้, เก็บเข้าคลัง/ถอนออกกระเป๋า, ความจุคลัง, auto-store อัญมณีตอน AFK, auto-confirm reconnect (ยังไม่เคยเจอเหตุการณ์จริงให้ทดสอบ) — ทั้งหมดผ่านฟังก์ชันทางการของเกม ไม่ใช่แก้ค่าตรงๆ, ตั้งค่าทุกอันจำการติ๊กไว้ข้ามการรีเฟรช, สวิตช์อัตโนมัติทำงานเฉพาะตอนเปิดหน้านี้ค้างไว้เท่านั้น', en: 'Everything real now: 85-item jewel conversion ("JewelConvert" - a separate system from gear/jewelry fusion, needs 3 of the exact same jewel type), Gear + Jewelry fusion ("Fusion" system, needs 6/3 items of just the same tier, no level match needed), Equip Best Weapons, Equip Standard Skills (reads real learned skills from the tree data, equips only Active ones, highest invested level first), both manual button and automatic per ticked tier/class switch, Store All/Withdraw All, Vault capacity, auto-store jewels while AFK, auto-confirm reconnect (never tested against a real disconnect yet) - all through the game\'s own official functions, never a raw value edit. Every setting remembers what was ticked across a refresh; the automation switches only run while this tab stays open.' },
   'forge-btn-autofuse': { th: 'เกมส์หลอมอัตโนมัติ (มาสเตอร์สวิตช์)', en: "Game's Own Auto-Fuse (Master Switch)" },
   'forge-btn-equipweapon': { th: 'ใส่อาวุธที่ดีที่สุด', en: 'Equip Best Weapons' },
   'forge-btn-equipskills': { th: 'ใส่สกิลมาตรฐาน', en: 'Equip Standard Skills' },
@@ -694,7 +694,7 @@ const UI_STRINGS = {
   'forge-sw-weapon-t': { th: 'ใส่อาวุธที่ดีที่สุดอัตโนมัติตอนสลับคลาส', en: 'Auto-equip the best weapon on class switch' },
   'forge-sw-weapon-d': { th: 'หาอาวุธหลัก/รองที่แรงที่สุดจากกระเป๋าและคลังมาใส่ให้เอง', en: 'Finds the strongest main/sub weapon across Bag and Vault and equips it automatically.' },
   'forge-sw-skills-t': { th: 'ใส่ชุดสกิลมาตรฐานอัตโนมัติตอนสลับคลาส', en: 'Auto-equip a standard skill set on class switch' },
-  'forge-sw-skills-d': { th: 'ยังทำไม่ได้ตอนนี้ — หาวิธีอ่าน "สกิลที่เรียนแล้วจริง" จากเกมยังไม่เจอ (ต่างจากใส่อาวุธที่มีข้อมูลชัดเจนแล้ว)', en: "Not possible yet - haven't found a reliable way to read which skills are actually learned in the game (unlike weapons, where the data is clear)." },
+  'forge-sw-skills-d': { th: 'ใส่สกิล Active ที่เรียนแล้วจริงของคลาสนั้น เรียงตามเลเวลที่ลงไว้มากสุดก่อน (สกิล Passive ไม่ต้องใส่ช่อง ใช้งานอัตโนมัติอยู่แล้ว)', en: "Equips the real learned Active skills for that class, highest invested level first (Passive skills don't need a slot - they apply automatically)." },
   'forge-sw-reconnect-t': { th: 'ยืนยันเชื่อมต่อใหม่อัตโนมัติเมื่อเน็ตหลุด', en: 'Auto-confirm reconnect on network error' },
   'forge-sw-reconnect-d': { th: 'เจอกล่อง "Reconnect Failed" จะกด Confirm ให้เองไม่ให้ AFK สะดุด — จุดนี้ยังไม่เคยเจอเหตุการณ์จริงให้ทดสอบ ทำตามโครงสร้างที่เจอในโค้ดต้นฉบับ ถ้าเกมเปลี่ยนหน้าตา popup อาจไม่ทำงาน', en: 'Clicks "Confirm" automatically when a "Reconnect Failed" dialog appears, so AFK farming isn\'t interrupted - built from the reference site\'s own code structure but never seen a real disconnect to test against, so it may silently not fire if the game\'s popup shape differs.' },
   'forge-log-title': { th: 'บันทึกการทำงาน', en: 'Activity Log' },
@@ -1774,6 +1774,25 @@ const JEWELRY_ONLY_TIDS_BY_TIER = (() => {
   });
   return out;
 })();
+// Equip Standard Skills: nn.net.data.tree.getTreeAllInfo(4) lists every real
+// learned skill (level > 0) across every class the boss has ever played, with
+// the current level baked into the last 2 digits of its treeTid (e.g.
+// 8302050 = group 8302010 at level 5) - confirmed live against a real
+// character (10 learned skills, exactly the 6 Active ones already sitting in
+// the real equipped slots, the 4 Passive ones correctly absent since passives
+// apply automatically and never occupy a slot).
+// HeroClassType -> skillTrees key mapping confirmed live for 3 (Mage); 1/2
+// inferred from array order (Melee, Ranged) - not yet cross-checked live.
+const HERO_CLASSTYPE_TO_SKILLCLASS = { 1: 'Melee', 2: 'Ranged', 3: 'Mage' };
+const SKILL_META_BY_GROUPID = (() => {
+  const out = {};
+  Object.keys(GAME_DATA.skillTrees).forEach(classCode => {
+    GAME_DATA.skillTrees[classCode].branches.forEach(b => b.skills.forEach(s => {
+      out[s.group_id] = { classCode, isPassive: s.is_passive, name: s.name_en };
+    }));
+  });
+  return out;
+})();
 function buildForgeContentStatusExpr(tidsByTier){
   // Same NotStack/_location pattern as jewels, confirmed against boss's own
   // currently-equipped gear: _location 1 = Bag, 2 = Vault, 3 = Equipped.
@@ -2118,6 +2137,92 @@ async function forgeEquipBestWeapon(){
 }
 document.getElementById('btn-forge-equipweapon').addEventListener('click', forgeEquipBestWeapon);
 
+/* ---- Equip Standard Skills: real, via nn.services.preset.skill.reqEquipCurrentPreset.
+   Reads real learned skills (nn.net.data.tree.getTreeAllInfo(4)), keeps only
+   this class's Active skills (Passives never occupy a slot), sorts by
+   invested level descending, and fills slots 1..openSlotCount. */
+function buildLearnedSkillsExpr(){
+  return `(function(){
+    try {
+      var out = {};
+      out.classType = nn.services.hero.getCurrentHeroClassType();
+      out.openSlotCount = nn.services.hero.getOpenSkillSlotCount();
+      out.presetNo = nn.services.preset.skill.getCurrentPresetNumber();
+      var info = nn.net.data.tree.getTreeAllInfo(4);
+      out.learned = info.map(function(e){
+        var groupId = e._groupTid, treeTid = e._treeTid;
+        var level = Math.round((treeTid - groupId) / 10);
+        return { groupId: groupId, level: level };
+      });
+      var slots = {};
+      for (var i = 1; i <= out.openSlotCount; i++) {
+        var slot = nn.services.preset.skill.getPresetItemSlot(out.presetNo, i);
+        slots[i] = slot && slot._info ? slot._info._itemTid : null;
+      }
+      out.currentSlots = slots;
+      return JSON.stringify(out);
+    } catch(e) { return JSON.stringify({ error: e.message }); }
+  })()`;
+}
+async function forgeEquipStandardSkills(){
+  let data;
+  try {
+    data = await sendLiveEval(buildLearnedSkillsExpr());
+    if (data.error) throw new Error(data.error);
+  } catch(e) {
+    toast(currentLang==='th' ? 'สั่งงานไม่สำเร็จ (เกมไม่ได้เปิด/ไม่ได้เชื่อมต่อ)' : 'Command failed (game not running / not connected)');
+    return;
+  }
+  const classCode = HERO_CLASSTYPE_TO_SKILLCLASS[data.classType];
+  if (!classCode) {
+    toast(currentLang==='th' ? `ไม่รู้จักคลาส (HeroClassType ${data.classType})` : `Unknown class (HeroClassType ${data.classType})`);
+    return;
+  }
+  const candidates = data.learned
+    // Presence in getTreeAllInfo(4) at all means the skill is unlocked/learned
+    // - level 0 just means no extra points invested past the base unlock
+    // (confirmed live: a level-0 skill was still validly equipped in a real
+    // slot), so it must not be filtered out here, only used for sort order.
+    .filter(l => { const meta = SKILL_META_BY_GROUPID[l.groupId]; return meta && meta.classCode === classCode && !meta.isPassive; })
+    .sort((a, b) => b.level - a.level)
+    .slice(0, data.openSlotCount);
+  if (candidates.length === 0) {
+    toast(currentLang==='th' ? 'ไม่พบสกิล Active ที่เรียนแล้วของคลาสนี้' : 'No learned Active skills found for this class');
+    return;
+  }
+  const targetTids = candidates.map(c => c.groupId);
+  const currentTids = Object.values(data.currentSlots);
+  const alreadyMatches = targetTids.length === currentTids.filter(t => t != null).length &&
+    targetTids.every(tid => currentTids.includes(tid));
+  if (alreadyMatches) {
+    toast(currentLang==='th' ? 'สกิลที่ใส่อยู่ตรงกับสกิลมาตรฐานแล้ว' : 'Equipped skills already match the standard set');
+    forgeLogActivity(currentLang==='th' ? '📘 สกิลตรงกับมาตรฐานอยู่แล้ว ไม่ต้องเปลี่ยน' : '📘 Skills already match the standard set, no change needed');
+    return;
+  }
+  const expr = `(async function(){
+    try {
+      var pSkill = nn.services.preset.skill;
+      var targets = ${JSON.stringify(targetTids)};
+      var results = [];
+      for (var i = 0; i < targets.length; i++) {
+        var res = await pSkill.reqEquipCurrentPreset(i + 1, targets[i], 0n);
+        results.push({ slot: i + 1, tid: targets[i], ok: !!(res && !res.hasError || !res) });
+      }
+      return JSON.stringify({ ok: true, results: results });
+    } catch(e) { return JSON.stringify({ error: e.message }); }
+  })()`;
+  try {
+    const res = await sendLiveEvalAwait(expr, 15000);
+    if (res.error) throw new Error(res.error);
+    const names = candidates.map(c => SKILL_META_BY_GROUPID[c.groupId]?.name || c.groupId).join(', ');
+    toast(currentLang==='th' ? `ใส่สกิลมาตรฐานแล้ว: ${names}` : `Equipped standard skills: ${names}`);
+    forgeLogActivity(currentLang==='th' ? `📘 ใส่สกิลมาตรฐาน (${classCode}): ${names}` : `📘 Equipped standard skills (${classCode}): ${names}`);
+  } catch(e) {
+    toast(currentLang==='th' ? `สั่งงานไม่สำเร็จ: ${e.message}` : `Command failed: ${e.message}`);
+  }
+}
+document.getElementById('btn-forge-equipskills').addEventListener('click', forgeEquipStandardSkills);
+
 /* ---- Real Fuse (Gear contentType 1, Jewelry contentType 2): the irreversible
    actions in this app. Uses the exact sequence found in the reference site's
    own code: findFusionTable(contentType, tier, maxLevel) ->
@@ -2233,7 +2338,7 @@ async function forgeRealFuseJewelry(tier){
    the browser) stops it immediately, same as any other page-only script. Each
    switch's on/off state is saved to localStorage so it survives a reload. ---- */
 const FORGE_AUTOMATION_SW_IDS = [
-  'forge-sw-weapon', 'forge-sw-autostore', 'forge-sw-reconnect',
+  'forge-sw-weapon', 'forge-sw-skills', 'forge-sw-autostore', 'forge-sw-reconnect',
   'forge-sw-gear', 'forge-sw-samelvl', 'forge-sw-jewelry',
   'forge-gear-usevault', 'forge-jewelry-usevault',
   'forge-gem-tier-1','forge-gem-tier-2','forge-gem-tier-3','forge-gem-tier-4','forge-gem-tier-5','forge-gem-tier-6',
@@ -2327,11 +2432,12 @@ function buildForgeAutomationProbeExpr(jewelTids, gearByTier, jewelryByTier, inc
 async function forgeAutomationTick(){
   if (!liveWs || liveWs.readyState !== WebSocket.OPEN) return;
   const wantWeapon = document.getElementById('forge-sw-weapon').checked;
+  const wantSkills = document.getElementById('forge-sw-skills').checked;
   const wantAutostore = document.getElementById('forge-sw-autostore').checked;
   const wantReconnect = document.getElementById('forge-sw-reconnect').checked;
   const wantGear = document.getElementById('forge-sw-gear').checked;
   const wantJewelry = document.getElementById('forge-sw-jewelry').checked;
-  if (!wantWeapon && !wantAutostore && !wantReconnect && !wantGear && !wantJewelry) return;
+  if (!wantWeapon && !wantSkills && !wantAutostore && !wantReconnect && !wantGear && !wantJewelry) return;
   const jewelTids = Object.values(JEWEL_TIDS_BY_GRADE).flat();
   const includeVaultGear = forgeGearIncludeVault();
   const includeVaultJewelry = forgeJewelryIncludeVault();
@@ -2340,13 +2446,16 @@ async function forgeAutomationTick(){
   try { data = await sendLiveEval(buildForgeAutomationProbeExpr(jewelTids, GEAR_ONLY_TIDS_BY_TIER, JEWELRY_ONLY_TIDS_BY_TIER, includeVaultGear, includeVaultJewelry)); } catch(e) { return; }
   if (!data || data.error) return;
 
-  if (wantWeapon) {
-    if (forgeLastClassType !== null && data.classType !== forgeLastClassType) {
-      forgeLogActivity(currentLang==='th' ? '🤖 ตรวจพบสลับคลาส → กำลังใส่อาวุธที่ดีที่สุดให้' : '🤖 Class switch detected → auto-equipping best weapons');
-      await forgeEquipBestWeapon();
-    }
-    forgeLastClassType = data.classType;
+  const classSwitched = forgeLastClassType !== null && data.classType !== forgeLastClassType;
+  if (wantWeapon && classSwitched) {
+    forgeLogActivity(currentLang==='th' ? '🤖 ตรวจพบสลับคลาส → กำลังใส่อาวุธที่ดีที่สุดให้' : '🤖 Class switch detected → auto-equipping best weapons');
+    await forgeEquipBestWeapon();
   }
+  if (wantSkills && classSwitched) {
+    forgeLogActivity(currentLang==='th' ? '🤖 ตรวจพบสลับคลาส → กำลังใส่สกิลมาตรฐานให้' : '🤖 Class switch detected → auto-equipping standard skills');
+    await forgeEquipStandardSkills();
+  }
+  forgeLastClassType = data.classType;
 
   if (wantAutostore && data.bagJewelIds.length > 0 && Date.now() - forgeLastAutoStoreAt > 15000) {
     const total = (forgeVaultTabs || 1) * data.slotCnt;
