@@ -2046,7 +2046,11 @@ function buildRealFuseExpr(contentType, tier, tidList, needCount, includeVault, 
       var tidSet = ${JSON.stringify(tidList)};
       var allowedLocs = ${includeVault} ? [1,2] : [1];
       var allItems = nn.net.data.item.getAllItemNotStack();
-      var candidates = allItems.filter(function(it){ return allowedLocs.indexOf(it.location) !== -1 && tidSet.indexOf(it.itemTid) !== -1; });
+      var candidates = allItems.filter(function(it){
+        if (it.isLock || allowedLocs.indexOf(it.location) === -1 || tidSet.indexOf(it.itemTid) === -1) return false;
+        try { if (nn.services.steamMarket.staging.isStaged(it.itemId)) return false; } catch(e){}
+        return true;
+      });
       var need = ${needCount};
       if (candidates.length < need) return JSON.stringify({ error: 'not_enough', have: candidates.length });
       var selected, bestLv;
