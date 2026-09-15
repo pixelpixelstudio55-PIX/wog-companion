@@ -719,6 +719,7 @@
       <div class="sa-card"><div class="sa-card-head sa-h-green" id="opt-head-map"></div><div class="sa-card-body" id="opt-map"></div></div>
       <div class="sa-card opt-wide"><div class="sa-card-head sa-h-red" id="opt-head-gear"></div><div class="sa-card-body" id="opt-gear"></div></div>
       <div class="sa-card opt-wide"><div class="sa-card-head sa-h-green" id="opt-head-skills"></div><div class="sa-card-body" id="opt-skills"></div></div>
+      <div class="sa-card opt-wide"><div class="sa-card-head sa-h-gold" id="opt-head-respec"></div><div class="sa-card-body" id="opt-respec"></div></div>
       <div class="sa-card opt-wide"><div class="sa-card-head sa-h-blue" id="opt-head-other"></div><div class="sa-card-body" id="opt-other"></div></div>
     </div>
     <p class="hint" style="margin-top:14px;" data-i="opt-foot">ที่มาของข้อมูล: ของที่มี กฎการใส่ของ ค่าอัปสกิล และค่าฮีโร่ อ่านจากเกมโดยตรง · ผลแมพวัดจากรอบจริง · "คะแนน" เป็นค่าประมาณที่แปลงค่าสถานะเป็น "% เทียบเท่า" ตามเป้าหมายที่เลือก ใช้จัดอันดับ ไม่ใช่ตัวเลขในเกม</p>
@@ -3563,7 +3564,7 @@ function optLineEffect(l, ctx){
     case 'atkFlat':   return { dmg: ctx.atk > 0 ? 100 * v / ctx.atk : 0 };
     case 'dmg':       return { dmg: v };
     case 'dmgProc':   return { dmg: 0.5 * v };
-    case 'critRate':  return { dmg: 100 * (v / 100) * cd / M };
+    case 'critRate':  return { critPts: v };   // summed across sources, then converted (capped at 100%) in optGoalScore
     case 'critDmg':   return { dmg: 100 * r * (v / 100) / M };
     case 'atkSpeed':  return { dmg: v * (ctx.basicShare || 0.5) };
     case 'cdPct':     return { dmg: v * (ctx.skillShare || 0.5) };
@@ -3586,10 +3587,23 @@ function optLineEffect(l, ctx){
   return {};
 }
 
+// Crit rate can't pass 100%, so crit points from every source are summed first
+// and turned into damage once, against the character's current crit numbers.
+// Converting each source on its own let stacked buffs count crit above 100%.
+let optCritCtx = { critRate: 0, critDmg: 0 };
+function optCritPtsToDmg(pts){
+  if (!pts) return 0;
+  const r0 = Math.max(0, Math.min(1, (optCritCtx.critRate || 0) / 100));
+  const cd = (optCritCtx.critDmg || 0) / 100;
+  const r1 = Math.max(0, Math.min(1, r0 + pts / 100));
+  const M0 = 1 + r0 * cd;
+  return M0 > 0 ? 100 * ((1 + r1 * cd) / M0 - 1) : 0;
+}
 function optGoalScore(eff, goal){
   if (goal === 'balanced') return (optGoalScore(eff, 'survive') + optGoalScore(eff, 'farm') + optGoalScore(eff, 'damage')) / 3;
   const w = (OPT_GOALS[goal] || OPT_GOALS.survive).w;
-  return Object.keys(w).reduce((s, k) => s + (eff[k] || 0) * w[k], 0);
+  const e = eff.critPts ? { ...eff, dmg: (eff.dmg || 0) + optCritPtsToDmg(eff.critPts) } : eff;
+  return Object.keys(w).reduce((s, k) => s + (e[k] || 0) * w[k], 0);
 }
 
 const OPT_KEY_TH = {
@@ -3705,6 +3719,355 @@ function buildOptimizerExpr(extraTypes, skillGroups){
   })()`;
 }
 
+/* ================= RESPEC PLANNER =================
+   Boss's brief (2026-09-16): "if every skill point were taken back and spent
+   again, at this character level, which allocation is worth the most" -
+   several plans, like the training ranking. Recommend-only.
+
+   Exact from the game (read once per class, the table is static): every
+   level's unlock level, prerequisite (ConditionID -> that skill's group and
+   level), point cost and cooldown, plus each level's effects from
+   nn.db.abilityAction - buffs on the caster, debuffs on the enemy, heals, with
+   their trigger and duration.
+
+   Estimated: how much each effect is worth, and its uptime. An effect is only
+   scored when its timing is known:
+     - cast skills (ActivateType 2) with a duration: uptime = duration / cooldown
+     - passives firing every N seconds (ActivateType 1, invoke type 1): duration / N
+     - passives reacting to casts (ActivateType 2): duration x casts per second
+     - permanent effects (AbilityTimeType 1)
+   Other triggers use codes the game doesn't name (on crit, on low HP...), and
+   seven Mage passives have no ability actions at all - those are listed on the
+   card and scored as zero; the plan never invents a trigger rate.
+
+   Resetting, from the game's own text (verified 2026-09-16): there is a
+   "Reset All Skills" button per class and a per-skill reset (blocked while
+   that skill is equipped or a higher skill depends on it), and a reset
+   unequips every equipped skill. No confirm text mentions a price and the item
+   table has no reset item, so it is probably free - not proven, and the card
+   says exactly that. */
+let optSkillPlanCache = {};   // clsCode -> skill table read from the game
+
+function buildSkillPlanExpr(groups){
+  return `(function(){
+    try {
+      var aa = nn.db.abilityAction, am = nn.db.ability._abilityTypeMap, names = {}, out = { skills: {} };
+      var nameOf = function(t){
+        t = Number(t); if (!t || names[t]) return;
+        var row = null; try { row = am.get(t); } catch(e){}
+        if (!row) { names[t] = { key: null, per: 0, en: '' }; return; }
+        var en = ''; try { var l = nn.db.locale.get(row.AbilityName); en = l ? (l.EN || '') : ''; } catch(e){}
+        names[t] = { key: row.AbilityName, per: row.PerType, en: en };
+      };
+      ${JSON.stringify(groups)}.forEach(function(s){
+        var levels = [];
+        for (var L = 1; L <= s.max; L++) {
+          var sk = null; try { sk = nn.db.skill.get(s.g + (L - 1) * 10); } catch(e){}
+          if (!sk) break;
+          var acts = [];
+          (sk.AbilityActionGroupID || []).forEach(function(id){
+            var rows = [];
+            try { var grp = aa.getAbilityActionGroup ? aa.getAbilityActionGroup(id) : null; if (grp && grp.length) rows = grp; } catch(e){}
+            if (!rows.length) { try { var one = aa.get(id); if (one) rows = [one]; } catch(e){} }
+            rows.forEach(function(a){
+              var types = (a.AbilityType || []).map(function(t, i){ nameOf(t); return [t, (a.AbilityDetailType || [])[i], (a.AbilityDetailCnt || [])[i]]; }).filter(function(p){ return p[0]; });
+              var singles = (a.SingleAbilityType || []).map(function(t, i){ nameOf(t); return [t, (a.SingleAbilityDetailType || [])[i], a.SingleAbilityDetail || []]; }).filter(function(p){ return p[0]; });
+              acts.push({ at: a.ActivateType, it: a.AbilityInvokeType, id: a.AbilityInvokeDetail, tgt: a.AbilityTargetType, tt: a.AbilityTimeType, td: a.AbilityTimeDetail, types: types, singles: singles });
+            });
+          });
+          var cond = (sk.ConditionID || []).filter(function(c){ return c; }).map(function(c){
+            var cr = null; try { cr = nn.db.skill.get(c); } catch(e){}
+            return cr ? { g: cr.GroupID, lv: cr.Level } : { raw: c };
+          });
+          levels.push({ L: L, open: sk.OpenLevel, cond: cond, cost: (sk.LevelUpItemCnt || [])[0] || 1, costTid: (sk.LevelUpItemID || [])[0] || 0, cd: sk.SkillCoolTime, acts: acts });
+        }
+        out.skills[s.g] = { levels: levels };
+      });
+      out.names = names;
+      return JSON.stringify(out);
+    } catch(e) { return JSON.stringify({ error: e.message }); }
+  })()`;
+}
+
+function optTypeLabel(t, names, th){
+  const n = names[t] || {};
+  const stem = String(n.key || '').replace(/^Ability(Type|Tip)_/, '');
+  if (!stem) return '#' + t;
+  return th ? (OPT_KEY_TH[stem] || String(n.en || stem).replace(/\s*[+-]?\{0\}\s*/, '').trim()) : String(n.en || stem).replace(/\s*[+-]?\{0\}\s*/, '').trim();
+}
+
+// One buff or debuff at a given uptime -> "% equivalent" contributions.
+// Seven Mage passives (Master's Staff, Battle Experience, Sharp Strike, Ignition,
+// Mana Amplification, Skill Tome, Elemental Convergence) have no rows in
+// nn.db.abilityAction, yet each is an always-on stat. Scoring them as zero made
+// every plan strip them - including Master's Staff at Lv 9, i.e. about -76%
+// attack. Their effect is read from the skill description instead, but only
+// for phrasings verified against real table rows on other skills: Arcane Burst
+// "Attack Power by x%" = AttackPer_Plus, Holy Blow "Critical Precision by x" =
+// CriticalRate_Plus, Fireball "Critical Damage by x%", Lava Swamp "Fire
+// Precision by x", Omnipotence "damage by x%", Titan Seal "damage to Boss".
+// Conditional wording is never read as always-on.
+const OPT_PERMANENT_PHRASES = [
+  [/^Increase Attack Power by (-?\d+(?:\.\d+)?)%\.?$/i, 'AbilityType_AttackPer_Plus', 1],
+  [/^Increase Critical Precision by (-?\d+(?:\.\d+)?)\.?$/i, 'AbilityType_CriticalRate_Plus', 0],
+  [/^Increase Critical Damage by (-?\d+(?:\.\d+)?)%\.?$/i, 'AbilityType_CriticalDamage_Plus', 1],
+  [/^Increase Fire Precision by (-?\d+(?:\.\d+)?)\.?$/i, 'AbilityType_BurnRate_Plus', 0],
+  [/^Damage dealt increases by (-?\d+(?:\.\d+)?)%\.?$/i, 'AbilityType_DamagePer_Plus', 1],
+  [/^Increase damage dealt to Boss by (-?\d+(?:\.\d+)?)%\.?$/i, 'AbilityType_BossDamagePer_Plus', 1],
+  [/^Reduce skill cooldown time by (-?\d+(?:\.\d+)?)%\.?$/i, 'AbilityType_SkillCoolTimePer_Minus', 1],
+];
+function optPermanentFromDescription(desc){
+  const text = String(desc || '').trim();
+  if (!text || /\b(when|every|within|after|upon|while|chance|stack|per battle)\b|^on\b/i.test(text)) return null;
+  for (const [re, key, per] of OPT_PERMANENT_PHRASES) {
+    const hit = text.match(re);
+    if (hit) return { key, per, value: Number(hit[1]) };
+  }
+  return null;
+}
+function optEffOfBuff(type, value, target, uptime, names, ctx){
+  const n = names[type] || {};
+  const key = String(n.key || '').replace(/^Ability(Type|Tip)_/, '');
+  const u = Math.max(0, Math.min(1, uptime));
+  const v = Math.abs(Number(value) || 0);
+  if (target === 2) {   // lands on the enemy
+    if (key === 'DefensePer_Minus') return { dmg: 0.5 * v * u };
+    if (key === 'BlockRate_Minus') return { dmg: 0.3 * v * u };
+    if (key === 'CriticalRate_Resist') return optLineEffect({ bucket: 'critRate', value: v * u, per: 0, sign: 1 }, ctx);
+    if (key === 'AttackSpeedPer_Minus') return { surv: 0.5 * v * u };
+    if (key === 'Stun') return { surv: 30 * u };
+    return null;
+  }
+  const b = optBucketOf(n.key);
+  if (b.bucket === 'other') return null;
+  return optLineEffect({ bucket: b.bucket, value: Number(value) * u, per: n.per, sign: b.sign }, ctx);
+}
+
+// Value of one skill at one level: hit damage (actives) + scored effects, and
+// the effects that couldn't be scored.
+function optSkillValue(sk, lvl, table, env){
+  const key = sk.group_id + ':' + lvl;
+  if (env.memo[key]) return env.memo[key];
+  const res = { dps: 0, eff: {}, unknown: [] };
+  if (lvl > 0 && table && table.levels[lvl - 1]) {
+    const row = table.levels[lvl - 1];
+    const gl = sk.levels[lvl - 1] || {};
+    const cd = gl.cooldown_sec || row.cd || 0;
+    const add = e => Object.keys(e || {}).forEach(k => { res.eff[k] = (res.eff[k] || 0) + e[k]; });
+    if (!sk.is_passive && gl.damage_percent && cd > 0) {
+      res.dps = env.m.attack * env.m.critMult * env.m.bonusMult * (gl.damage_percent / 100) / cd;
+    }
+    (row.acts || []).forEach(a => {
+      let uptime = null;
+      if (a.tt === 1) uptime = 1;
+      else if (a.at === 2 && a.tt === 2 && a.td > 0) uptime = sk.is_passive ? a.td * env.castRate : (cd > 0 ? a.td / cd : null);
+      else if (a.at === 1 && a.it === 1 && a.id > 0 && a.tt === 2 && a.td > 0) uptime = a.td / a.id;
+      (a.types || []).forEach(([t, , cnt]) => {
+        const e = uptime != null ? optEffOfBuff(t, cnt, a.tgt, uptime, env.names, env.ctx) : null;
+        if (e) add(e); else res.unknown.push(optTypeLabel(t, env.names, env.th));
+      });
+      (a.singles || []).forEach(([t, , det]) => {
+        const stem = String((env.names[t] || {}).key || '').replace(/^Ability(Type|Tip)_/, '');
+        if (!stem) return;   // the unnamed single effect is the hit itself, counted from damage %
+        if (stem === 'Heal' && a.at === 1 && a.it === 1 && a.id > 0) {
+          add({ surv: 0.3 * 60 * (Number((det || [])[0]) || 0) / a.id });   // % HP healed per minute, weighted
+        } else {
+          res.unknown.push(optTypeLabel(t, env.names, env.th));
+        }
+      });
+    });
+    if (sk.is_passive && !(row.acts || []).length) {
+      const parsed = optPermanentFromDescription(gl.description_en);
+      if (parsed) {
+        const b = optBucketOf(parsed.key);
+        add(optLineEffect({ bucket: b.bucket, value: parsed.value, per: parsed.per, sign: b.sign }, env.ctx));
+        res.fromDescription = true;
+      } else {
+        res.unknown.push(env.th ? 'ไม่มีข้อมูลผลในตารางเกม และคำอธิบายไม่ใช่ผลติดตัวแบบที่ตรวจแล้ว' : 'no effect rows in the game table, and the description is not a verified always-on phrasing');
+      }
+    }
+  }
+  res.unknown = [...new Set(res.unknown)];
+  env.memo[key] = res;
+  return res;
+}
+
+function optAddEff(into, e){ Object.keys(e || {}).forEach(k => { into[k] = (into[k] || 0) + e[k]; }); return into; }
+
+// Score of a whole allocation for one goal: every passive counts, and only the
+// best `slots` actives count (you can only equip that many).
+function optPlanValue(levels, env, goal){
+  const eff = {};
+  const actives = [];
+  env.skills.forEach(sk => {
+    const L = levels[sk.group_id] || 0;
+    if (!L) return;
+    const v = optSkillValue(sk, L, env.table.skills[sk.group_id], env);
+    if (sk.is_passive) { optAddEff(eff, v.eff); return; }
+    const e = optAddEff({ dmg: env.m.totalDps > 0 ? 100 * v.dps / env.m.totalDps : 0 }, v.eff);
+    actives.push({ sk, L, e, score: optGoalScore(e, goal) });
+  });
+  actives.sort((a, b) => b.score - a.score);
+  const equipped = actives.slice(0, env.slots);
+  equipped.forEach(a => optAddEff(eff, a.e));
+  return { score: optGoalScore(eff, goal), eff, equipped: new Set(equipped.map(a => a.sk.group_id)) };
+}
+
+// Greedy by value per point. Each candidate is "the next level of one skill"
+// together with every prerequisite level it needs (and those levels' own
+// prerequisites), all within the character's current level and the budget.
+function optPlanFor(goal, env){
+  const levels = { ...(env.locked || {}) };   // locked skills start (and stay) at their current level
+  let spent = 0;
+  const rowOf = (g, L) => env.table.skills[g] && env.table.skills[g].levels[L - 1];
+  const bundle = (g, L, have, acc) => {
+    const reached = x => Math.max(have[x] || 0, ...acc.filter(s => s.g === x).map(s => s.L), 0);
+    if (env.locked && g in env.locked && L > env.locked[g]) return null;   // a locked prerequisite can't be raised
+    for (let k = reached(g) + 1; k <= L; k++) {
+      const row = rowOf(g, k);
+      if (!row || row.open > env.lv) return null;
+      for (const c of (row.cond || [])) {
+        if (c.g == null) return null;
+        if (reached(c.g) < c.lv && !bundle(c.g, c.lv, have, acc)) return null;
+      }
+      acc.push({ g, L: k, cost: row.cost || 1 });
+    }
+    return acc;
+  };
+  let current = optPlanValue(levels, env, goal).score;
+  for (let guard = 0; guard < 500; guard++) {
+    let best = null;
+    env.skills.forEach(sk => {
+      const g = sk.group_id;
+      if (env.locked && g in env.locked) return;
+      const next = (levels[g] || 0) + 1;
+      if (next > sk.levels.length) return;
+      const steps = bundle(g, next, levels, []);
+      if (!steps || !steps.length) return;
+      const cost = steps.reduce((s, x) => s + x.cost, 0);
+      if (spent + cost > env.budget) return;
+      const trial = { ...levels };
+      steps.forEach(s => { trial[s.g] = Math.max(trial[s.g] || 0, s.L); });
+      const v = optPlanValue(trial, env, goal).score;
+      const gain = v - current;
+      if (gain <= 1e-9) return;
+      const ratio = gain / cost;
+      if (!best || ratio > best.ratio + 1e-9 || (Math.abs(ratio - best.ratio) <= 1e-9 && cost < best.cost)) best = { trial, cost, v, ratio };
+    });
+    if (!best) break;
+    Object.assign(levels, best.trial);
+    spent += best.cost;
+    current = best.v;
+  }
+  const detail = optPlanValue(levels, env, goal);
+  return { levels, spent, left: env.budget - spent, score: detail.score, equipped: detail.equipped };
+}
+
+async function optRenderRespec(d, x, base){
+  const th = currentLang === 'th';
+  const el = document.getElementById('opt-respec');
+  if (!el) return;
+  const { m, ctx, lv, clsCode, cur, names } = base;
+  const tree = GAME_DATA.skillTrees[clsCode];
+  if (!tree) { el.innerHTML = `<div class="hint">${th ? 'ไม่รู้จักอาชีพนี้' : 'Unknown class'}</div>`; return; }
+  const skills = tree.branches.flatMap(b => b.skills);
+  let table = optSkillPlanCache[clsCode];
+  if (!table) {
+    if (!el.innerHTML) el.innerHTML = `<div class="hint">${th ? 'กำลังอ่านตารางสกิลทุกเลเวลจากเกม…' : 'Reading every skill level from the game…'}</div>`;
+    try {
+      table = await sendLiveEval(buildSkillPlanExpr(skills.map(s => ({ g: s.group_id, max: s.levels.length }))));
+      if (!table || table.error) throw new Error((table && table.error) || 'no data');
+      optSkillPlanCache[clsCode] = table;
+    } catch(e) {
+      el.innerHTML = `<div class="empty-state" style="padding:20px 10px;">${th ? 'อ่านตารางสกิลจากเกมไม่ได้' : "Couldn't read the skill table from the game"}</div>`;
+      return;
+    }
+  }
+
+  const pointTid = OPT_SKILL_POINT_TID[clsCode];
+  const curLevels = {};
+  skills.forEach(sk => { const raw = x.tree4 ? x.tree4[sk.group_id] : null; if (raw != null) curLevels[sk.group_id] = raw + OPT_TREE_LEVEL_OFFSET; });
+  const costOfLevels = (g, upTo) => { const lv = (table.skills[g] || {}).levels || []; let c = 0; for (let k = 1; k <= upTo; k++) c += (lv[k - 1] && lv[k - 1].cost) || 1; return c; };
+  const spentNow = Object.keys(curLevels).reduce((s, g) => s + costOfLevels(g, curLevels[g]), 0);
+  const unspent = cur(pointTid);
+  const env = {
+    th, skills, table, lv, m, ctx,
+    names: { ...names, ...(table.names || {}) },
+    budget: spentNow + unspent,
+    slots: (d.skillSlots || []).length || 6,
+    castRate: m.equipped.reduce((s, e) => s + (e.cd > 0 ? 1 / e.cd : 0), 0),
+    memo: {},
+    locked: {},
+  };
+  // A skill whose effect can't be scored at any level is kept exactly where it
+  // is: its points leave the budget and no plan may raise or lower it. Scoring
+  // it as zero would make every plan strip it.
+  skills.forEach(sk => {
+    const g = sk.group_id, have = curLevels[g] || 0;
+    const probe = [Math.max(1, have), sk.levels.length].map(L => optSkillValue(sk, L, table.skills[g], env));
+    if (!probe.some(v => v.dps > 0 || Object.keys(v.eff).length > 0)) {
+      env.locked[g] = have;
+      env.budget -= costOfLevels(g, have);
+    }
+  });
+  const goals = ['survive', 'farm', 'damage', 'balanced'];
+  const plans = {}, now = {};
+  goals.forEach(g => { plans[g] = optPlanFor(g, env); now[g] = optPlanValue(curLevels, env, g); });
+
+  const goalShort = { survive: th ? '🛡️ อยู่รอด' : '🛡️ Survive', farm: th ? '💰 ฟาร์ม' : '💰 Farm', damage: th ? '⚔️ ดาเมจ' : '⚔️ Damage', balanced: th ? '⚖️ สมดุล' : '⚖️ Balanced' };
+  const pct = (a, b) => b > 0 ? `${a >= b ? '+' : ''}${saFmt(100 * (a - b) / b, 0)}%` : '—';
+  const rows = skills.filter(sk => (curLevels[sk.group_id] || 0) > 0 || goals.some(g => (plans[g].levels[sk.group_id] || 0) > 0));
+  const lvCell = (L, changed, star, active) => `<td style="text-align:center;${changed ? 'color:var(--gold-bright);font-weight:700;' : ''}${active ? 'background:rgba(212,175,55,.08);' : ''}">${L || '<span class="hint">—</span>'}${star ? ' ★' : ''}</td>`;
+  const unknownRows = rows.map(sk => {
+    const L = Math.max(curLevels[sk.group_id] || 0, ...goals.map(g => plans[g].levels[sk.group_id] || 0));
+    const v = optSkillValue(sk, L, table.skills[sk.group_id], env);
+    return v.unknown.length ? { sk, unknown: v.unknown } : null;
+  }).filter(Boolean);
+  const fromDesc = skills.filter(sk => optSkillValue(sk, sk.levels.length, table.skills[sk.group_id], env).fromDescription).map(sk => fld(sk, 'name'));
+  const lockedNames = Object.keys(env.locked).map(g => { const sk = skills.find(s => String(s.group_id) === String(g)); return `${sk ? fld(sk, 'name') : g} Lv ${env.locked[g]}`; });
+  const mine = plans[optGoal] || plans.survive;
+  const gainMine = now[optGoal] ? mine.score - now[optGoal].score : 0;
+
+  el.innerHTML =
+    saRow(th ? 'แต้มสกิลทั้งหมดของอาชีพนี้ (ใช้ไปแล้ว + เหลือ)' : 'All skill points for this class (spent + unspent)', `${saFmt(spentNow)} + ${saFmt(unspent)} = <b>${saFmt(spentNow + unspent)}</b>`, 'sm')
+    + saRow(th ? 'วางแผนตามเลเวลตัวละคร' : 'Planned for character level', `Lv ${lv} · ${th ? 'ช่องสกิล' : 'skill slots'} ${env.slots}`, 'sm')
+    + (lockedNames.length ? saRow(th ? 'คงเลเวลเดิม ไม่แตะ (ประเมินผลไม่ได้)' : "Kept as is (effect can't be scored)", esc(lockedNames.join(' · ')), 'sm') : '')
+    + (fromDesc.length ? saRow(th ? 'อ่านผลจากคำอธิบายสกิล (ตารางเกมไม่มีแถว)' : 'Effect read from the description (no game table rows)', esc(fromDesc.join(' · ')), 'sm') : '')
+    + (lockedNames.length ? saRow(th ? 'แต้มที่นำมาจัดใหม่ได้' : 'Points free to re-plan', `<b>${saFmt(env.budget)}</b>`, 'sm') : '')
+    + `<div class="table-scroll" style="margin-top:8px;"><table class="data-table"><thead><tr>
+        <th>${th ? 'สกิล' : 'Skill'}</th><th style="text-align:center;">${th ? 'ตอนนี้' : 'Now'}</th>
+        ${goals.map(g => `<th style="text-align:center;${g === optGoal ? 'color:var(--gold-bright);' : ''}">${goalShort[g]}</th>`).join('')}
+      </tr></thead><tbody>`
+    + `<tr><td><b>${th ? 'คะแนนรวม (เป้าหมายของคอลัมน์นั้น)' : 'Total score (that column\'s goal)'}</b></td><td style="text-align:center;" class="hint">${th ? 'ดูแต่ละช่อง' : 'see each'}</td>`
+    + goals.map(g => `<td style="text-align:center;"><b>${saFmt(plans[g].score, 1)}</b><div class="opt-lines">${th ? 'ตอนนี้' : 'now'} ${saFmt(now[g].score, 1)} · <span style="color:${plans[g].score > now[g].score ? '#7ee787' : 'var(--text-dim)'};">${pct(plans[g].score, now[g].score)}</span></div></td>`).join('') + `</tr>`
+    + rows.map(sk => {
+        const g = sk.group_id, nowL = curLevels[g] || 0;
+        return `<tr><td>${profIconHtml(sk.icon, sk.is_passive ? '🛡️' : '⚔️')} <b>${esc(fld(sk, 'name'))}</b> <span class="opt-tag">${sk.is_passive ? (th ? 'พาสซีฟ' : 'passive') : (th ? 'ใช้งาน' : 'active')}</span></td>`
+          + lvCell(nowL, false, !sk.is_passive && now[optGoal] && now[optGoal].equipped.has(g), false)
+          + goals.map(goal => { const L = plans[goal].levels[g] || 0; return lvCell(L, L !== nowL, !sk.is_passive && plans[goal].equipped.has(g), goal === optGoal); }).join('')
+          + `</tr>`;
+      }).join('')
+    + `<tr><td class="hint">${th ? 'แต้มที่เหลือหลังทำตามแผน' : 'Points left over'}</td><td></td>${goals.map(g => `<td style="text-align:center;" class="hint">${saFmt(plans[g].left)}</td>`).join('')}</tr>`
+    + `</tbody></table></div>`
+    + `<div class="opt-lines" style="margin-top:4px;">★ ${th ? '= สกิลใช้งานที่ควรใส่ในช่องสกิล (ช่องมีจำกัด) · ตัวเลขสีทอง = ต่างจากตอนนี้' : '= active skill to keep in a skill slot (slots are limited) · gold number = differs from now'}</div>`
+    // Four identical columns would read as four independent recommendations.
+    // When every goal lands on the same levels, say why instead.
+    + (skills.every(sk => goals.every(g => (plans[g].levels[sk.group_id] || 0) === (plans.survive.levels[sk.group_id] || 0)))
+      ? `<div class="sa-advice info" style="margin-top:10px;">ℹ️ ${th
+          ? 'ทั้ง 4 เป้าหมายได้การลงแต้มแบบเดียวกัน — ไม่ใช่ว่าเป้าหมายไม่ต่างกัน แต่ในสกิลที่ประเมินได้ของอาชีพนี้ บัฟโจมตี/คริแบบติดตัวคุ้มกว่าการฟื้นเลือดในทุกเป้าหมาย ส่วนสกิลเอาตัวรอดจริงๆ ทำงานตามเงื่อนไขที่เกมไม่ได้ระบุ (อยู่ในรายการ "คงเลเวลเดิม") จึงประเมินไม่ได้ แผน "อยู่รอด" ของอาชีพนี้เลยไม่มีตัวเลือกเอาตัวรอดให้เลือก'
+          : 'All four goals land on the same allocation - not because the goals are alike, but because among the skills that can be scored, always-on attack/crit buffs beat healing under every goal. The real survival skills trigger on conditions the game doesn\'t name (see "Kept as is"), so they can\'t be scored, and the Survive plan has no survival option to pick for this class.'}</div>`
+      : '')
+    + (gainMine > 0.5
+      ? `<div class="sa-advice go" style="margin-top:10px;">🔁 ${th ? `ถ้ารีเซ็ตแล้วลงแต้มตามแผน <b>${goalShort[optGoal]}</b> คะแนนจะเพิ่มจาก ${saFmt(now[optGoal].score, 1)} เป็น <b>${saFmt(mine.score, 1)}</b> (${pct(mine.score, now[optGoal].score)}) — คุ้มถ้าค่ารีเซ็ตในเกมไม่แพง` : `Resetting and following the <b>${goalShort[optGoal]}</b> plan lifts the score from ${saFmt(now[optGoal].score, 1)} to <b>${saFmt(mine.score, 1)}</b> (${pct(mine.score, now[optGoal].score)}) - worth it if the in-game reset is cheap`}</div>`
+      : `<div class="sa-advice info" style="margin-top:10px;">✅ ${th ? 'การลงแต้มตอนนี้ใกล้เคียงแผนที่ดีที่สุดของเป้าหมายนี้แล้ว ไม่คุ้มรีเซ็ต' : "Your current allocation is already close to this goal's best plan - not worth a reset"}</div>`)
+    + (unknownRows.length
+      ? `<div class="sa-sub">${th ? '⚠️ ผลที่ประเมินไม่ได้ (ไม่ได้นับคะแนน)' : "⚠️ Effects that couldn't be scored (counted as zero)"}</div>`
+        + unknownRows.map(u => `<div class="opt-lines">• <b>${esc(fld(u.sk, 'name'))}</b>: ${esc(u.unknown.join(', '))}</div>`).join('')
+        + `<div class="opt-lines" style="margin-top:4px;">${th ? 'ส่วนใหญ่เป็นเงื่อนไขทริกเกอร์ที่เกมไม่ได้ตั้งชื่อ (เช่น ตอนคริ ตอนเลือดต่ำ) — ถ้าบอสรู้ว่าตัวไหนใช้ดี แผนอาจต่ำกว่าความจริงสำหรับสกิลนั้น' : "Mostly trigger conditions the game doesn't name (on crit, on low HP...) - if you know one of these is strong, the plans undervalue it."}</div>`
+      : '')
+    + `<div class="sa-advice hold" style="margin-top:10px;">⚠️ ${th ? 'ในเกมมีปุ่ม "รีเซ็ตสกิลทั้งหมด" ของอาชีพนี้ และรีเซ็ตทีละสกิลได้ — ข้อความยืนยันของเกมไม่ได้พูดถึงค่าใช้จ่าย และไม่มีไอเทมรีเซ็ตในตารางไอเทม จึง<b>น่าจะฟรี แต่ยังไม่ได้ยืนยัน</b> ให้ดูในเกมก่อนกด · <b>รีเซ็ตแล้วสกิลที่ใส่อยู่จะถูกถอดออกทั้งหมด</b> ต้องใส่ใหม่ (สกิลที่มี ★) · รีเซ็ตทีละตัวไม่ได้ถ้าสกิลนั้นใส่อยู่ หรือมีสกิลขั้นสูงกว่าต้องใช้มัน · แผนนี้นับบัฟ/ดีบัฟของสกิลด้วย จึงอาจต่างจากตาราง "อัปสกิลไหนคุ้ม" ด้านบนที่นับแค่ดาเมจ' : 'The game has a "Reset All Skills" button for this class and a per-skill reset. Its confirm text mentions no cost and there is no reset item in the item table, so a reset is <b>probably free, but not confirmed</b> - check in game first. <b>A reset unequips every equipped skill</b>, so re-equip the ★ ones afterwards. A single skill can\'t be reset while equipped or while a higher skill needs it. These plans count skill buffs and debuffs too, so they can differ from the "skills worth upgrading" table above, which only counts damage.'}</div>`;
+}
+
 function renderOptimizer(){ refreshOptimizerLive(); }
 
 function renderOptGoals(){
@@ -3733,9 +4096,10 @@ async function refreshOptimizerLive(){
     'opt-head-gear': th ? '3️⃣ อุปกรณ์ & อัญมณีที่ควรใส่ (จากที่มีอยู่)' : '3️⃣ Gear & jewels to wear (from what you own)',
     'opt-head-skills': th ? '2️⃣ อัปสกิลไหนคุ้ม ณ เลเวลนี้' : '2️⃣ Skills worth upgrading at this level',
     'opt-head-other': th ? '➕ อื่นๆ ที่ยังรีดได้อีก' : '➕ Other things still left on the table',
+    'opt-head-respec': th ? '🔁 ถ้ารีเซ็ตสกิลแล้วอัปใหม่ แบบไหนคุ้มสุด (ตามเลเวลตอนนี้)' : '🔁 If you reset every skill point, the best way to spend them again (at this level)',
   };
   Object.keys(heads).forEach(id => { const el = document.getElementById(id); if (el) el.textContent = heads[id]; });
-  const bodies = ['opt-summary', 'opt-class', 'opt-map', 'opt-gear', 'opt-skills', 'opt-other'].map(id => document.getElementById(id));
+  const bodies = ['opt-summary', 'opt-class', 'opt-map', 'opt-gear', 'opt-skills', 'opt-other', 'opt-respec'].map(id => document.getElementById(id));
   if (!bodies[0]) return;
   const skillGroups = allSkillsFlatList().map(s => s.group_id);
   const extra = new Set();
@@ -3777,6 +4141,7 @@ function optRenderAll(d, x){
     skillShare: m.totalDps > 0 ? m.skillDps / m.totalDps : 0.5,
     bossReq: 70,
   };
+  optCritCtx = { critRate: ctx.critRate, critDmg: ctx.critDmg };
   const stages = GAME_DATA.stageData || [];
   const curStage = stages.find(s => s.stage_id === d.stageTid) || null;
   if (curStage && curStage.boss_req_mobs) ctx.bossReq = curStage.boss_req_mobs;
@@ -4134,6 +4499,7 @@ function optRenderAll(d, x){
   const upcomingAll = gearRows.filter(r => r.upcoming);
   if (upcomingAll.length) other.push(`<div class="sa-item"><span class="sa-rank">🔜</span><div style="flex:1;min-width:0;"><div class="sa-item-name">${th ? `มีของที่ดีกว่ารอเลเวลอยู่ ${upcomingAll.length} ชิ้น` : `${upcomingAll.length} better item(s) waiting for a level`}</div><div class="sa-item-meta">${upcomingAll.map(r => `${esc(optItemName(r.upcoming.it))} (Lv ${r.upcoming.it.equip.limitNow})`).join(' · ')}</div></div></div>`);
   document.getElementById('opt-other').innerHTML = other.length ? other.join('') : `<div class="hint">${th ? 'ไม่มีอะไรค้างอยู่' : 'Nothing left on the table'}</div>`;
+  optRenderRespec(d, x, { m, ctx, lv, clsCode, cur, names });
 }
 
 document.getElementById('btn-opt-refresh').addEventListener('click', () => {

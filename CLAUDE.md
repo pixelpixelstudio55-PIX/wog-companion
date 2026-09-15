@@ -159,6 +159,30 @@ testing/bookmarking.
   after gear is worn), so `optLineEffect()` converts each stat into a "% equivalent" for the goal
   (formulas documented there). Class comparison is medium-low confidence by nature: the game
   computes full stats only for the class being played.
+- **Respec planner** (card inside `#optimize`, 2026-09-16, recommend-only) — "if every skill
+  point were reset and spent again at this character level, which allocation is best", one plan
+  per goal vs the current allocation. Budget = points spent (from `getTreeAllInfo(4)` with the +1
+  level rule) + unspent. Exact from the game: every level's `OpenLevel`, `ConditionID` prerequisite
+  (resolved to group + level), `LevelUpItemCnt`, cooldown, and effects from `nn.db.abilityAction`
+  (self buffs, enemy debuffs, heals, trigger + duration). **Active skills carry big buffs the plain
+  DPS model ignores** (Arcane Burst Attack +120% for 10 s, Fireball Crit Damage +150%, Titan Seal
+  Boss +75%, Flame Storm enemy Defense −60%), valued at uptime = duration / cooldown. Periodic
+  passives: duration / interval; permanent: 1. Other trigger codes are unnamed by the game and are
+  **never assigned an invented rate**.
+  **Lesson worth keeping:** seven Mage passives have no `abilityAction` rows at all, yet are
+  always-on stats (Master's Staff Attack +84%, Battle Experience Crit +52, Sharp Strike, Ignition,
+  Skill Tome, Elemental Convergence, Mana Amplification). The first version scored them as zero and
+  **recommended stripping Master's Staff Lv 9 (≈ −76% attack)**. Now: their effect is read from the
+  description, only for phrasings verified against real table rows on other skills
+  (`OPT_PERMANENT_PHRASES`; conditional wording is never parsed), and any skill still unscorable is
+  **locked at its current level** — its points leave the budget and no plan may touch it. Crit
+  points are summed across sources and converted once, **capped at 100% crit rate**
+  (`optCritPtsToDmg`); this also applies to gear scoring. For the current Mage all four goals
+  converge on one allocation — verified, not a bug: Prayer scores 0.17/point vs Master's Staff
+  2.92 under Survive, and the real survival passives are conditional (locked) — the card says so.
+  Reset, from the game's own text: a per-class "Reset All Skills" button and a per-skill reset
+  (blocked while equipped or while a higher skill depends on it); a reset unequips all skills; no
+  price in any confirm text and no reset item exists → probably free, not proven.
 - **Live Steam prices** (Equipment + Jewels tabs only, boss's call) — checked in **THB** then
   converted to USD via open.er-api.com. Steam's `priceoverview` has no CORS headers (verified:
   the browser blocks it), so prices go through `workers/steam-price-relay/` (Cloudflare Worker,
