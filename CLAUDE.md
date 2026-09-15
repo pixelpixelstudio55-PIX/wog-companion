@@ -188,7 +188,10 @@ testing/bookmarking.
   the browser blocks it), so prices go through `workers/steam-price-relay/` (Cloudflare Worker,
   deploy steps in its README; boss must deploy it with their own Cloudflare account — until then
   the column shows the old 14 Sep snapshot, labelled). Only rows on screen are checked, one every
-  3.3 s, cached 30 min, because Steam rate-limits the endpoint (~20/min). The game client itself
+  3.3 s, because Steam rate-limits the endpoint (~20/min). ⚠️ **Boss's rule (2026-09-16): each
+  item's live price is fetched at most once every 6 hours** (`PRICE_TTL_MS`) on Equipment/Jewels —
+  the bar's button only fills in missing or older-than-6h prices, it never forces a re-check. Bag &
+  Vault is the one exception (manual press, 15 min). Cells show the price's age, not a stale flag. The game client itself
   has no price data (`nn.services.steamMarket` only lists/withdraws items).
   **Steam blocks the Cloudflare Worker — verified, don't re-test blindly.** Boss deployed it to
   `https://wog-steam-price-relay.luckycut.workers.dev`: `/health` 200, but every `/price` got 429

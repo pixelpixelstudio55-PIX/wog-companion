@@ -4548,11 +4548,22 @@ document.getElementById('btn-opt-refresh').addEventListener('click', () => {
    answers, the column keeps the old 14 Sep snapshot, clearly labelled.
 
    Steam allows roughly 20 priceoverview requests a minute, so only the rows on
-   screen are checked, one every PRICE_GAP_MS, cached for PRICE_TTL_MS.
+   screen are checked, one every PRICE_GAP_MS.
+   Boss's rule (2026-09-16): on the Equipment and Jewels pages each item's live
+   price is asked for at most once every 6 hours (PRICE_TTL_MS) - opening the
+   page again, re-rendering, or the "check missing prices" button only fetch
+   items that have no price yet or one older than that. The Bag & Vault page
+   keeps its own rule instead: a manual press once per 15 minutes.
    THB -> USD comes from open.er-api.com (free, CORS-enabled, verified). */
 const PRICE_RELAY_KEY = 'wog_price_relay';
 const PRICE_CACHE_KEY = 'wog_price_cache';
-const PRICE_TTL_MS = 30 * 60 * 1000;
+const PRICE_TTL_MS = 6 * 60 * 60 * 1000;
+function priceAgeText(at, th){
+  const m = Math.max(0, Math.round((Date.now() - at) / 60000));
+  if (m < 1) return th ? 'เช็คเมื่อสักครู่' : 'checked just now';
+  if (m < 60) return th ? `เช็คเมื่อ ${m} นาทีก่อน` : `checked ${m} min ago`;
+  return th ? `เช็คเมื่อ ${Math.floor(m / 60)} ชม. ก่อน` : `checked ${Math.floor(m / 60)} h ago`;
+}
 const PRICE_GAP_MS = 3300;
 const FX_KEY = 'wog_fx_thb_usd';
 const FX_TTL_MS = 12 * 60 * 60 * 1000;
@@ -4658,7 +4669,7 @@ function priceCellHtml(item){
   const main = th ? (p.thb != null ? priceFmtThb(p.thb) : priceFmtUsd(p.usd)) : (p.usd != null ? priceFmtUsd(p.usd) : priceFmtThb(p.thb));
   const sub = th ? (p.thb != null && p.usd != null ? '≈ ' + priceFmtUsd(p.usd) : '') : (p.thb != null && p.usd != null ? '≈ ' + priceFmtThb(p.thb) : '');
   const tag = p.source === 'live'
-    ? `<span style="color:#7ee787;">● ${th ? 'สด' : 'live'}</span>${p.stale ? ` <span class="hint">(${th ? 'เกิน 30 นาที' : '>30 min old'})</span>` : ''}${p.volume ? ` <span class="hint">· ${th ? 'ขายใน 24 ชม.' : '24h sold'} ${esc(p.volume)}</span>` : ''}`
+    ? `<span style="color:#7ee787;">● ${th ? 'สด' : 'live'}</span> <span class="hint">· ${esc(priceAgeText(p.at, th))}</span>${p.volume ? ` <span class="hint">· ${th ? 'ขายใน 24 ชม.' : '24h sold'} ${esc(p.volume)}</span>` : ''}`
     : `<span class="hint">${th ? 'ราคาชุด 14 ก.ย.' : '14 Sep snapshot'}${p.listings ? ` · ${p.listings} listings` : ''}</span>`;
   const url = `https://steamcommunity.com/market/listings/4891320/${encodeURIComponent(market)}`;
   return `<td style="text-align:right;" ${attr}><a href="${esc(url)}" target="_blank" rel="noopener" style="color:#3fb950;font-weight:700;text-decoration:none;">${esc(main)}</a>${sub ? `<div style="font-size:11px;color:var(--text-dim);">${esc(sub)}</div>` : ''}<div style="font-size:10px;">${tag}</div></td>`;
@@ -4756,7 +4767,7 @@ function priceStatusText(){
   const th = currentLang === 'th';
   const via = priceRelayLabel(priceActiveRelay, th);
   const startHint = th ? 'ดับเบิลคลิก start-local-relay.vbs (ในโฟลเดอร์ workers/steam-price-relay) เพื่อเปิดตัวช่วยบนเครื่องนี้' : 'double-click start-local-relay.vbs (in workers/steam-price-relay) to start the relay on this PC';
-  if (priceLastError === 'network') return (th ? '⚠️ ไม่มีตัวช่วยเช็คราคาตัวไหนตอบเลย — ' : '⚠️ No price relay answered - ') + startHint + (th ? ' แล้วกด "เช็คราคาหน้านี้ใหม่"' : ', then press "Re-check this page"');
+  if (priceLastError === 'network') return (th ? '⚠️ ไม่มีตัวช่วยเช็คราคาตัวไหนตอบเลย — ' : '⚠️ No price relay answered - ') + startHint + (th ? ' แล้วกด "เช็คราคาที่ยังขาด"' : ', then press "Check missing prices"');
   if (priceLastError === 'rate') return (th ? '⏳ Steam จำกัดการเช็คราคา (Cloudflare โดนบล็อกเป็นประจำ) — ' : '⏳ Steam is rate-limiting (it routinely blocks Cloudflare) - ') + startHint + (th ? ' · จะลองใหม่ใน 1 นาที' : ' · retrying in a minute');
   if (priceLastError) return (th ? '⚠️ เช็คราคาไม่ได้: ' : '⚠️ Price check failed: ') + priceLastError;
   if (priceQueue.length) {
@@ -4787,7 +4798,7 @@ function priceBarHtml(){
     <input type="text" class="price-relay-input" placeholder="${th ? 'ว่างไว้ = ใช้ตัวช่วยบนเครื่องนี้ก่อน แล้วค่อย Cloudflare' : 'blank = this PC first, then Cloudflare'}" value="${esc(url)}" aria-label="${th ? 'URL เซิร์ฟเวอร์ตัวกลาง' : 'Relay URL'}">
     <button class="btn btn-outline price-relay-save">${th ? 'บันทึก' : 'Save'}</button>
     <button class="btn btn-outline price-relay-test">${th ? 'ทดสอบ' : 'Test'}</button>
-    <button class="btn btn-outline price-refresh">${th ? '🔄 เช็คราคาหน้านี้ใหม่' : '🔄 Re-check this page'}</button>
+    <button class="btn btn-outline price-refresh">${th ? '🔄 เช็คราคาที่ยังขาด (เกิน 6 ชม./ยังไม่มี)' : '🔄 Check missing prices (none yet / over 6 h)'}</button>
     <span class="price-status hint" style="flex-basis:100%;"></span>
   </div>`;
 }
@@ -4843,7 +4854,7 @@ function priceMountBar(viewId){
     bar.querySelector('.price-refresh').addEventListener('click', () => {
       if (!priceRelayUrl()) { toast(currentLang === 'th' ? 'ต้องตั้งค่าเซิร์ฟเวอร์ตัวกลางก่อน' : 'Set the relay URL first'); return; }
       priceLastError = null;
-      priceQueueVisible(viewId, true);
+      priceQueueVisible(viewId, false);   // 6-hour rule: only missing or older-than-6h prices
     });
   }
   priceUpdateBars();
@@ -4902,6 +4913,26 @@ let invScope = invLoadPref('wog_inv_scope', 'all');      // all | bag | vault
 let invHideUntradeable = invLoadPref('wog_inv_hide', '0') === '1';
 let invBatch = null;         // the press in progress: { names, started }
 let invLastResult = null;    // { got, total, refunded, error }
+// Is a relay other than Cloudflare (which Steam blocks) answering /health?
+// Only a local health ping, never a Steam request. The relay on this PC doesn't
+// restart by itself after a reboot, which silently left every total at ฿0.00.
+let invRelayOk = null;
+async function invProbeRelay(){
+  const list = priceRelayCandidates().filter(u => !/workers\.dev/.test(u));
+  let ok = false;
+  for (const base of list) {
+    try {
+      const ctl = new AbortController();
+      const timer = setTimeout(() => ctl.abort(), 2500);
+      const r = await fetch(base + '/health', { signal: ctl.signal });
+      clearTimeout(timer);
+      const j = await r.json().catch(() => null);
+      if (j && j.ok) { ok = true; break; }
+    } catch(e) {}
+  }
+  invRelayOk = ok;
+  invUpdateBar();
+}
 const invExtraItems = new Map();   // market name -> stand-in item for things GAME_DATA doesn't list
 
 function invLastCheck(){ return Number(invLoadPref(INV_PRICE_LAST_KEY, '0')) || 0; }
@@ -5084,6 +5115,10 @@ function invUpdateBar(){
       msg = (th ? 'กำลังเช็คราคาสด เหลืออีก ' + pending + ' รายการ (~' + Math.ceil(pending * PRICE_GAP_MS / 1000) + ' วิ)' : 'Checking live prices - ' + pending + ' left (~' + Math.ceil(pending * PRICE_GAP_MS / 1000) + 's)')
         + (priceLastError === 'rate' ? (th ? ' · Steam ขอให้รอ จะเช็คต่อเองใน 1 นาที (ยังเป็นการกดครั้งนี้)' : ' · Steam asked us to wait; this same press resumes in a minute') : '')
         + (priceActiveRelay ? ' · ' + (th ? 'ผ่าน' : 'via ') + priceRelayLabel(priceActiveRelay, th) : '');
+    } else if (invRelayOk === false) {
+      msg = '⚠️ ' + (th
+        ? 'ตัวช่วยเช็คราคาบนเครื่องนี้ยังไม่ได้เปิด (มักเกิดหลังรีสตาร์ทเครื่อง) — ดับเบิลคลิก start-local-relay.vbs ในโฟลเดอร์ workers/steam-price-relay ก่อนกดเช็คราคา'
+        : "The price relay on this PC isn't running (usually after a reboot) - double-click start-local-relay.vbs in workers/steam-price-relay before checking prices");
     } else if (invLastResult && invLastResult.refunded) {
       const why = invLastResult.error === 'network'
         ? (th ? 'ไม่มีตัวช่วยเช็คราคาตัวไหนตอบ — ดับเบิลคลิก start-local-relay.vbs (ในโฟลเดอร์ workers/steam-price-relay) แล้วกดใหม่' : 'no price relay answered - double-click start-local-relay.vbs (in workers/steam-price-relay) and press again')
@@ -5149,18 +5184,36 @@ function invRenderBody(){
 
   const pieces = loc => all.filter(r => r.loc === loc).reduce((a, r) => a + r.qty, 0);
   const tradeRows = scoped.filter(r => r.trade);
-  const liveRows = tradeRows.filter(r => r.price && r.price.source === 'live' && r.price.listed);
-  const liveTotal = liveRows.reduce((a, r) => a + r.price.thb * r.qty, 0);
-  const sellNow = liveRows.filter(r => !r.lock).reduce((a, r) => a + r.price.thb * r.qty, 0);
-  const noLive = tradeRows.filter(r => !(r.price && r.price.source === 'live')).length;
+  // Each row counts once: its live price if it has one, otherwise the 14 Sep
+  // snapshot, otherwise nothing - and the card says how much came from which,
+  // so a page with no live check yet doesn't read as a ฿0.00 inventory.
+  const sumRows = list => {
+    const o = { live: 0, liveN: 0, snap: 0, snapN: 0, none: 0 };
+    list.forEach(r => {
+      const pr = r.price;
+      if (pr && pr.source === 'live' && pr.listed && pr.thb != null) { o.live += pr.thb * r.qty; o.liveN++; }
+      else if (pr && pr.source === 'snapshot' && pr.thb != null) { o.snap += pr.thb * r.qty; o.snapN++; }
+      else o.none++;
+    });
+    o.total = o.live + o.snap;
+    return o;
+  };
+  const allSum = sumRows(tradeRows), nowSum = sumRows(tradeRows.filter(r => !r.lock));
+  const sumSub = o => {
+    const parts = [];
+    if (priceFx && priceFx.rate) parts.push('≈ ' + esc(priceFmtUsd(o.total * priceFx.rate)));
+    parts.push(th ? 'สด ' + esc(priceFmtThb(o.live)) + ' (' + o.liveN + ' รายการ)' : 'live ' + esc(priceFmtThb(o.live)) + ' (' + o.liveN + ')');
+    if (o.snapN) parts.push(th ? 'ราคาชุด 14 ก.ย. ' + esc(priceFmtThb(o.snap)) + ' (' + o.snapN + ' รายการ)' : '14 Sep snapshot ' + esc(priceFmtThb(o.snap)) + ' (' + o.snapN + ')');
+    if (o.none) parts.push(th ? 'ไม่มีราคา ' + o.none + ' รายการ' : o.none + ' without a price');
+    return parts.join(' · ');
+  };
   const stat = (k, v, sub) => '<div class="inv-stat"><div class="k">' + k + '</div><div class="v">' + v + '</div>' + (sub ? '<div class="s">' + sub + '</div>' : '') + '</div>';
-  const usdSub = thb => priceFx && priceFx.rate ? '≈ ' + esc(priceFmtUsd(thb * priceFx.rate)) : '';
 
   let html = '<div class="inv-stats">'
     + stat(th ? 'ของทั้งหมด' : 'Items', (pieces(1) + pieces(2)) + (th ? ' ชิ้น' : ''), (th ? '🎒 กระเป๋า ' : '🎒 Bag ') + pieces(1) + ' · ' + (th ? '🏛 คลัง ' : '🏛 Vault ') + pieces(2))
     + stat(th ? 'ขายบนตลาดได้' : 'Sellable on market', tradeRows.reduce((a, r) => a + r.qty, 0) + (th ? ' ชิ้น' : ''), (th ? 'ในขอบเขตที่เลือก · ขายไม่ได้ ' : 'in this view · not sellable ') + scoped.filter(r => !r.trade).reduce((a, r) => a + r.qty, 0))
-    + stat(th ? 'มูลค่ารวม (ราคาสด)' : 'Total (live prices)', esc(priceFmtThb(liveTotal)), usdSub(liveTotal) + (noLive ? (th ? ' · ยังไม่มีราคาสด ' + noLive + ' รายการ' : ' · ' + noLive + ' without a live price') : ''))
-    + stat(th ? 'ขายได้ทันที (ไม่ติดล็อก)' : 'Sellable right now (unlocked)', esc(priceFmtThb(sellNow)), usdSub(sellNow))
+    + stat(th ? 'มูลค่ารวม' : 'Total value', esc(priceFmtThb(allSum.total)), sumSub(allSum))
+    + stat(th ? 'ขายได้ทันที (ไม่ติดล็อก)' : 'Sellable right now (unlocked)', esc(priceFmtThb(nowSum.total)), sumSub(nowSum))
     + '</div>';
 
   const btn = (grp, val, label, active) => '<button class="filter-btn' + (active ? ' active' : '') + '" data-' + grp + '="' + val + '">' + label + '</button>';
@@ -5229,6 +5282,7 @@ function renderInventory(){
   invMountBar();
   invRenderBody();
   refreshInventoryLive();
+  invProbeRelay();
   // Exchange rate only (not a Steam request) so the THB -> USD figures appear.
   priceEnsureFx().then(() => { if (currentView === 'inventory') invRenderBody(); });
 }
@@ -5237,6 +5291,7 @@ document.getElementById('btn-inv-reload').addEventListener('click', () => { invS
 // Steam) while the page is open.
 setInterval(() => { if (currentView === 'inventory') invUpdateBar(); }, 1000);
 setInterval(() => { if (currentView === 'inventory') refreshInventoryLive(); }, 10000);
+setInterval(() => { if (currentView === 'inventory' && !invBatch) invProbeRelay(); }, 30000);
 
 /* ================= JEWEL FORGE & STORAGE (read-only counts + one safe toggle) ================= */
 const JEWEL_TIDS_BY_GRADE = (() => {
