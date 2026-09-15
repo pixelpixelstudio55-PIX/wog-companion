@@ -297,6 +297,34 @@ const trainingSkills = load("trainingSkills", "data_trainingSkills.js");
 const equipments = load("equipments", "data_equipments.js");
 const stageData = load("stageData", "data_stageData.js");
 const steamMarketPrices = load("steamMarketPrices", "data_steamMarketPrices.js");
+const userLevelsData = load("userLevelsData", "data_userLevels.js");
+
+// Level-up reward item ids -> readable names. These are the same currency tids
+// the game itself uses (confirmed live against nn.db.item.get(tid)), so the
+// names here are the game's own, just pre-translated.
+const LEVEL_REWARD_NAMES = {
+  8000: ["แต้มสกิลอัศวิน", "Knight Skill Point"],
+  8100: ["แต้มสกิลนักธนู", "Ranger Skill Point"],
+  8200: ["แต้มสกิลจอมเวท", "Wizard Skill Point"],
+  1000: ["ทอง", "Gold"],
+  6000: ["เพชร", "Diamond"],
+  3000: ["โทเคนฝึกฝน", "Training Token"],
+  4000: ["หินปลดล็อก", "Unlock Stone"],
+};
+const userLevels = {};
+Object.keys(userLevelsData).forEach(lv => {
+  const r = userLevelsData[lv];
+  const rewards = (r.rewards || []).map((tid, i) => {
+    const nm = LEVEL_REWARD_NAMES[tid];
+    return {
+      tid,
+      count: (r.reward_counts || [])[i] || 1,
+      name_th: nm ? nm[0] : `ไอเทม #${tid}`,
+      name_en: nm ? nm[1] : `Item #${tid}`,
+    };
+  });
+  userLevels[lv] = { level: r.level, req_exp: r.req_exp, max_equip_tier: r.max_equip_tier, rewards };
+});
 
 // Equipment items below Tier 3 aren't tradable on Steam in this game, so the
 // price table only has entries from Tier 3 up, keyed "<name> (Tier N)".
@@ -426,7 +454,8 @@ const GAME_DATA = {
   trainingSkills: ${JSON.stringify(trainingSkills)},
   equipments: ${JSON.stringify(equipments)},
   jewelDatabase: ${JSON.stringify(jewelDatabase)},
-  stageData: ${JSON.stringify(stageData)}
+  stageData: ${JSON.stringify(stageData)},
+  userLevels: ${JSON.stringify(userLevels)}
 };
 `;
 fs.writeFileSync(OUT, out, "utf8");
