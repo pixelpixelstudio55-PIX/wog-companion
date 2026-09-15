@@ -594,8 +594,9 @@
             <label class="forge-tier-check tier-4"><input type="checkbox" id="forge-gem-tier-4"> Tier 4</label>
             <label class="forge-tier-check tier-5"><input type="checkbox" id="forge-gem-tier-5"> Tier 5</label>
             <label class="forge-tier-check tier-6"><input type="checkbox" id="forge-gem-tier-6"> Tier 6</label>
+            <label class="forge-tier-check" style="border-color:var(--gold);"><input type="checkbox" id="forge-gem-usevault" checked> <span data-i="forge-usevault-label">หลอมในคลัง</span></label>
           </div>
-          <div class="hint" style="margin-top:6px;color:var(--gold);" data-i="forge-gem-tier-note">⚠️ ยังไม่เจอวิธีสั่งให้เกมหลอมเฉพาะเทียร์ที่เลือก - ปุ่ม Auto Jewel Fuse ด้านบนจะหลอมเทียร์ไหนก็ได้ที่ครบ 6 ชิ้นก่อน ไม่สนใจว่าติ๊กเทียร์ไหนไว้</div></div>
+          <div class="hint" style="margin-top:6px;color:var(--gold);" data-i="forge-gem-tier-note">สวิตช์นี้ใช้ระบบหลอมของเราเอง (หลอม 6 ชิ้นเทียร์เดียวกัน เฉพาะเทียร์ที่ติ๊กไว้) ต่างจากปุ่มมาสเตอร์สวิตช์ด้านบนที่เป็นระบบอัตโนมัติของเกมเอง</div></div>
         </div>
         <div class="forge-toggle-row" style="flex-direction:column;align-items:stretch;">
           <div style="display:flex;gap:12px;">
@@ -755,7 +756,7 @@ const UI_STRINGS = {
   'forge-sw-samelvl-d': { th: 'บังคับให้ของ 6 ชิ้นต้องการเลเวลเท่ากันทั้งหมด (เช่น Lv.50 ล้วน) ป้องกันของเลเวลต่ำหลุดไปปนกับของเลเวลสูงตอนหลอม', en: "Requires all 6 items to share the same required level (e.g. all Lv.50) - stops a low-level item from slipping into a high-level fusion." },
   'forge-radio-note': { th: 'เลือกได้แค่ 1 ใน 2 ข้อนี้เท่านั้น - ปิดไว้เป็นค่าเริ่มต้นตามที่บอสยืนยันว่าเกมจริงหลอมได้แค่เทียร์เดียวกันก็พอ ไม่ต้องเลเวลเท่ากัน', en: "Only one of these two can be on at a time - off by default, since boss confirmed the real game only needs matching tier, not matching level." },
   'forge-usevault-label': { th: 'หลอมในคลัง', en: 'Fuse from Vault too' },
-  'forge-gem-tier-note': { th: '⚠️ ยังไม่เจอวิธีสั่งให้เกมหลอมเฉพาะเทียร์ที่เลือก - ปุ่ม Auto Jewel Fuse ด้านบนจะหลอมเทียร์ไหนก็ได้ที่ครบ 6 ชิ้นก่อน ไม่สนใจว่าติ๊กเทียร์ไหนไว้', en: "⚠️ Haven't found a way to make the game fuse only selected tiers - the Auto Jewel Fuse switch above fuses whichever tier reaches 6 first, regardless of what's ticked here." },
+  'forge-gem-tier-note': { th: 'สวิตช์นี้ใช้ระบบหลอมของเราเอง (หลอม 6 ชิ้นเทียร์เดียวกัน เฉพาะเทียร์ที่ติ๊กไว้) ต่างจากปุ่มมาสเตอร์สวิตช์ด้านบนที่เป็นระบบอัตโนมัติของเกมเอง', en: "This switch uses our own fuse routine (6 same-tier jewels, only the ticked tiers) - separate from the master switch above, which is the game's own built-in automation." },
   'forge-sw-autostore-t': { th: 'เก็บอัญมณีที่หลุดเข้าคลังอัตโนมัติ', en: 'Auto-store loose jewels into the Vault' },
   'forge-sw-autostore-d': { th: 'อัญมณีใหม่/ที่หลอมเสร็จ ย้ายเข้าคลังทันที กระเป๋าจะได้ไม่เต็มตอน AFK', en: "New or freshly-fused jewels move to the Vault right away, so the Bag never fills up while AFK." },
   'forge-sw-weapon-t': { th: 'ใส่อาวุธที่ดีที่สุดอัตโนมัติตอนสลับคลาส', en: 'Auto-equip the best weapon on class switch' },
@@ -2090,8 +2091,12 @@ function buildForgeStatusExpr(){
    built for Gear/Jewelry, just with contentType 20 and needCount 6; vault is
    always included per boss's request (no separate toggle for this one). */
 const JEWEL_FUSION_CONTENT_TYPE = 20;
-async function forgeRealFuseGem(tier){
-  await forgeRunRealFuse(JEWEL_FUSION_CONTENT_TYPE, tier, JEWEL_TIDS_BY_GRADE[tier] || [], 6, true, false);
+function forgeGemIncludeVault(){
+  const el = document.getElementById('forge-gem-usevault');
+  return el ? el.checked : true;
+}
+async function forgeRealFuseGem(tier, opts){
+  await forgeRunRealFuse(JEWEL_FUSION_CONTENT_TYPE, tier, JEWEL_TIDS_BY_GRADE[tier] || [], 6, forgeGemIncludeVault(), false, opts);
 }
 const EQUIP_TIDS_BY_GRADE = (() => {
   const out = {};
@@ -2687,9 +2692,9 @@ async function forgeRealFuseJewelry(tier){
    the browser) stops it immediately, same as any other page-only script. Each
    switch's on/off state is saved to localStorage so it survives a reload. ---- */
 const FORGE_AUTOMATION_SW_IDS = [
-  'forge-sw-weapon', 'forge-sw-skills', 'forge-sw-autostore', 'forge-sw-reconnect',
+  'forge-sw-main', 'forge-sw-weapon', 'forge-sw-skills', 'forge-sw-autostore', 'forge-sw-reconnect',
   'forge-sw-gear', 'forge-sw-samelvl', 'forge-sw-jewelry',
-  'forge-gear-usevault', 'forge-jewelry-usevault',
+  'forge-gear-usevault', 'forge-jewelry-usevault', 'forge-gem-usevault',
   'forge-gem-tier-1','forge-gem-tier-2','forge-gem-tier-3','forge-gem-tier-4','forge-gem-tier-5','forge-gem-tier-6',
   'forge-gear-tier-1','forge-gear-tier-2','forge-gear-tier-3','forge-gear-tier-4','forge-gear-tier-5','forge-gear-tier-6',
   'forge-jewelry-tier-1','forge-jewelry-tier-2','forge-jewelry-tier-3','forge-jewelry-tier-4','forge-jewelry-tier-5','forge-jewelry-tier-6',
@@ -2711,7 +2716,8 @@ let forgeLastClassType = null;
 let forgeLastAutoStoreAt = 0;
 let forgeLastGearFuseAt = {};
 let forgeLastJewelryFuseAt = {};
-function buildForgeAutomationProbeExpr(jewelTids, gearByTier, jewelryByTier, includeVaultGear, includeVaultJewelry){
+let forgeLastGemFuseAt = {};
+function buildForgeAutomationProbeExpr(jewelTids, gearByTier, jewelryByTier, includeVaultGear, includeVaultJewelry, gemByTier, includeVaultGem){
   return `(function(){
     try {
       var out = {};
@@ -2742,6 +2748,7 @@ function buildForgeAutomationProbeExpr(jewelTids, gearByTier, jewelryByTier, inc
         });
         return counts;
       }
+      out.gemCounts = countReady(${JSON.stringify(gemByTier)}, ${includeVaultGem});
       out.gearCounts = countReady(${JSON.stringify(gearByTier)}, ${includeVaultGear});
       out.jewelryCounts = countReady(${JSON.stringify(jewelryByTier)}, ${includeVaultJewelry});
       var popupInfo = null;
@@ -2786,13 +2793,15 @@ async function forgeAutomationTick(){
   const wantReconnect = document.getElementById('forge-sw-reconnect').checked;
   const wantGear = document.getElementById('forge-sw-gear').checked;
   const wantJewelry = document.getElementById('forge-sw-jewelry').checked;
-  if (!wantWeapon && !wantSkills && !wantAutostore && !wantReconnect && !wantGear && !wantJewelry) return;
+  const wantGem = document.getElementById('forge-sw-main').checked;
+  if (!wantWeapon && !wantSkills && !wantAutostore && !wantReconnect && !wantGear && !wantJewelry && !wantGem) return;
   const jewelTids = Object.values(JEWEL_TIDS_BY_GRADE).flat();
   const includeVaultGear = forgeGearIncludeVault();
   const includeVaultJewelry = forgeJewelryIncludeVault();
+  const includeVaultGem = forgeGemIncludeVault();
   const requireSameLevel = forgeRequireSameLevel();
   let data;
-  try { data = await sendLiveEval(buildForgeAutomationProbeExpr(jewelTids, GEAR_ONLY_TIDS_BY_TIER, JEWELRY_ONLY_TIDS_BY_TIER, includeVaultGear, includeVaultJewelry)); } catch(e) { return; }
+  try { data = await sendLiveEval(buildForgeAutomationProbeExpr(jewelTids, GEAR_ONLY_TIDS_BY_TIER, JEWELRY_ONLY_TIDS_BY_TIER, includeVaultGear, includeVaultJewelry, JEWEL_TIDS_BY_GRADE, includeVaultGem)); } catch(e) { return; }
   if (!data || data.error) return;
 
   const classSwitched = forgeLastClassType !== null && data.classType !== forgeLastClassType;
@@ -2887,6 +2896,18 @@ async function forgeAutomationTick(){
       if (cnt >= 3 && Date.now() - last > 20000) {
         forgeLastJewelryFuseAt[t] = Date.now();
         await forgeRunRealFuse(2, t, JEWELRY_ONLY_TIDS_BY_TIER[t] || [], 3, includeVaultJewelry, requireSameLevel, { silent: true });
+      }
+    }
+  }
+  // Jewels/gems use the game's own ContentType 20 fusion: 6 of the same tier,
+  // any type, any level. Runs per ticked tier, same throttle as the others.
+  if (wantGem) {
+    for (const t of forgeSelectedTiers('forge-gem-tier')) {
+      const cnt = (data.gemCounts && data.gemCounts[t]) || 0;
+      const last = forgeLastGemFuseAt[t] || 0;
+      if (cnt >= 6 && Date.now() - last > 20000) {
+        forgeLastGemFuseAt[t] = Date.now();
+        await forgeRealFuseGem(t, { silent: true });
       }
     }
   }
