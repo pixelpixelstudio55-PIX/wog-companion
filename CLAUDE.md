@@ -61,13 +61,27 @@ testing/bookmarking.
   chunk-rendered (equipment) so 1872 rows never block the main thread on insert.
 - **Profile / DPS** — a local-only character-stat form (attack/crit/bonuses, defaults to the
   source data's own default profile) feeding a per-skill DPS estimate.
-  ⚠️ **The DPS formula is a calibrated estimate, not the game's real formula** (which isn't
-  published anywhere reachable here). It was tuned against one real number the source data
-  *does* expose — `userProfile.combatStats.realDps: 3750` at the default stats — and additive
-  stacking of the three "increased %" bonus categories landed within ~5% of that (~3948 vs
-  3750), vs. ~17% off with multiplicative stacking. Good enough to **rank skills against each
-  other**, not to promise an exact in-game number — the UI says so directly next to the
-  result, keep that caveat if this section is ever redesigned.
+  ⚠️ **The DPS formula is an estimate and does NOT reproduce the game's own number** — see
+  the Skill DPS section below for what was measured and what replaced it. It survives only as
+  the offline fallback (no game running) and as a source of *ratios*.
+- **Skill DPS breakdown** (`#dpsbreak`) — rebuilt 2026-09-15 against the live game.
+  **Measured finding, don't re-derive it:** the game's own DPS (`contentState.getValue(103)`)
+  **already includes skill damage** — every normal-attack-only formula we could build lands far
+  below it (2417.8 attack / 1.0544 hits-per-sec / 32.8% crit rate / 193.7% crit dmg /
+  +26.7% general +45% PvE +35% boss ⇒ real 10,796; standard-crit additive 6,889, our-crit
+  additive 8,617, standard-crit multiplicative 8,266), and it moves when the equipped skills
+  move. It is a stable computed stat, not a rolling measurement (identical to 12 decimals
+  across repeated polls). **We could not reproduce it and deliberately do not pretend to.**
+  What *is* exact is each source's **share**: normal attack contributes `hits/sec`, a skill
+  contributes `(damage% / 100) / cooldown`, and attack/crit/every damage bonus multiply all
+  sources alike so they cancel out of the ratio. So the page splits the game's real DPS by
+  that share (`dpsbWeights()`), and `smartDpsModel()` carries an `anchor` that rescales every
+  absolute number onto it — which is why Skill DPS and Smart Analysis now agree exactly.
+  Keep this approach; don't reintroduce a "model total vs real, deviation %" row.
+  Also here: live stage banner, mob/boss mode (boss mode applies only the real boss-bonus
+  ratio — **no invented AoE multiplier**, the data doesn't say which skills are AoE), and a
+  3-class comparison table fed by `recordClassDpsSnapshot()` (localStorage `wog_class_dps_log`,
+  written from both this page and Smart Analysis; unseen classes stay blank, never guessed).
 - **Smart Analysis** (`#smart`) — built 2026-09-15 on top of Live Sync, so it no longer needs
   the manual profile form at all. Four cards, all driven by one `buildProfileExpr()` snapshot:
   Account Overview, Real DPS Analysis (real DPS from ability 103 + normal-attack vs skill

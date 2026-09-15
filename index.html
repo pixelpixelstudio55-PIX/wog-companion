@@ -177,6 +177,28 @@
   .prof-cur-val { font-size: 14px; font-weight: 700; color: var(--gold-bright); font-family: 'Cinzel', serif; white-space: nowrap; }
   .empty-state { text-align: center; padding: 50px 20px; color: var(--text-dim); }
 
+  /* ---- Skill DPS breakdown ---- */
+  .dpsb-banner { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; background: linear-gradient(145deg, var(--bg2), var(--bg3)); border: 1px solid #388bfd; border-radius: 10px; padding: 13px 18px; margin-bottom: 16px; }
+  .dpsb-banner-label { font-size: 10.5px; color: #58a6ff; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
+  .dpsb-banner-stage { font-size: 16px; font-weight: 700; color: var(--text); }
+  .dpsb-banner-facts { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12.5px; color: var(--text-dim); align-items: center; }
+  .dpsb-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(165px,1fr)); gap: 12px; margin-bottom: 16px; }
+  .dpsb-card { background: var(--bg2); border: 1px solid var(--line); border-left-width: 3px; border-radius: 10px; padding: 11px 14px; }
+  .dpsb-card-title { font-size: 10.5px; color: var(--text-dim); text-transform: uppercase; letter-spacing: .4px; margin-bottom: 5px; }
+  .dpsb-card-val { font-size: 18px; font-weight: 700; font-family: 'Cinzel', serif; color: var(--text); }
+  .dpsb-card-sub { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+  .dpsb-modes { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin-bottom: 14px; }
+  .dpsb-mode { background: var(--bg2); border: 1px solid var(--line); color: var(--text-dim); border-radius: 999px; padding: 6px 15px; font-size: 12.5px; font-weight: 700; cursor: pointer; transition: .15s; font-family: inherit; }
+  .dpsb-mode:hover { border-color: var(--gold); color: var(--text); }
+  .dpsb-mode.active { background: var(--accent-bg); border-color: var(--gold); color: var(--gold-bright); }
+  .dpsb-skillcell { display: flex; align-items: center; gap: 9px; min-width: 190px; }
+  .dpsb-skillname { font-weight: 700; color: var(--text); }
+  .dpsb-skillsub { font-size: 10.5px; color: var(--text-dim); }
+  .dpsb-share { min-width: 130px; }
+  .dpsb-share-bar { height: 8px; border-radius: 999px; background: var(--bg3); overflow: hidden; margin-top: 4px; }
+  .dpsb-share-fill { height: 100%; border-radius: 999px; }
+  .dpsb-cmp-card { background: var(--bg2); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; margin-top: 20px; }
+
   /* ---- Smart Analysis ---- */
   .sa-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(420px,1fr)); gap: 16px; align-items: start; }
   .sa-card { background: var(--bg2); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
@@ -555,9 +577,46 @@
   </div>
 
   <div class="view" id="view-dpsbreak">
-    <p class="hint" style="margin-bottom:14px;">คำนวณจากสถิติสด (ถ้าเชื่อมต่อ Live Sync) หรือฟอร์มโปรไฟล์ ใช้เฉพาะสกิล Active ของคลาสที่เลือกในหน้าสกิลทรี — ไม่ใช่ค่าจริง 100% จากเกม (ไม่รวมผลกระทบพิเศษ เช่น สเตตัสสะสม/บัฟชั่วคราว)</p>
-    <div class="result-count" id="dpsbreak-total"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px;">
+      <div>
+        <h3 style="margin:0;color:#f85149;" data-i="dpsb-head-title">⚔️ แจกแจงดาเมจต่อสกิล</h3>
+        <p class="hint" style="margin:4px 0 0;" data-i="dpsb-head-sub">อ่านสกิลที่ใส่อยู่จริงและเลเวลจริงจากเกม แล้วแจกแจงว่าดาเมจที่ออกมาจากไหนบ้าง เรียงจากมากไปน้อย</p>
+      </div>
+      <button class="btn btn-outline" id="btn-dpsb-refresh" data-i="dpsb-btn-refresh">🔄 รีเฟรช</button>
+    </div>
+
+    <div class="dpsb-banner" id="dpsb-banner">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <span style="font-size:26px;">📍</span>
+        <div>
+          <div class="dpsb-banner-label" data-i="dpsb-stage-label">ด่านที่กำลังสู้อยู่ในเกม</div>
+          <div class="dpsb-banner-stage" id="dpsb-stage-name">—</div>
+          <div style="margin-top:3px;font-size:12px;color:var(--text-dim);"><span data-i="dpsb-class-label">คลาสที่เล่นอยู่</span>: <b id="dpsb-class-name" style="color:var(--gold-bright);">—</b></div>
+        </div>
+      </div>
+      <div class="dpsb-banner-facts" id="dpsb-stage-facts"></div>
+    </div>
+
+    <div class="dpsb-modes">
+      <button class="dpsb-mode" id="dpsb-mode-mob" data-mode="mob">🌾 <span data-i="dpsb-mode-mob">ตีมอบธรรมดา</span></button>
+      <button class="dpsb-mode" id="dpsb-mode-boss" data-mode="boss">👹 <span data-i="dpsb-mode-boss">ตีบอส</span></button>
+      <span class="hint" id="dpsb-mode-note" style="font-size:11.5px;"></span>
+    </div>
+
+    <div class="dpsb-cards" id="dpsb-cards"></div>
     <div class="table-scroll"><table class="data-table" id="dpsbreak-table"></table></div>
+    <p class="hint" id="dpsb-method" style="margin-top:12px;"></p>
+
+    <div class="dpsb-cmp-card">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px;">
+        <div>
+          <h3 style="margin:0 0 4px;color:#58a6ff;font-size:15px;" data-i="dpsb-cmp-title">📊 เทียบ DPS &amp; สถิติระหว่าง 3 คลาส</h3>
+          <p class="hint" style="margin:0;font-size:11.5px;" data-i="dpsb-cmp-sub">บันทึกอัตโนมัติทุกครั้งที่เปิดหน้านี้หรือหน้าวิเคราะห์อัจฉริยะ — คลาสที่ยังไม่เคยเปิดดูจะเว้นว่างไว้ ไม่เดาค่าให้</p>
+        </div>
+        <button class="btn btn-outline" id="btn-dpsb-cmp-reset" style="color:#f85149;" data-i="dpsb-cmp-reset">🗑️ ล้างประวัติ</button>
+      </div>
+      <div class="table-scroll"><table class="data-table" id="dpsb-cmp-table"></table></div>
+    </div>
   </div>
 
   <div class="view" id="view-history">
@@ -811,6 +870,16 @@ const UI_STRINGS = {
   'forge-sw-skills-d': { th: 'ใส่สกิล Active ที่เรียนแล้วจริงของคลาสนั้น เรียงตามเลเวลที่ลงไว้มากสุดก่อน (สกิล Passive ไม่ต้องใส่ช่อง ใช้งานอัตโนมัติอยู่แล้ว)', en: "Equips the real learned Active skills for that class, highest invested level first (Passive skills don't need a slot - they apply automatically)." },
   'forge-sw-reconnect-t': { th: 'ยืนยันเชื่อมต่อใหม่อัตโนมัติเมื่อเน็ตหลุด', en: 'Auto-confirm reconnect on network error' },
   'forge-sw-reconnect-d': { th: 'เจอกล่อง "Reconnect Failed" จะกด Confirm ให้เองไม่ให้ AFK สะดุด — จุดนี้ยังไม่เคยเจอเหตุการณ์จริงให้ทดสอบ ทำตามโครงสร้างที่เจอในโค้ดต้นฉบับ ถ้าเกมเปลี่ยนหน้าตา popup อาจไม่ทำงาน', en: 'Clicks "Confirm" automatically when a "Reconnect Failed" dialog appears, so AFK farming isn\'t interrupted - built from the reference site\'s own code structure but never seen a real disconnect to test against, so it may silently not fire if the game\'s popup shape differs.' },
+  'dpsb-head-title': { th: '⚔️ แจกแจงดาเมจต่อสกิล', en: '⚔️ Skill Damage Breakdown' },
+  'dpsb-head-sub': { th: 'อ่านสกิลที่ใส่อยู่จริงและเลเวลจริงจากเกม แล้วแจกแจงว่าดาเมจที่ออกมาจากไหนบ้าง เรียงจากมากไปน้อย', en: 'Reads the skills you actually have equipped, at their real levels, and shows where your damage comes from - highest first.' },
+  'dpsb-btn-refresh': { th: '🔄 รีเฟรช', en: '🔄 Refresh' },
+  'dpsb-stage-label': { th: 'ด่านที่กำลังสู้อยู่ในเกม', en: 'Stage you are fighting in' },
+  'dpsb-class-label': { th: 'คลาสที่เล่นอยู่', en: 'Active class' },
+  'dpsb-mode-mob': { th: 'ตีมอบธรรมดา', en: 'Normal mobs' },
+  'dpsb-mode-boss': { th: 'ตีบอส', en: 'Boss' },
+  'dpsb-cmp-title': { th: '📊 เทียบ DPS & สถิติระหว่าง 3 คลาส', en: '📊 DPS & stats compared across the 3 classes' },
+  'dpsb-cmp-sub': { th: 'บันทึกอัตโนมัติทุกครั้งที่เปิดหน้านี้หรือหน้าวิเคราะห์อัจฉริยะ — คลาสที่ยังไม่เคยเปิดดูจะเว้นว่างไว้ ไม่เดาค่าให้', en: 'Saved automatically whenever you open this page or Smart Analysis. A class you have never viewed is left blank - nothing is guessed.' },
+  'dpsb-cmp-reset': { th: '🗑️ ล้างประวัติ', en: '🗑️ Clear history' },
   'smart-head-title': { th: '🧠 วิเคราะห์อัจฉริยะ', en: '🧠 Smart Analysis' },
   'smart-head-sub': { th: 'อ่านสดจากเกมที่รันอยู่ (Genesis.exe) — เลเวลสกิลจริง สถิติจริง ด่านที่ฟาร์มอยู่จริง แล้วคำนวณให้ว่าควรอัปสกิลตัวไหน และฟาร์มด่านไหนคุ้มที่สุด', en: 'Read live from the running game (Genesis.exe) - real skill levels, real stats, the real stage being farmed - then ranks which skill to upgrade and which stage to farm.' },
   'smart-btn-refresh': { th: '🔄 รีเฟรช', en: '🔄 Refresh' },
@@ -1969,6 +2038,10 @@ function connectLiveSync(){
       lastSmartRefreshAt = Date.now();
       refreshSmartLive();
     }
+    if (currentView === 'dpsbreak' && Date.now() - lastDpsBreakRefreshAt > 4000) {
+      lastDpsBreakRefreshAt = Date.now();
+      refreshDpsBreakLive();
+    }
     setTimeout(pollLiveOnce, 2000);
   };
   liveWs.onerror = () => {};
@@ -1995,35 +2068,238 @@ function activeStatsForCalc(){
   }
   return { ...profile, source: 'manual' };
 }
-function renderDpsBreakdown(){
-  const st = activeStatsForCalc();
-  const critMult = 1 + (st.critRate/100) * (st.critDamage/100);
-  const bonusMult = 1 + st.damageBonus/100 + st.pveBonus/100 + st.bossBonus/100;
-  const cls = GAME_DATA.skillTrees[currentClass];
-  const rows = [];
-  cls.branches.forEach(b => b.skills.forEach(sk => {
-    if (sk.is_passive) return;
-    const lvl = skillAllocations[sk.id] || 0;
-    const cur = sk.levels[Math.max(0, lvl-1)] || sk.levels[0];
-    if (!cur.damage_percent) return;
-    const castsPerMin = cur.cooldown_sec > 0 ? 60/cur.cooldown_sec : 0;
-    const perCast = st.attack * (cur.damage_percent/100) * critMult * bonusMult;
-    const dpsOutput = perCast * castsPerMin / 60;
-    rows.push({ name: sk.name_en, level: lvl||1, dmgPct: cur.damage_percent, cooldown: cur.cooldown_sec, castsPerMin, perCast, dpsOutput });
-  }));
-  // basic attack row
-  const basicPerCast = st.attack * critMult * bonusMult;
-  const basicCastsPerMin = st.attackSpeed * 60;
-  rows.push({ name: currentLang==='th'?'โจมตีพื้นฐาน':'Basic Attack', level: '-', dmgPct: 100, cooldown: 0, castsPerMin: basicCastsPerMin, perCast: basicPerCast, dpsOutput: basicPerCast*basicCastsPerMin/60 });
-  rows.sort((a,b) => b.dpsOutput - a.dpsOutput);
-  const total = rows.reduce((s,r) => s+r.dpsOutput, 0) || 1;
-  document.getElementById('dpsbreak-total').innerHTML = `${currentLang==='th'?'DPS รวมประมาณ':'Estimated total DPS'}: <b style="color:var(--gold-bright);">${Math.round(total).toLocaleString()}</b>` +
-    ` <span class="hint">(${st.source==='live' ? (currentLang==='th'?'ใช้สถิติสดจากเกม':'using live game stats') : (currentLang==='th'?'ใช้ฟอร์มโปรไฟล์ที่กรอกเอง':'using manually entered profile')})</span>`;
+/* ================= SKILL DPS BREAKDOWN =================
+   The game exposes its own real DPS on ability 103, and that number already
+   INCLUDES skill damage - verified live: every normal-attack-only formula we
+   could build (standard crit, our crit, additive or multiplicative bonus
+   stacking) lands far below it, and it moves when the equipped skills move.
+   We could not reproduce it exactly, so we don't pretend to.
+
+   What we CAN compute exactly is each source's SHARE of the damage, because
+   the share depends only on attack speed and each skill's own damage% and
+   cooldown - attack, crit and every damage bonus multiply every source alike
+   and cancel out of the ratio. So this page splits the game's own real DPS by
+   that share instead of multiplying our way to a total that would be wrong.
+   Falls back to the manual profile form when the game isn't running. */
+let dpsbMode = localStorage.getItem('wog_dpsb_mode') || 'mob';
+let lastDpsBreakRefreshAt = 0;
+
+function renderDpsBreakdown(){ refreshDpsBreakLive(); }
+
+// Shares are formula-independent: normal attack contributes `hits/sec` and a
+// skill contributes `(damage% / 100) / cooldown` per second, both scaled by the
+// same attack x crit x bonus factor.
+function dpsbWeights(hitsPerSec, skills){
+  const basic = hitsPerSec;
+  const rows = skills.map(s => ({ ...s, weight: (s.dmgPct / 100) / s.cd }));
+  const total = basic + rows.reduce((a, r) => a + r.weight, 0);
+  return { basicWeight: basic, rows, total: total || 1 };
+}
+
+async function refreshDpsBreakLive(){
+  const th = currentLang === 'th';
+  let d = null;
+  try {
+    d = await sendLiveEval(buildProfileExpr());
+    if (!d || d.error) d = null;
+  } catch(e) { d = null; }
+
+  const live = !!d;
+  let hitsPerSec, skills, realDps, clsCode, ab = {}, stage = null, cleared = null;
+  if (live) {
+    const m = smartDpsModel(d);
+    ab = m.ab;
+    hitsPerSec = (ab.atkSpeed || 0) / 100;
+    skills = m.equipped.map(s => ({ meta: s.meta, lv: s.lv, dmgPct: s.dmgPct, cd: s.cd }));
+    realDps = ab.dps || null;
+    clsCode = HERO_CLASSTYPE_TO_SKILLCLASS[d.classType];
+    stage = (GAME_DATA.stageData || []).find(s => s.stage_id === d.stageTid) || null;
+    cleared = (GAME_DATA.stageData || []).find(s => s.stage_id === d.clearStageTid) || null;
+    recordClassDpsSnapshot(d, m);
+  } else {
+    // Offline fallback: the manually entered profile + simulated allocations.
+    const st = activeStatsForCalc();
+    ab = { attack: st.attack, atkSpeed: st.attackSpeed * 100, critRate: st.critRate, critDmg: st.critDamage,
+           pve: st.pveBonus, boss: st.bossBonus, dmg: st.damageBonus };
+    hitsPerSec = st.attackSpeed;
+    clsCode = currentClass;
+    skills = [];
+    (GAME_DATA.skillTrees[currentClass].branches || []).forEach(b => b.skills.forEach(sk => {
+      if (sk.is_passive) return;
+      const lv = skillAllocations[sk.id] || 0;
+      if (lv <= 0) return;
+      const lvObj = sk.levels[lv - 1] || sk.levels[0];
+      if (!lvObj || !lvObj.damage_percent || !lvObj.cooldown_sec) return;
+      skills.push({ meta: sk, lv, dmgPct: lvObj.damage_percent, cd: lvObj.cooldown_sec });
+    }));
+    const critMult = 1 + (st.critRate / 100) * (st.critDamage / 100);
+    const bonusMult = 1 + (st.damageBonus + st.pveBonus + st.bossBonus) / 100;
+    const w = dpsbWeights(hitsPerSec, skills);
+    realDps = st.attack * critMult * bonusMult * w.total;   // estimated, clearly labelled below
+  }
+
+  const w = dpsbWeights(hitsPerSec, skills);
+  // Boss bonus only applies to bosses, so mob mode is the baseline the game's
+  // own DPS number reflects, and boss mode scales it by the extra boss bonus.
+  const gp = 1 + ((ab.dmg || 0) + (ab.pve || 0)) / 100;
+  const gpb = gp + (ab.boss || 0) / 100;
+  const bossFactor = gp > 0 ? gpb / gp : 1;
+  const modeFactor = dpsbMode === 'boss' ? bossFactor : 1;
+  const totalDps = (realDps || 0) * modeFactor;
+
+  // ---- mode buttons ----
+  ['mob', 'boss'].forEach(mode => {
+    const b = document.getElementById('dpsb-mode-' + mode);
+    if (b) b.classList.toggle('active', dpsbMode === mode);
+  });
+  document.getElementById('dpsb-mode-note').textContent = dpsbMode === 'boss'
+    ? (th ? `กำลังคิดโบนัสดาเมจบอส +${(ab.boss || 0).toFixed(1)}% เพิ่มเข้าไป (แรงกว่าตีมอบ ${((bossFactor - 1) * 100).toFixed(1)}%)` : `Including the +${(ab.boss || 0).toFixed(1)}% boss bonus (${((bossFactor - 1) * 100).toFixed(1)}% harder than on normal mobs)`)
+    : (th ? 'คิดเฉพาะโบนัสทั่วไป + PvE (ไม่รวมโบนัสบอส)' : 'General + PvE bonuses only (no boss bonus)');
+
+  // ---- banner ----
+  document.getElementById('dpsb-stage-name').textContent = stage ? fld(stage, 'display_full') : (live ? '—' : (th ? 'ไม่ได้เชื่อมต่อเกม' : 'Not connected'));
+  document.getElementById('dpsb-class-name').textContent = (CLASS_LABELS[clsCode] || {})[currentLang] || '—';
+  document.getElementById('dpsb-stage-facts').innerHTML = stage ? [
+    `<span>❤️ ${th ? 'เลือดมอบทั้งด่าน' : 'Stage HP'}: <b style="color:#ff7b72;">${saFmt(stage.total_hp)}</b></span>`,
+    `<span>👹 ${th ? 'เลือดบอส' : 'Boss HP'}: <b style="color:#ff7b72;">${saFmt(stage.boss_hp)}</b></span>`,
+    `<span>⏱️ ${th ? 'เวลาเคลียร์' : 'Clear'}: <b style="color:#7ee787;">~${stage.est_clear_sec}s</b></span>`,
+    `<span>💰 <b style="color:var(--gold-bright);">${saFmt(stage.gold_per_sec, 2)}</b> ${th ? 'ทอง/วิ' : 'gold/s'}</span>`,
+    live ? `<span style="color:#7ee787;">● ${th ? 'อ่านสดทุก 4 วิ' : 'live, every 4s'}</span>` : '',
+  ].filter(Boolean).join('') : '';
+
+  // ---- summary cards ----
+  const cards = [
+    [th ? 'พลังโจมตี' : 'Attack', saFmt(ab.attack), '', '#58a6ff'],
+    [th ? 'ความเร็วโจมตี' : 'Attack speed', hitsPerSec.toFixed(3), th ? 'ครั้ง/วินาที' : 'hits/sec', '#58a6ff'],
+    [th ? 'คริ (อัตรา / ดาเมจ)' : 'Crit (rate / damage)', `${saFmt(ab.critRate, 1)}% / ${saFmt(ab.critDmg, 1)}%`, '', '#bc8cff'],
+    [th ? 'โบนัสดาเมจ' : 'Damage amp', `+${saFmt((ab.dmg || 0) + (ab.pve || 0) + (dpsbMode === 'boss' ? (ab.boss || 0) : 0), 1)}%`,
+      th ? `ทั่วไป ${saFmt(ab.dmg, 1)}% · PvE ${saFmt(ab.pve, 1)}%${dpsbMode === 'boss' ? ` · บอส ${saFmt(ab.boss, 1)}%` : ''}` : `general ${saFmt(ab.dmg, 1)}% · PvE ${saFmt(ab.pve, 1)}%${dpsbMode === 'boss' ? ` · boss ${saFmt(ab.boss, 1)}%` : ''}`, '#bc8cff'],
+    [live ? (th ? 'DPS รวม (ค่าจริงจากเกม)' : 'Total DPS (real, from game)') : (th ? 'DPS รวม (ประมาณการ)' : 'Total DPS (estimated)'),
+      saFmt(totalDps), dpsbMode === 'boss' ? (th ? 'ตอนตีบอส' : 'against a boss') : (th ? 'ตอนตีมอบธรรมดา' : 'against normal mobs'), '#f85149'],
+    [th ? 'ดาเมจรวมใน 1 นาที' : 'Total damage per minute', saFmt(totalDps * 60), '', 'var(--gold)'],
+  ];
+  document.getElementById('dpsb-cards').innerHTML = cards.map(([t2, v, sub, col]) => `
+    <div class="dpsb-card" style="border-left-color:${col};">
+      <div class="dpsb-card-title">${esc(t2)}</div>
+      <div class="dpsb-card-val" style="color:${col};">${v}</div>
+      ${sub ? `<div class="dpsb-card-sub">${esc(sub)}</div>` : ''}
+    </div>`).join('');
+
+  // ---- the breakdown table ----
+  const rows = w.rows.map(r => {
+    const share = r.weight / w.total;
+    const dps = totalDps * share;
+    return { icon: profIconHtml(r.meta.icon, '⚔️'), name: fld(r.meta, 'name'),
+             sub: th ? `คูลดาวน์ ${r.cd} วิ` : `${r.cd}s cooldown`, lv: String(r.lv),
+             perCast: dps * r.cd, cd: r.cd + 's', castsPerMin: 60 / r.cd, dps, share, color: '#bc8cff' };
+  });
+  rows.push({
+    icon: `<span class="sk-icon-fallback">🗡️</span>`,
+    name: th ? 'โจมตีปกติ' : 'Normal attack',
+    sub: th ? 'ไม่มีคูลดาวน์ ตีรัว' : 'no cooldown, continuous',
+    lv: '—',
+    perCast: hitsPerSec > 0 ? (totalDps * (w.basicWeight / w.total)) / hitsPerSec : 0,
+    cd: '—', castsPerMin: hitsPerSec * 60,
+    dps: totalDps * (w.basicWeight / w.total), share: w.basicWeight / w.total, color: '#58a6ff',
+  });
+  rows.sort((a, b) => b.dps - a.dps);
   const table = document.getElementById('dpsbreak-table');
-  table.innerHTML = `<thead><tr><th>#</th><th>${currentLang==='th'?'สกิล':'Skill'}</th><th>${t('tier')==='Tier'?'Lv.':'Lv.'}</th><th>Dmg%</th><th>${currentLang==='th'?'คูลดาวน์':'Cooldown'}</th><th>Casts/min</th><th>DPS</th><th>%</th></tr></thead><tbody>` +
-    rows.map((r,i) => `<tr><td>${i+1}</td><td>${esc(r.name)}</td><td>${r.level}</td><td>${r.dmgPct}%</td><td>${r.cooldown}s</td><td>${r.castsPerMin.toFixed(1)}</td><td>${Math.round(r.dpsOutput).toLocaleString()}</td><td>${(100*r.dpsOutput/total).toFixed(1)}%</td></tr>`).join('') +
+  if (!rows.length || !isFinite(totalDps) || totalDps <= 0) {
+    table.innerHTML = `<tbody><tr><td class="empty-state">${th ? 'ยังไม่มีข้อมูล — เปิดเกมแล้วเชื่อม Live Sync หรือกรอกสถิติในหน้าโปรไฟล์' : 'No data yet - run the game with Live Sync, or fill in the Profile form'}</td></tr></tbody>`;
+  } else {
+    table.innerHTML = `<thead><tr>
+        <th style="width:48px;text-align:center;">🏆</th>
+        <th>${th ? '⚔️ สกิล / การโจมตี' : '⚔️ Skill / attack'}</th>
+        <th>${th ? '⭐ เลเวล' : '⭐ Level'}</th>
+        <th>${th ? '⚡ ดาเมจ/ครั้ง' : '⚡ Damage per cast'}</th>
+        <th>${th ? '⏱️ คูลดาวน์' : '⏱️ Cooldown'}</th>
+        <th>${th ? '🔄 ครั้ง/นาที' : '🔄 Casts/min'}</th>
+        <th style="color:#f85149;">${th ? '💥 DPS' : '💥 DPS'}</th>
+        <th style="color:var(--gold-bright);">${th ? '💰 ดาเมจ/นาที' : '💰 Damage/min'}</th>
+        <th style="width:150px;">${th ? '📊 สัดส่วน' : '📊 Share'}</th>
+      </tr></thead><tbody>` +
+      rows.map((r, i) => `<tr>
+        <td style="text-align:center;">${i + 1}</td>
+        <td><div class="dpsb-skillcell">${r.icon}<div><div class="dpsb-skillname">${esc(r.name)}</div><div class="dpsb-skillsub">${esc(r.sub)}</div></div></div></td>
+        <td>${esc(r.lv)}</td>
+        <td>${saFmt(r.perCast)}</td>
+        <td>${esc(r.cd)}</td>
+        <td>${r.castsPerMin.toFixed(1)}</td>
+        <td style="color:#f85149;font-weight:700;">${saFmt(r.dps)}</td>
+        <td style="color:var(--gold-bright);">${saFmt(r.dps * 60)}</td>
+        <td><div class="dpsb-share"><div>${(100 * r.share).toFixed(1)}%</div>
+          <div class="dpsb-share-bar"><div class="dpsb-share-fill" style="width:${(100 * r.share).toFixed(1)}%;background:${r.color};"></div></div></div></td>
+      </tr>`).join('') + `</tbody>`;
+  }
+
+  document.getElementById('dpsb-method').innerHTML = live
+    ? (th ? `วิธีคิด: <b>DPS รวมเป็นค่าจริงจากเกม</b> (ค่าความสามารถ 103 ซึ่งรวมดาเมจสกิลอยู่แล้ว) ส่วนการ<b>แบ่งสัดส่วน</b>คิดจากความเร็วโจมตีและ %ดาเมจ÷คูลดาวน์ของแต่ละสกิล — ตัวคูณพลังโจมตี/คริ/โบนัสตัดกันหมดในอัตราส่วน สัดส่วนจึงไม่ขึ้นกับสูตร ข้อแม้เดียวคือถ้าเกมคิดคริหรือโบนัสกับสกิลไม่เท่ากับโจมตีปกติ สัดส่วนจะเพี้ยนไปบ้าง`
+          : `Method: <b>the total is the game's own real DPS</b> (ability 103, which already includes skill damage). The <b>split</b> comes from attack speed and each skill's damage% ÷ cooldown - attack, crit and bonus multipliers cancel out of the ratio, so the shares don't depend on any formula. The one caveat: if the game applies crit or bonuses differently to skills than to normal attacks, the split shifts a little.`)
+    : (th ? `⚠️ ไม่ได้เชื่อมต่อเกม — ตัวเลขทั้งหมดเป็น<b>ประมาณการ</b>จากฟอร์มโปรไฟล์และแต้มสกิลที่จำลองไว้ในหน้าสกิลทรี ไม่ใช่ค่าจริง เปิดเกมแล้วกดรีเฟรชเพื่อดูของจริง`
+          : `⚠️ Not connected to the game - every number here is <b>estimated</b> from the Profile form and the simulated allocations in the Skill Tree tab. Run the game and hit Refresh for the real thing.`);
+
+  renderClassDpsComparison();
+}
+
+/* ---- per-class snapshots, so the 3 classes can be compared over time ---- */
+function recordClassDpsSnapshot(d, m){
+  const code = HERO_CLASSTYPE_TO_SKILLCLASS[d.classType];
+  if (!code || !m.ab || m.ab.dps == null) return;
+  let log = {};
+  try { log = JSON.parse(localStorage.getItem('wog_class_dps_log') || '{}'); } catch(e) {}
+  log[code] = {
+    dps: m.ab.dps, attack: m.ab.attack, atkSpeed: m.ab.atkSpeed, critRate: m.ab.critRate, critDmg: m.ab.critDmg,
+    hp: m.ab.hp, defense: m.ab.defense, cp: d.combatPower, level: d.level, stageTid: d.stageTid, at: Date.now(),
+  };
+  localStorage.setItem('wog_class_dps_log', JSON.stringify(log));
+}
+function renderClassDpsComparison(){
+  const th = currentLang === 'th';
+  let log = {};
+  try { log = JSON.parse(localStorage.getItem('wog_class_dps_log') || '{}'); } catch(e) {}
+  const codes = ['Melee', 'Ranged', 'Mage'];
+  const table = document.getElementById('dpsb-cmp-table');
+  if (!table) return;
+  const seen = codes.filter(c => log[c]);
+  if (!seen.length) {
+    table.innerHTML = `<tbody><tr><td class="empty-state">${th ? 'ยังไม่เคยบันทึกคลาสไหนเลย — เปิดหน้านี้ตอนเล่นแต่ละคลาส แล้วค่าจะถูกเก็บให้เอง' : 'Nothing recorded yet - open this page while playing each class and the numbers get saved automatically'}</td></tr></tbody>`;
+    return;
+  }
+  const best = Math.max(...seen.map(c => log[c].dps || 0));
+  const cell = (c, get, fmt) => { const v = log[c] ? get(log[c]) : null; return v == null ? '<span style="color:var(--text-dim);">—</span>' : (fmt ? fmt(v) : saFmt(v)); };
+  const metrics = [
+    [th ? '💥 DPS จริง' : '💥 Real DPS', r => r.dps, v => `<b style="color:#f85149;">${saFmt(v)}</b>`],
+    [th ? '⚔️ พลังโจมตี' : '⚔️ Attack', r => r.attack],
+    [th ? '⚡ ความเร็วโจมตี' : '⚡ Attack speed', r => r.atkSpeed, v => (v / 100).toFixed(3) + (th ? ' ครั้ง/วิ' : ' /s')],
+    [th ? '🎯 คริ (อัตรา/ดาเมจ)' : '🎯 Crit (rate/dmg)', r => r, v => `${saFmt(v.critRate, 1)}% / ${saFmt(v.critDmg, 1)}%`],
+    [th ? '❤️ เลือด' : '❤️ HP', r => r.hp],
+    [th ? '🛡️ ป้องกัน' : '🛡️ Defense', r => r.defense],
+    [th ? '🔥 พลังต่อสู้' : '🔥 Combat power', r => r.cp, v => `<b style="color:#bc8cff;">${saFmt(v)}</b>`],
+    [th ? '📍 ด่านตอนบันทึก' : '📍 Stage when recorded', r => r.stageTid, v => esc(profStageLabel(v))],
+    [th ? '🕒 บันทึกเมื่อ' : '🕒 Recorded', r => r.at, v => new Date(v).toLocaleString(th ? 'th-TH' : 'en-US')],
+  ];
+  table.innerHTML = `<thead><tr><th>${th ? 'รายการ' : 'Metric'}</th>` +
+    codes.map(c => `<th${log[c] && log[c].dps === best && best > 0 ? ' style="color:var(--gold-bright);"' : ''}>${esc((CLASS_LABELS[c] || {})[currentLang] || c)}${log[c] && log[c].dps === best && best > 0 ? ' 👑' : ''}</th>`).join('') +
+    `</tr></thead><tbody>` +
+    metrics.map(([label, get, fmt]) => `<tr><td>${esc(label)}</td>` +
+      codes.map(c => `<td>${cell(c, get, fmt)}</td>`).join('') + `</tr>`).join('') +
     `</tbody>`;
 }
+document.getElementById('btn-dpsb-refresh').addEventListener('click', () => {
+  refreshDpsBreakLive();
+  toast(currentLang === 'th' ? 'กำลังอ่านค่าใหม่จากเกม' : 'Re-reading from the game');
+});
+document.querySelectorAll('.dpsb-mode').forEach(b => b.addEventListener('click', () => {
+  dpsbMode = b.dataset.mode;
+  localStorage.setItem('wog_dpsb_mode', dpsbMode);
+  refreshDpsBreakLive();
+}));
+document.getElementById('btn-dpsb-cmp-reset').addEventListener('click', () => {
+  if (!confirm(currentLang === 'th' ? 'ล้างประวัติ DPS ของทั้ง 3 คลาสที่เก็บไว้ในเบราว์เซอร์นี้?' : 'Clear the saved DPS history for all 3 classes in this browser?')) return;
+  localStorage.removeItem('wog_class_dps_log');
+  renderClassDpsComparison();
+  toast(currentLang === 'th' ? 'ล้างแล้ว' : 'Cleared');
+});
 
 /* ================= STAGE RUN HISTORY ================= */
 let lastKnownStageTid = null;
@@ -2103,9 +2379,18 @@ function smartDpsModel(d){
   }).filter(Boolean).sort((a, b) => b.dps - a.dps);
   const skillDps = equipped.reduce((s, x) => s + x.dps, 0);
   const freeSlots = (d.skillSlots || []).filter(x => !x).length;
-  return { ab, attack, critMult, bonusMult, basicDps, equipped, equippedSet, skillDps, freeSlots,
-           weakest: equipped.length ? equipped[equipped.length - 1] : null,
-           totalDps: basicDps + skillDps, lvByGroup, allSk };
+  const modelTotal = basicDps + skillDps;
+  // Our multiplier formula does NOT reproduce the game's own DPS (ability 103,
+  // which already includes skill damage - proven live). What IS exact is the
+  // ratio between sources, since attack/crit/bonus scale every source alike and
+  // cancel. So we keep the model only for its ratios and rescale every absolute
+  // number onto the game's real total.
+  const anchor = (ab.dps && modelTotal > 0) ? ab.dps / modelTotal : 1;
+  equipped.forEach(e => { e.rawDps = e.dps; e.dps = e.dps * anchor; });
+  return { ab, attack, critMult, bonusMult, equipped, equippedSet, freeSlots, anchor,
+           basicDps: basicDps * anchor, skillDps: skillDps * anchor,
+           modelTotal, weakest: equipped.length ? equipped[equipped.length - 1] : null,
+           totalDps: modelTotal * anchor, lvByGroup, allSk };
 }
 
 function renderSmartAnalysis(){ refreshSmartLive(); }
@@ -2175,7 +2460,6 @@ function saRenderDps(d, m, th){
   const basicPct = 100 * m.basicDps / tot;
   const skillPct = 100 * m.skillDps / tot;
   const real = ab.dps;
-  const devPct = (real && m.totalDps) ? 100 * (m.totalDps - real) / real : null;
   const top = m.equipped.slice(0, 4);
   document.getElementById('sa-dps').innerHTML =
     saRow(th ? 'DPS จริงจากเกม' : 'Real DPS (from the game)', saFmt(real), 'dps')
@@ -2187,7 +2471,6 @@ function saRenderDps(d, m, th){
     + saRow(th ? 'อัตราคริ / ดาเมจคริ' : 'Crit rate / damage', `${saFmt(ab.critRate, 1)}% / ${saFmt(ab.critDmg, 1)}%`, 'sm')
     + saRow(th ? 'ตัวคูณจากคริ' : 'Crit multiplier', '×' + m.critMult.toFixed(3), 'good')
     + saRow(th ? 'โบนัสดาเมจรวม (ทั่วไป+PvE+บอส)' : 'Total damage amp (general+PvE+boss)', `+${saFmt((ab.dmg || 0) + (ab.pve || 0) + (ab.boss || 0), 1)}% → ×${m.bonusMult.toFixed(3)}`, 'good')
-    + saRow(th ? 'DPS ตามสูตรของเรา (ไว้เทียบ)' : 'Model DPS (for comparison)', saFmt(m.totalDps) + (devPct != null ? ` (${devPct >= 0 ? '+' : ''}${devPct.toFixed(1)}%)` : ''), 'sm')
     + `<div class="sa-sub">${th ? 'สกิลที่ใส่อยู่ เรียงตาม DPS' : 'Equipped skills, ranked by DPS'}</div>`
     + (top.length ? top.map((s, i) => `<div class="sa-item ${i === 0 ? 'top' : ''}">
         <span class="sa-rank">${i + 1}</span>
@@ -2198,7 +2481,8 @@ function saRenderDps(d, m, th){
         </div>
         <div class="sa-item-val">${saFmt(s.dps)}<small>${(100 * s.dps / tot).toFixed(1)}% ${th ? 'ของ DPS รวม' : 'of total'}</small></div>
       </div>`).join('')
-      : `<div class="empty-state" style="padding:16px 8px;">${th ? 'ยังไม่ได้ใส่สกิลโจมตีในช่องสกิล' : 'No damaging skills equipped'}</div>`);
+      : `<div class="empty-state" style="padding:16px 8px;">${th ? 'ยังไม่ได้ใส่สกิลโจมตีในช่องสกิล' : 'No damaging skills equipped'}</div>`)
+    + `<div class="sa-advice info" style="margin-top:10px;">ℹ️ ${th ? 'ยอดรวมเป็นค่าจริงจากเกม ส่วนการแบ่งว่าสกิลไหนกี่ % คิดจากความเร็วโจมตีและ %ดาเมจ÷คูลดาวน์ — ดูวิธีคิดแบบเต็มได้ที่เมนู Skill DPS' : "The total is the game's own number; the per-skill split comes from attack speed and each skill's damage% ÷ cooldown - see the Skill DPS tab for the full method."}</div>`;
 }
 
 /* ---- card 3: which skill upgrade pays the most ---- */
@@ -2215,8 +2499,10 @@ function saRenderSkill(d, m, th){
     const nextL = sk.levels[lv];
     if (!nextL || !nextL.damage_percent || !nextL.cooldown_sec) return;
     const curL = lv > 0 ? sk.levels[lv - 1] : null;
-    const curDps = curL ? m.attack * (curL.damage_percent / 100) * m.critMult * m.bonusMult / curL.cooldown_sec : 0;
-    const nextDps = m.attack * (nextL.damage_percent / 100) * m.critMult * m.bonusMult / nextL.cooldown_sec;
+    // Anchored onto the game's real DPS, the same way m.equipped[].dps is, so
+    // these deltas can be compared against the equipped skills directly.
+    const curDps = (curL ? m.attack * (curL.damage_percent / 100) * m.critMult * m.bonusMult / curL.cooldown_sec : 0) * m.anchor;
+    const nextDps = m.attack * (nextL.damage_percent / 100) * m.critMult * m.bonusMult / nextL.cooldown_sec * m.anchor;
     const equipped = m.equippedSet.has(sk.group_id);
     // The honest number is the DPS you'd ACTUALLY gain. A skill sitting outside
     // the 6 slots contributes nothing until it's equipped - and with every slot
