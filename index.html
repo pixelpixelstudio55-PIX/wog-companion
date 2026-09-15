@@ -177,6 +177,16 @@
   .prof-cur-val { font-size: 14px; font-weight: 700; color: var(--gold-bright); font-family: 'Cinzel', serif; white-space: nowrap; }
   .empty-state { text-align: center; padding: 50px 20px; color: var(--text-dim); }
 
+  /* ---- Farm Ranking ---- */
+  .farm-rank { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; font-size: 12px; font-weight: 700; }
+  .farm-rank.r1 { background: var(--gold); color: #1a1408; box-shadow: 0 0 8px rgba(212,175,55,.55); }
+  .farm-rank.r2 { background: #c0c0c0; color: #111; }
+  .farm-rank.r3 { background: #cd7f32; color: #fff; }
+  .farm-rank.rx { background: var(--bg3); color: var(--text-dim); }
+  .farm-pace { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 12px; color: var(--text-dim); }
+  .farm-pace input[type=range] { width: 150px; max-width: 100%; accent-color: var(--gold); }
+  .farm-pace b { color: var(--gold-bright); font-family: 'Cinzel', serif; }
+
   /* ---- Skill DPS breakdown ---- */
   .dpsb-banner { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; background: linear-gradient(145deg, var(--bg2), var(--bg3)); border: 1px solid #388bfd; border-radius: 10px; padding: 13px 18px; margin-bottom: 16px; }
   .dpsb-banner-label { font-size: 10.5px; color: #58a6ff; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; }
@@ -511,6 +521,11 @@
       <select id="farm-difficulty-filter"><option value="">--</option></select>
       <select id="farm-sort"></select>
       <select id="farm-basis"></select>
+      <div class="farm-pace" id="farm-pace-box">
+        <span>⏱️ <span id="farm-pace-label">จังหวะเคลียร์</span> <b id="farm-pace-val">×1.00</b></span>
+        <input type="range" id="farm-pace" min="1" max="5" step="0.05" value="1">
+        <button class="btn btn-outline" id="btn-farm-pace-real" style="padding:4px 10px;font-size:11.5px;">ใช้จังหวะจริงของบอส</button>
+      </div>
     </div>
     <div class="result-count" id="farm-count"></div>
     <div class="table-scroll"><table class="data-table" id="farm-table"></table></div>
@@ -939,7 +954,7 @@ const UI_STRINGS = {
   search_training: { th: 'ค้นหาการฝึกฝน...', en: 'Search training...' },
   search_equip: { th: 'ค้นหาอุปกรณ์...', en: 'Search equipment...' },
   search_jewel: { th: 'ค้นหาอัญมณี...', en: 'Search jewel...' },
-  search_farm: { th: 'ค้นหาด่าน/พื้นที่...', en: 'Search stage/area...' },
+  search_farm: { th: 'ค้นหาด่าน/พื้นที่/ความยาก (เช่น 3-9, ยากมาก, ป่า)...', en: 'Search stage/area/difficulty (e.g. 3-9, very hard, forest)...' },
   'skill-alloc-hint': { th: 'คลิกที่แถวในตารางเพื่อจำลองการลงแต้ม (บันทึกอัตโนมัติในเครื่องนี้)', en: 'Click a row in the table to simulate point allocation (auto-saved on this device)' },
   profile_title: { th: 'ตัวละครของฉัน (บันทึกในเครื่องนี้)', en: 'My Character (saved on this device)' },
   save: { th: 'บันทึก', en: 'Save' },
@@ -1495,11 +1510,12 @@ document.getElementById('btn-jewel-reset').addEventListener('click', jewelResetF
 let farmSortKey = localStorage.getItem('wog_farm_sort') || 'gps';
 let farmScope = localStorage.getItem('wog_farm_scope') || 'unlocked';
 let farmBasis = localStorage.getItem('wog_farm_basis') || 'personal';
+let farmPace = parseFloat(localStorage.getItem('wog_farm_pace')) || null; // null = use the measured pace
 
 function saExpPerSec(s){ return (s && s.est_clear_sec) ? s.total_exp / s.est_clear_sec : 0; }
 
 // Shared by Farm Ranking and the Smart Analysis farm card.
-function stagePerfTable(){
+function stagePerfTable(paceOverride){
   const stages = GAME_DATA.stageData || [];
   const byId = new Map(stages.map(s => [s.stage_id, s]));
   const agg = new Map();
@@ -1522,6 +1538,7 @@ function stagePerfTable(){
     if (a.ok > 0) { const n = byId.get(tid).stage_num; maxClearedNum = maxClearedNum == null ? n : Math.max(maxClearedNum, n); }
   });
   const factor = (sumEst > 0 && sumOkSec > 0) ? sumOkSec / sumEst : null;
+  const pace = paceOverride || factor;
 
   const perf = new Map();
   stages.forEach(s => {
@@ -1536,8 +1553,8 @@ function stagePerfTable(){
         eps: spent > 0 ? s.total_exp * a.ok / spent : 0,
         risky: a.ok === 0 || a.died / tries >= 0.5,
       });
-    } else if (factor) {
-      const sec = (s.est_clear_sec || 0) * factor;
+    } else if (pace) {
+      const sec = (s.est_clear_sec || 0) * pace;
       perf.set(s.stage_id, {
         basis: 'adjusted', runs: 0, ok: 0, died: 0, deathRate: null, clearSec: sec,
         gps: sec > 0 ? s.total_gold / sec : 0, eps: sec > 0 ? s.total_exp / sec : 0,
@@ -1550,13 +1567,45 @@ function stagePerfTable(){
       });
     }
   });
-  return { perf, factor, maxClearedNum, hasRuns: agg.size > 0 };
+  return { perf, factor, pace, paceIsManual: !!paceOverride, maxClearedNum, hasRuns: agg.size > 0 };
 }
 
 function farmBasisTag(r, P, th){
   if (r.basis === 'measured') return th ? `วัดจริง ${r.runs} รอบ` : `measured, ${r.runs} runs`;
-  if (r.basis === 'adjusted') return th ? `ประมาณ ×${P.factor.toFixed(1)} ตามจังหวะจริง` : `est. ×${P.factor.toFixed(1)} to your pace`;
+  if (r.basis === 'adjusted') {
+    const x = (P.pace || 1).toFixed(2);
+    return P.paceIsManual
+      ? (th ? `ประมาณ ×${x} (ตั้งเอง)` : `est. ×${x} (manual)`)
+      : (th ? `ประมาณ ×${x} ตามจังหวะจริง` : `est. ×${x} to your pace`);
+  }
   return th ? 'ค่าอ้างอิงของเกม' : 'game estimate';
+}
+
+// One icon per area theme, keyed on the English area name (all 40 checked).
+// Specific themes first: "King's Tomb" is ruins, "King's Chamber" is the throne.
+function farmAreaIcon(s){
+  const n = (s && s.area_name_en) || '';
+  if (/Throne|King's Chamber/.test(n)) return '👑';
+  if (/Ice|Snow|Frozen|Frost|Crystal/.test(n)) return '❄️';
+  if (/Prison|Cell|Execution|Iron Gate|Torture|Guard|Interrogation|Warden/.test(n)) return '🗝️';
+  if (/Swamp/.test(n)) return '🧪';
+  if (/Spirit/.test(n)) return '👻';
+  if (/Foggy|Valley/.test(n)) return '🌫️';
+  if (/Forest|Tree|Root|Vine/.test(n)) return '🌲';
+  if (/Tomb|Altar|Temple|Sealed|Ruins|Plaza/.test(n)) return '🏛️';
+  if (/Path|Corridor|Entrance/.test(n)) return '🛣️';
+  return '🏞️';
+}
+
+// Highest playable stage = the one after the highest cleared (read live).
+function farmMaxUnlocked(){
+  const stages = GAME_DATA.stageData || [];
+  const live = lastLiveData || {};
+  const clearTid = (live.run && live.run.clearStageTid != null) ? live.run.clearStageTid : null;
+  const cleared = clearTid ? stages.find(s => s.stage_id === clearTid) : null;
+  if (!cleared) return { num: null, stage: null, cleared: null };
+  const num = cleared.stage_num + 1;
+  return { num, stage: stages.find(s => s.stage_num === num) || cleared, cleared };
 }
 
 function initFarmFilters(){
@@ -1573,17 +1622,20 @@ function initFarmFilters(){
   stages.forEach(s => { if (!diffs.some(d => d[0] === s.difficulty)) diffs.push([s.difficulty, fld(s, 'difficulty')]); });
   keep(document.getElementById('farm-difficulty-filter'), [['', t('all_difficulty')], ...diffs]);
   keep(document.getElementById('farm-sort'), [
-    ['gps', th ? 'เรียงตาม: ทอง/วินาที' : 'Sort: gold/sec'],
-    ['eps', th ? 'เรียงตาม: EXP/วินาที' : 'Sort: EXP/sec'],
-    ['total_gold', th ? 'เรียงตาม: ทองต่อรอบ' : 'Sort: gold per clear'],
-    ['total_exp', th ? 'เรียงตาม: EXP ต่อรอบ' : 'Sort: EXP per clear'],
-    ['clear', th ? 'เรียงตาม: เคลียร์เร็วสุด' : 'Sort: fastest clear'],
-    ['stage', th ? 'เรียงตาม: ลำดับด่าน' : 'Sort: stage order'],
+    ['gps', th ? '💰 เรียงตาม: ทอง/วินาที' : '💰 Sort: gold/sec'],
+    ['eps', th ? '📈 เรียงตาม: EXP/วินาที' : '📈 Sort: EXP/sec'],
+    ['gpm', th ? '🪙 เรียงตาม: ทอง/นาที' : '🪙 Sort: gold/min'],
+    ['clear', th ? '⚡ เรียงตาม: เคลียร์เร็วสุด' : '⚡ Sort: fastest clear'],
+    ['total_gold', th ? '🎁 เรียงตาม: ทองต่อรอบ' : '🎁 Sort: gold per clear'],
+    ['total_exp', th ? '⭐ เรียงตาม: EXP ต่อรอบ' : '⭐ Sort: EXP per clear'],
+    ['stage', th ? '🗺️ เรียงตาม: ลำดับด่าน' : '🗺️ Sort: stage order'],
   ]);
+  const mu = farmMaxUnlocked();
+  const upTo = mu.stage ? ` (≤ ${fld(mu.stage, 'display_tag')})` : '';
   keep(document.getElementById('farm-scope'), [
-    ['all', th ? 'ทุกด่าน (400)' : 'All stages (400)'],
-    ['unlocked', th ? 'เฉพาะด่านที่ปลดล็อกแล้ว' : 'Unlocked stages only'],
-    ['measured', th ? 'เฉพาะด่านที่เคยตีจริง' : 'Stages you have run'],
+    ['measured', th ? '🏆 เฉพาะด่านที่เคยตีจริง (วัดจริง)' : '🏆 Stages you have run (measured)'],
+    ['unlocked', (th ? 'เฉพาะด่านที่ปลดล็อกแล้ว' : 'Unlocked stages only') + upTo],
+    ['all', th ? `ทุกด่านในเกม (${stages.length})` : `All ${stages.length} stages in the game`],
   ]);
   keep(document.getElementById('farm-basis'), [
     ['personal', th ? 'ตัวเลข: ของบอสจริง' : 'Numbers: your real runs'],
@@ -1602,6 +1654,22 @@ function initFarmFilters(){
      ['farm-scope', v => { farmScope = v; localStorage.setItem('wog_farm_scope', v); }],
      ['farm-basis', v => { farmBasis = v; localStorage.setItem('wog_farm_basis', v); }]]
       .forEach(([id, set]) => document.getElementById(id).addEventListener('change', e => { set(e.target.value); renderFarm(); }));
+    // The reference site's slider sets an assumed DPS (default 3,415) and derives
+    // clear time as HP / DPS + a guessed spawn delay. Both inputs are wrong for
+    // this game: ability 103 is HP, not DPS, and clears are gated by spawn rate.
+    // This slider instead scales the game's own clear estimate, and its "real"
+    // button snaps to the pace actually measured from Stage Run History.
+    const pace = document.getElementById('farm-pace');
+    pace.addEventListener('input', () => {
+      farmPace = parseFloat(pace.value);
+      try { localStorage.setItem('wog_farm_pace', String(farmPace)); } catch(e) {}
+      renderFarm();
+    });
+    document.getElementById('btn-farm-pace-real').addEventListener('click', () => {
+      farmPace = null;
+      try { localStorage.removeItem('wog_farm_pace'); } catch(e) {}
+      renderFarm();
+    });
   }
 }
 
@@ -1609,17 +1677,31 @@ function renderFarm(){
   initFarmFilters();
   const th = currentLang === 'th';
   const stages = GAME_DATA.stageData || [];
-  const P = stagePerfTable();
-  const personal = farmBasis === 'personal' && P.hasRuns;
+  const P = stagePerfTable(farmPace);
+  // A hand-set pace is a simulation the viewer asked for, so it applies even
+  // before any runs exist - exactly like the reference site's slider.
+  const personal = farmBasis === 'personal' && (P.hasRuns || !!farmPace);
   const gameRate = s => ({ basis: 'game', runs: 0, ok: 0, died: 0, deathRate: null, clearSec: s.est_clear_sec, gps: s.gold_per_sec, eps: saExpPerSec(s), risky: false });
   const rate = s => personal ? P.perf.get(s.stage_id) : gameRate(s);
 
   const live = lastLiveData || {};
   const curTid = live.stageTid || null;
-  const clearTid = (live.run && live.run.clearStageTid != null) ? live.run.clearStageTid : null;
-  const clearedObj = clearTid ? stages.find(s => s.stage_id === clearTid) : null;
-  const maxUnlockedNum = clearedObj ? clearedObj.stage_num + 1 : null;
+  const mu = farmMaxUnlocked();
+  const maxUnlockedNum = mu.num;
   const isUnlocked = s => maxUnlockedNum == null || s.stage_num <= maxUnlockedNum;
+
+  // ---- pace slider ----
+  const paceBox = document.getElementById('farm-pace-box');
+  paceBox.hidden = farmBasis !== 'personal';
+  const paceNow = farmPace || P.factor || 1;
+  document.getElementById('farm-pace').value = String(paceNow);
+  document.getElementById('farm-pace-val').textContent = `×${paceNow.toFixed(2)}`;
+  document.getElementById('farm-pace-label').textContent = th ? 'จังหวะเคลียร์ (ด่านที่ยังไม่เคยตี)' : 'Clear pace (stages not yet run)';
+  const realBtn = document.getElementById('btn-farm-pace-real');
+  realBtn.textContent = P.factor
+    ? (th ? `ใช้จังหวะจริงของบอส (×${P.factor.toFixed(2)})` : `Use my real pace (×${P.factor.toFixed(2)})`)
+    : (th ? 'ใช้ค่าอ้างอิงของเกม (×1.00)' : "Use the game's estimate (×1.00)");
+  realBtn.disabled = !farmPace;
 
   // ---- recommendation candidates: unlocked, and not a known/unknown death risk ----
   // Death risk is real data whichever basis is on screen, so it always applies:
@@ -1627,39 +1709,85 @@ function renderFarm(){
   // character back at the top (it did - 4-2 came back as "best" at 0/5 clears).
   const riskOf = s => P.hasRuns && P.perf.get(s.stage_id).risky;
   const candidates = stages.filter(s => isUnlocked(s) && !riskOf(s));
-  const bestGold = [...candidates].sort((a, b) => rate(b).gps - rate(a).gps)[0] || null;
+  const byGold = [...candidates].sort((a, b) => rate(b).gps - rate(a).gps);
+  const bestGold = byGold[0] || null;
   const bestExp = [...candidates].sort((a, b) => rate(b).eps - rate(a).eps)[0] || null;
+  const recommendedIds = new Set(byGold.slice(1, 5).map(s => s.stage_id));
   const cur = curTid ? stages.find(s => s.stage_id === curTid) : null;
 
+  // ---- highlight cards ----
   const card = (cls, head, s, big, sub, lines) => `
     <div class="sa-card"><div class="sa-card-head ${cls}">${head}</div><div class="sa-card-body">
-      <div style="font-size:15px;font-weight:700;color:var(--text);">${s ? esc(fld(s, 'display_tag')) : '—'} <span class="hint" style="font-size:11px;font-weight:400;">${s ? esc(fld(s, 'area_name')) : ''}</span></div>
+      <div style="font-size:15px;font-weight:700;color:var(--text);">${s ? `${farmAreaIcon(s)} ${esc(fld(s, 'display_tag'))}` : '—'} <span class="hint" style="font-size:11px;font-weight:400;">${s ? esc(fld(s, 'area_name')) : ''}</span></div>
       <div style="font-size:21px;font-weight:700;font-family:'Cinzel',serif;margin:6px 0 2px;">${big}</div>
       <div class="hint" style="font-size:11.5px;">${sub}</div>
       ${lines}
     </div></div>`;
-  const rowsFor = (s) => {
-    if (!s) return '';
-    const r = rate(s);
-    return saRow(th ? 'ทอง/ชั่วโมง (AFK)' : 'Gold/hour (AFK)', saFmt(r.gps * 3600), 'gold')
-      + saRow(th ? 'EXP/ชั่วโมง (AFK)' : 'EXP/hour (AFK)', saFmt(r.eps * 3600), 'good')
+  const realRow = s => { const pm = P.perf.get(s.stage_id); return pm && pm.basis === 'measured' ? saRow(th ? 'ผลจริง (ผ่าน/ตาย)' : 'Real result (clear/died)', `${pm.ok} / ${pm.died}`, pm.died ? 'warn' : 'good') : ''; };
+  const cr = cur ? rate(cur) : null;
+
+  let goldLines = '';
+  if (bestGold) {
+    const r = rate(bestGold);
+    let vsCur = '';
+    if (cur && cr) {
+      if (bestGold.stage_id === cur.stage_id) vsCur = `<div class="sa-advice go" style="margin-top:8px;">✅ ${th ? 'บอสฟาร์มด่านที่ได้ทอง/วิ สูงสุดอยู่แล้ว' : 'You are already farming the top gold/sec stage'}</div>`;
+      else if (cr.gps > 0) vsCur = `<div class="sa-advice info" style="margin-top:8px;">💡 ${th ? `ได้ทองมากกว่าด่านที่ฟาร์มอยู่ (${esc(fld(cur, 'display_tag'))}) <b>+${Math.round(100 * (r.gps - cr.gps) / cr.gps)}%</b>` : `<b>+${Math.round(100 * (r.gps - cr.gps) / cr.gps)}%</b> more gold than your current stage (${esc(fld(cur, 'display_tag'))})`}</div>`;
+      else vsCur = `<div class="sa-advice info" style="margin-top:8px;">💡 ${th ? `ด่านที่ฟาร์มอยู่ (${esc(fld(cur, 'display_tag'))}) ได้ทองจริง 0` : `Your current stage (${esc(fld(cur, 'display_tag'))}) really pays 0 gold`}</div>`;
+    }
+    goldLines = saRow(th ? 'ทอง/นาที' : 'Gold/min', saFmt(r.gps * 60), 'gold')
+      + saRow(th ? 'ทอง/ชั่วโมง (AFK)' : 'Gold/hour (AFK)', saFmt(r.gps * 3600), 'gold')
+      + saRow(th ? 'เลือดมอบรวม' : 'Total monster HP', saFmt(bestGold.total_hp), '')
       + saRow(th ? 'เวลาต่อรอบ' : 'Time per clear', r.clearSec ? r.clearSec.toFixed(1) + 's' : '—', 'sm')
-      + (r.basis === 'measured' ? saRow(th ? 'ผลจริง (ผ่าน/ตาย)' : 'Real result (clear/died)', `${r.ok} / ${r.died}`, r.died ? 'warn' : 'good') : '');
-  };
+      + realRow(bestGold) + vsCur;
+  }
+
+  let expLines = '';
+  if (bestExp) {
+    const r = rate(bestExp);
+    const remaining = (live.maxExp != null && live.curExp != null) ? Math.max(0, live.maxExp - live.curExp) : null;
+    const eta = (remaining && r.eps > 0)
+      ? `<div class="sa-advice go" style="margin-top:8px;">⏳ ${th ? `ขึ้นเลเวล ${(live.level || 0) + 1} ในอีกประมาณ <b>${profEta(remaining / r.eps)}</b> ถ้าฟาร์มด่านนี้ต่อเนื่อง` : `Level ${(live.level || 0) + 1} in about <b>${profEta(remaining / r.eps)}</b> of continuous AFK here`}</div>`
+      : `<div class="sa-advice info" style="margin-top:8px;">⏳ ${th ? 'EXP/วิ สูงสุดในบรรดาด่านที่ปลอดภัยและปลดล็อกแล้ว' : 'Highest EXP/sec among safe, unlocked stages'}</div>`;
+    expLines = saRow(th ? 'EXP/ชั่วโมง (AFK)' : 'EXP/hour (AFK)', saFmt(r.eps * 3600), 'good')
+      + saRow(th ? 'EXP ต่อรอบ (มอบ+บอส)' : 'EXP per clear (mobs+boss)', saFmt(bestExp.total_exp), '')
+      + saRow(th ? 'เวลาต่อรอบ' : 'Time per clear', r.clearSec ? r.clearSec.toFixed(1) + 's' : '—', 'sm')
+      + realRow(bestExp) + eta;
+  }
+
+  let curLines = '';
+  if (cur && cr) {
+    const isCleared = mu.cleared ? cur.stage_num <= mu.cleared.stage_num : null;
+    const status = isCleared == null ? (th ? '—' : '—')
+      : isCleared ? (th ? 'ผ่านแล้ว ฟาร์ม AFK ได้' : 'Cleared, free to AFK') : (th ? 'ยังไม่เคยผ่านด่านนี้' : 'Not cleared yet');
+    const gName = bestGold ? `<b>${esc(fld(bestGold, 'display_tag'))}</b>` : '—';
+    const eName = bestExp ? `<b>${esc(fld(bestExp, 'display_tag'))}</b>` : '—';
+    const gBest = bestGold && bestGold.stage_id === cur.stage_id, eBest = bestExp && bestExp.stage_id === cur.stage_id;
+    let rec;
+    if (gBest && eBest) rec = th ? 'ยอดเยี่ยม! ด่านนี้ดีที่สุดทั้งทองและ EXP' : 'Perfect - this stage is best for BOTH gold and EXP';
+    else if (gBest) rec = th ? `ดีที่สุดเรื่องทองแล้ว ถ้าอยากได้ EXP เร็วขึ้นให้ไป ${eName}` : `Best for gold already; for faster EXP switch to ${eName}`;
+    else if (eBest) rec = th ? `ดีที่สุดเรื่อง EXP แล้ว ถ้าอยากได้ทองมากขึ้นให้ไป ${gName}` : `Best for EXP already; for more gold switch to ${gName}`;
+    else rec = th ? `อยากได้ทองไป ${gName} · อยากได้ EXP ไป ${eName}` : `For gold switch to ${gName}; for EXP switch to ${eName}`;
+    curLines = saRow(th ? 'สถานะ' : 'Status', esc(status), isCleared ? 'good' : 'warn')
+      + saRow(th ? 'EXP/วินาที' : 'EXP/sec', saFmt(cr.eps, 1), 'good')
+      + saRow(th ? 'ทอง/ชั่วโมง (AFK)' : 'Gold/hour (AFK)', saFmt(cr.gps * 3600), 'gold')
+      + realRow(cur)
+      + `<div class="sa-advice ${gBest && eBest ? 'go' : 'info'}" style="margin-top:8px;">🎯 ${rec}</div>`;
+  }
+
   document.getElementById('farm-cards').innerHTML =
     card('sa-h-gold', th ? '🌟 ฟาร์มทองดีที่สุดสำหรับบอส' : '🌟 Best gold stage for you', bestGold,
-      bestGold ? `<span style="color:var(--gold-bright);">${saFmt(rate(bestGold).gps, 1)}</span> <span class="hint" style="font-size:12px;">${th ? 'ทอง/วิ' : 'gold/s'}</span>` : '—',
-      bestGold ? esc(farmBasisTag(rate(bestGold), P, th)) : '', rowsFor(bestGold))
-    + card('sa-h-green', th ? '📈 ดัน EXP เร็วที่สุด' : '📈 Fastest EXP', bestExp,
-      bestExp ? `<span style="color:#bc8cff;">${saFmt(rate(bestExp).eps, 1)}</span> <span class="hint" style="font-size:12px;">EXP/${th ? 'วิ' : 's'}</span>` : '—',
-      bestExp ? esc(farmBasisTag(rate(bestExp), P, th)) : '', rowsFor(bestExp))
-    + card('sa-h-blue', th ? '📍 ด่านที่ฟาร์มอยู่ตอนนี้' : '📍 Farming right now', cur,
-      cur ? `<span style="color:var(--gold-bright);">${saFmt(rate(cur).gps, 1)}</span> <span class="hint" style="font-size:12px;">${th ? 'ทอง/วิ' : 'gold/s'}</span>` : (th ? 'ไม่ได้เชื่อมต่อเกม' : 'not connected'),
-      cur ? esc(farmBasisTag(rate(cur), P, th)) : '', rowsFor(cur));
+      bestGold ? `<span style="color:var(--gold-bright);">${saFmt(rate(bestGold).gps, 2)}</span> <span class="hint" style="font-size:12px;">${th ? 'ทอง/วิ' : 'gold/s'}</span>` : '—',
+      bestGold ? esc(farmBasisTag(rate(bestGold), P, th)) : '', goldLines)
+    + card('sa-h-green', th ? '📈 ดัน EXP เร็วที่สุด (ขึ้นเลเวลไว)' : '📈 Fastest EXP (level up fast)', bestExp,
+      bestExp ? `<span style="color:#bc8cff;">${saFmt(rate(bestExp).eps, 2)}</span> <span class="hint" style="font-size:12px;">EXP/${th ? 'วิ' : 's'}</span>` : '—',
+      bestExp ? esc(farmBasisTag(rate(bestExp), P, th)) : '', expLines)
+    + card('sa-h-blue', th ? '📍 ด่านที่ฟาร์มอยู่ตอนนี้' : '📍 Your current stage', cur,
+      cur ? `<span style="color:var(--gold-bright);">${saFmt(cr.gps, 2)}</span> <span class="hint" style="font-size:12px;">${th ? 'ทอง/วิ' : 'gold/s'}</span>` : (th ? 'ไม่ได้เชื่อมต่อเกม' : 'not connected'),
+      cur ? esc(farmBasisTag(cr, P, th)) : '', curLines);
 
   // ---- advice ----
   const adv = document.getElementById('farm-advice');
-  const cr = cur ? rate(cur) : null;
   if (cur && cr && cr.died > 0 && cr.deathRate >= 0.25 && bestGold && bestGold.stage_id !== cur.stage_id) {
     adv.className = 'sa-advice hold';
     adv.innerHTML = `💀 ${th
@@ -1701,13 +1829,15 @@ function renderFarm(){
   let list = stages.filter(s =>
     (!q || String(s.stage_id).includes(q) || s.chapter_stage.includes(q)
         || String(fld(s, 'area_name')).toLowerCase().includes(q)
-        || String(fld(s, 'display_tag')).toLowerCase().includes(q)) &&
+        || String(fld(s, 'display_tag')).toLowerCase().includes(q)
+        || String(fld(s, 'difficulty')).toLowerCase().includes(q)) &&
     (!diff || s.difficulty === diff) &&
     (farmScope !== 'unlocked' || isUnlocked(s)) &&
     (farmScope !== 'measured' || (P.perf.get(s.stage_id) || {}).runs > 0)
   );
   const cmp = {
     gps: (a, b) => rate(b).gps - rate(a).gps,
+    gpm: (a, b) => rate(b).gps - rate(a).gps,
     eps: (a, b) => rate(b).eps - rate(a).eps,
     total_gold: (a, b) => b.total_gold - a.total_gold,
     total_exp: (a, b) => b.total_exp - a.total_exp,
@@ -1722,7 +1852,9 @@ function renderFarm(){
   list = list.sort(farmSortKey === 'stage' ? cmp : (a, b) => (riskOf(a) - riskOf(b)) || cmp(a, b));
 
   document.getElementById('farm-count').innerHTML = `${t('showing')} <b>${list.length}</b> ${t('items')}`
-    + (personal && P.factor ? ` · <span class="hint">${th ? `จังหวะจริงของบอส ช้ากว่าค่าอ้างอิงของเกม ×${P.factor.toFixed(2)}` : `your real pace vs the game's estimate: ×${P.factor.toFixed(2)}`}</span>` : '');
+    + (personal && P.pace ? ` · <span class="hint">${P.paceIsManual
+        ? (th ? `ด่านที่ยังไม่เคยตี จำลองด้วยจังหวะ ×${P.pace.toFixed(2)} ที่ตั้งเอง` : `stages not yet run simulated at a manual ×${P.pace.toFixed(2)} pace`)
+        : (th ? `จังหวะจริงของบอส ช้ากว่าค่าอ้างอิงของเกม ×${P.pace.toFixed(2)}` : `your real pace vs the game's estimate: ×${P.pace.toFixed(2)}`)}</span>` : '');
 
   const table = document.getElementById('farm-table');
   if (!list.length) {
@@ -1731,7 +1863,7 @@ function renderFarm(){
       : (th ? 'ไม่พบด่านที่ตรงกับตัวกรอง' : 'No stages match these filters')}</td></tr></tbody>`;
   } else {
     table.innerHTML = `<thead><tr>
-        <th style="width:48px;text-align:center;">#</th>
+        <th style="width:52px;text-align:center;">🏆 ${th ? 'อันดับ' : 'Rank'}</th>
         <th>🗺️ ${th ? 'ด่าน' : 'Stage'}</th>
         <th>🌲 ${th ? 'พื้นที่' : 'Area'}</th>
         <th>${t('difficulty')}</th>
@@ -1743,39 +1875,43 @@ function renderFarm(){
         <th>⏱️ ${th ? 'เวลาต่อรอบ' : 'Time per clear'}</th>
         <th>❤️ ${th ? 'เลือดมอบรวม' : 'Total HP'}</th>
         <th>📊 ${th ? 'ผลจริง ผ่าน/ตาย' : 'Real clear/died'}</th>
-        <th>${th ? 'คำแนะนำ' : 'Verdict'}</th>
+        <th>🎯 ${th ? 'คำแนะนำ' : 'Verdict'}</th>
       </tr></thead><tbody>` +
       list.slice(0, 400).map((s, i) => {
         const r = rate(s);
+        const pm = P.perf.get(s.stage_id);
         const isCur = s.stage_id === curTid, isBest = bestGold && s.stage_id === bestGold.stage_id;
         let verdict;
         if (!isUnlocked(s)) verdict = `<span style="color:var(--text-dim);">🔒 ${th ? 'ยังไม่ปลดล็อก' : 'locked'}</span>`;
-        else if (riskOf(s) && P.perf.get(s.stage_id).basis === 'measured') verdict = `<b style="color:#f85149;">💀 ${th ? 'ตายบ่อย' : 'dies often'}</b>`;
+        else if (riskOf(s) && pm.basis === 'measured') verdict = `<b style="color:#f85149;">💀 ${th ? 'ตายบ่อย' : 'dies often'}</b>`;
         else if (riskOf(s)) verdict = `<span style="color:#ffa657;">⚠️ ${th ? 'ยากกว่าที่เคยผ่าน' : 'harder than any clear'}</span>`;
-        else if (isBest) verdict = `<b style="color:var(--gold-bright);">⭐ ${personal ? (th ? 'ดีที่สุดสำหรับบอส' : 'best for you') : (th ? 'ดีที่สุดตามค่าเกม' : 'best by game estimate')}</b>`;
-        else verdict = '<span style="color:var(--text-dim);">—</span>';
+        else if (isBest) verdict = `<b style="color:var(--gold-bright);">⭐ ${personal ? (th ? 'ดีที่สุด (แนะนำ AFK)' : 'best (AFK here)') : (th ? 'ดีที่สุดตามค่าเกม' : 'best by game estimate')}</b>`;
+        else if (recommendedIds.has(s.stage_id)) verdict = `<span style="color:#7ee787;font-weight:600;">✅ ${th ? 'แนะนำ AFK' : 'recommended AFK'}</span>`;
+        else if (isCur) verdict = `<span style="color:#58a6ff;font-weight:600;">📍 ${th ? 'ด่านปัจจุบัน' : 'current stage'}</span>`;
+        else verdict = `<span style="color:var(--text-dim);">${th ? 'ปกติ' : 'normal'}</span>`;
+        const rankCls = i === 0 ? 'r1' : i === 1 ? 'r2' : i === 2 ? 'r3' : 'rx';
         const bg = isBest ? 'background:rgba(212,175,55,.10);' : isCur ? 'background:rgba(56,139,253,.10);' : '';
         return `<tr style="${bg}">
-          <td style="text-align:center;">${i + 1}</td>
+          <td style="text-align:center;"><span class="farm-rank ${rankCls}">${i + 1}</span></td>
           <td><b style="color:#58a6ff;">${esc(fld(s, 'display_tag'))}</b>${isCur ? ` <span class="sidebar-badge">${th ? 'ฟาร์มอยู่' : 'current'}</span>` : ''}<div class="dpsb-skillsub">ID: ${s.stage_id}</div></td>
-          <td>${esc(fld(s, 'area_name'))}</td>
+          <td><b>${farmAreaIcon(s)} ${esc(fld(s, 'area_name'))}</b></td>
           <td>${esc(fld(s, 'difficulty'))}</td>
-          <td style="color:var(--gold-bright);font-weight:700;">${saFmt(r.gps, 2)}</td>
-          <td style="color:#bc8cff;font-weight:700;">${saFmt(r.eps, 2)}</td>
-          <td>${saFmt(r.gps * 60)}</td>
-          <td>${saFmt(s.total_gold)}<div class="dpsb-skillsub">${saFmt(s.clear_gold)} + ${th ? 'บอส' : 'boss'} ${saFmt(s.boss_gold)}</div></td>
-          <td>${saFmt(s.total_exp)}</td>
-          <td>${r.clearSec ? r.clearSec.toFixed(1) + 's' : '—'}<div class="dpsb-skillsub" style="color:${r.basis === 'measured' ? '#7ee787' : r.basis === 'adjusted' ? '#ffa657' : 'var(--text-dim)'};">${esc(farmBasisTag(r, P, th))}</div></td>
-          <td>${saFmt(s.total_hp)}</td>
-          <td>${(() => { const pm = P.perf.get(s.stage_id); return pm && pm.basis === 'measured' ? `<b style="color:${pm.died ? '#ffa657' : '#7ee787'};">${pm.ok} / ${pm.died}</b>` : '<span style="color:var(--text-dim);">—</span>'; })()}</td>
+          <td style="color:var(--gold-bright);font-weight:700;">💰 ${saFmt(r.gps, 2)}</td>
+          <td style="color:#bc8cff;font-weight:700;">📈 ${saFmt(r.eps, 2)}</td>
+          <td>🪙 ${saFmt(r.gps * 60)}</td>
+          <td><b>${saFmt(s.total_gold)}</b><div class="dpsb-skillsub">${th ? 'ด่าน' : 'stage'} ${saFmt(s.clear_gold)} + ${th ? 'บอส' : 'boss'} ${saFmt(s.boss_gold)}</div></td>
+          <td><b>${saFmt(s.total_exp)}</b></td>
+          <td>⏱️ ${r.clearSec ? r.clearSec.toFixed(1) + 's' : '—'}<div class="dpsb-skillsub" style="color:${r.basis === 'measured' ? '#7ee787' : r.basis === 'adjusted' ? '#ffa657' : 'var(--text-dim)'};">${esc(farmBasisTag(r, P, th))}</div></td>
+          <td>❤️ ${saFmt(s.total_hp)}</td>
+          <td>${pm && pm.basis === 'measured' ? `<b style="color:${pm.died ? '#ffa657' : '#7ee787'};">${pm.ok} / ${pm.died}</b>` : '<span style="color:var(--text-dim);">—</span>'}</td>
           <td>${verdict}</td>
         </tr>`;
       }).join('') + `</tbody>`;
   }
 
   document.getElementById('farm-foot').innerHTML = personal
-    ? (th ? `ที่มาของตัวเลข: <span style="color:#7ee787;">วัดจริง</span> = ทองที่ได้จริง ÷ เวลาที่ใช้จริง <b>รวมรอบที่ตาย</b> (รอบที่ตายเสียเวลาแต่ไม่ได้ทอง) · <span style="color:#ffa657;">ประมาณ ×${P.factor ? P.factor.toFixed(1) : '?'}</span> = ด่านที่ยังไม่เคยตี ใช้ค่าอ้างอิงของเกมคูณจังหวะจริงของบอส ยังไม่รู้ความเสี่ยงตาย · ไม่นับรอบ "ออกกลางทาง" และ "จับได้ไม่ครบรอบ" เพราะเวลาไม่ตรง`
-          : `Where the numbers come from: <span style="color:#7ee787;">measured</span> = gold actually earned ÷ time actually spent, <b>deaths included</b> (a death costs time and pays nothing). <span style="color:#ffa657;">est. ×${P.factor ? P.factor.toFixed(1) : '?'}</span> = a stage you haven't run, using the game's estimate scaled to your real pace; its death risk is unknown. Abandoned and partial runs are left out because their timing isn't trustworthy.`)
+    ? (th ? `ที่มาของตัวเลข: <span style="color:#7ee787;">วัดจริง</span> = ทองที่ได้จริง ÷ เวลาที่ใช้จริง <b>รวมรอบที่ตาย</b> (รอบที่ตายเสียเวลาแต่ไม่ได้ทอง) · <span style="color:#ffa657;">ประมาณ ×${P.pace ? P.pace.toFixed(2) : '?'}</span> = ด่านที่ยังไม่เคยตี ใช้ค่าอ้างอิงของเกมคูณจังหวะ${P.paceIsManual ? 'ที่ตั้งเอง' : 'จริงของบอส'} ยังไม่รู้ความเสี่ยงตาย · ไม่นับรอบ "ออกกลางทาง" และ "จับได้ไม่ครบรอบ" เพราะเวลาไม่ตรง · แถบจังหวะเคลียร์มีผลเฉพาะด่านที่ยังไม่เคยตี ด่านที่วัดจริงแล้วใช้ค่าจริงเสมอ`
+          : `Where the numbers come from: <span style="color:#7ee787;">measured</span> = gold actually earned ÷ time actually spent, <b>deaths included</b> (a death costs time and pays nothing). <span style="color:#ffa657;">est. ×${P.pace ? P.pace.toFixed(2) : '?'}</span> = a stage you haven't run, using the game's estimate scaled to ${P.paceIsManual ? 'the pace you set' : 'your real pace'}; its death risk is unknown. Abandoned and partial runs are left out because their timing isn't trustworthy. The pace slider only affects stages not yet run - measured stages always use their real numbers.`)
     : (th ? 'ตัวเลขทั้งหมดเป็นค่าอ้างอิงที่เกมคำนวณไว้ล่วงหน้า สำหรับตัวละครมาตรฐาน ไม่ใช่ของบอส' : "Every number here is the game's own precomputed reference for a standard character, not yours.");
 }
 

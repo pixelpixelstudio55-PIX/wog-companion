@@ -70,6 +70,21 @@ testing/bookmarking.
   so and names the best *proven* stage too. Also fixed three old bugs: the difficulty filter
   showed raw Vietnamese, the "EXP/sec" sort actually sorted total EXP, and "clear time"
   sorted slowest-first.
+  **Feature parity with the reference site's stage tab (2026-09-16), in our own code.** Boss
+  said "copy the original"; its features were all rebuilt here, its code was not pasted, both
+  per the "what was NOT reused" rule at the top of this file and because two of its inputs are
+  invented: clear time = `total_hp / DPS + (boss_req_mobs/4.5*1.5+3)` with a DPS slider
+  defaulting to 3,415, and placeholder stage objects (`total_gold: 15000`, `total_hp: 500000`)
+  when a stage isn't found. Parity items: detailed highlight cards (gold/min + gold/hour,
+  total mob HP, "+X% vs current stage"; EXP card with **time to next level** from live EXP;
+  current-stage card with status + a 4-way gold/EXP recommendation), gold/silver/bronze rank
+  badges, an icon per area theme (`farmAreaIcon`, keyed on `area_name_en`, all 40 checked),
+  tiered verdicts (⭐ best / ✅ recommended = next 4 safe stages by gold / 📍 current / normal,
+  plus our 💀 / ⚠️ / 🔒), a gold/min sort, a scope label showing "(≤ stage X)", and search by
+  difficulty name. **Their DPS slider became a pace slider**: it scales `est_clear_sec` for
+  stages not yet run (×1–×5, `wog_farm_pace`), and its button snaps back to the pace measured
+  from real runs — measured stages always keep their real numbers. `stagePerfTable(paceOverride)`
+  takes the override; Smart Analysis calls it with no argument, so it always uses the real pace.
 - **Equipment** (1872 items) / **Jewels** (85) / **Training** (40) — searchable reference,
   chunk-rendered (equipment) so 1872 rows never block the main thread on insert.
 - **Profile / DPS** — a local-only character-stat form (attack/crit/bonuses, defaults to the
