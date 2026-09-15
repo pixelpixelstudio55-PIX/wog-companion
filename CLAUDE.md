@@ -166,6 +166,15 @@ testing/bookmarking.
   the column shows the old 14 Sep snapshot, labelled). Only rows on screen are checked, one every
   3.3 s, cached 30 min, because Steam rate-limits the endpoint (~20/min). The game client itself
   has no price data (`nn.services.steamMarket` only lists/withdraws items).
+  **Steam blocks the Cloudflare Worker — verified, don't re-test blindly.** Boss deployed it to
+  `https://wog-steam-price-relay.luckycut.workers.dev`: `/health` 200, but every `/price` got 429
+  (first request, and again after a minute), while the identical Steam request from boss's PC
+  returned 200 instantly with or without a User-Agent — so it's Cloudflare's IPs, not the request.
+  Fix: `workers/steam-price-relay/local-relay.js` (same API, runs on boss's PC on
+  `127.0.0.1:8932`, CORS + Chrome private-network preflight, 3.3 s spacing, 10 min cache, 60 s
+  back-off), started hidden by `start-local-relay.vbs`. The site tries relays in order — saved URL →
+  local → Cloudflare — and fails over on unreachable or 429. The bar's Test button sends a real
+  price request, because `/health` alone passed on the blocked Worker.
 - **Phone layout (fixed 2026-09-16, pre-existing bug).** At ≤860px `.app-shell` becomes a column,
   but its base rule kept `align-items: flex-start`, so the content column sized itself to its widest
   table instead of the screen and every `.table-scroll` grew rather than scrolled — on a 375px

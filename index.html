@@ -4146,10 +4146,14 @@ document.getElementById('btn-opt-refresh').addEventListener('click', () => {
    US dollars; show them on the Equipment and Jewels tabs only.
 
    Steam's priceoverview endpoint has no CORS headers, so this page can't read
-   it directly (verified: the browser blocks the fetch). Prices go through the
-   small Cloudflare Worker in workers/steam-price-relay/, whose URL the boss
-   pastes into the bar at the top of those tabs. Until then the column keeps the
-   old 14 Sep snapshot, clearly labelled, converted to THB when a rate is known.
+   it directly (verified: the browser blocks the fetch). Prices go through a
+   relay, tried in this order: a URL saved in the bar, then the relay on this PC
+   (workers/steam-price-relay/local-relay.js, started by start-local-relay.vbs),
+   then boss's Cloudflare Worker. Order matters - verified 2026-09-16: Steam
+   answered the same request from this PC instantly (฿33.31) but returned 429 to
+   the Cloudflare Worker on its first request and again a minute later, with or
+   without a User-Agent, so the block is on Cloudflare's IPs. While no relay
+   answers, the column keeps the old 14 Sep snapshot, clearly labelled.
 
    Steam allows roughly 20 priceoverview requests a minute, so only the rows on
    screen are checked, one every PRICE_GAP_MS, cached for PRICE_TTL_MS.
@@ -4169,9 +4173,28 @@ let priceFx = null;
 try { priceCache = JSON.parse(localStorage.getItem(PRICE_CACHE_KEY) || '{}') || {}; } catch(e) { priceCache = {}; }
 try { priceFx = JSON.parse(localStorage.getItem(FX_KEY) || 'null'); } catch(e) { priceFx = null; }
 
-function priceRelayUrl(){
+const PRICE_DEFAULT_RELAYS = [
+  // Runs on this PC; Steam serves a home connection normally.
+  'http://127.0.0.1:8932',
+  // Boss's Cloudflare Worker - kept only as a fallback, Steam throttles its IPs.
+  'https://wog-steam-price-relay.luckycut.workers.dev',
+];
+let priceActiveRelay = null;   // the relay that last returned a price
+
+function priceSavedRelay(){
   try { return (localStorage.getItem(PRICE_RELAY_KEY) || '').trim().replace(/\/+$/, ''); } catch(e) { return ''; }
 }
+function priceRelayCandidates(){
+  return [...new Set([priceSavedRelay(), ...PRICE_DEFAULT_RELAYS].filter(Boolean))];
+}
+function priceRelayUrl(){ return priceActiveRelay || priceRelayCandidates()[0] || ''; }
+function priceRelayLabel(url, th){
+  if (!url) return '—';
+  if (/127\.0\.0\.1|localhost/.test(url)) return th ? 'ตัวช่วยบนเครื่องนี้' : 'this PC';
+  if (/workers\.dev/.test(url)) return 'Cloudflare';
+  return url;
+}
+
 function priceSaveCache(){ try { localStorage.setItem(PRICE_CACHE_KEY, JSON.stringify(priceCache)); } catch(e) {} }
 
 async function priceEnsureFx(){
@@ -4263,41 +4286,54 @@ function priceQueueVisible(viewId, force){
   priceRunQueue();
 }
 
+// Tries each relay for one item: an unreachable relay (not started) or one that
+// Steam rate-limits is skipped for the next; the first real answer wins and
+// becomes the relay tried first from then on.
+async function priceFetchViaRelays(name){
+  const list = priceRelayCandidates();
+  const ordered = priceActiveRelay && list.includes(priceActiveRelay)
+    ? [priceActiveRelay, ...list.filter(u => u !== priceActiveRelay)] : list;
+  let sawRate = false;
+  for (const base of ordered) {
+    let res, j;
+    try {
+      res = await fetch(`${base}/price?currency=THB&name=${encodeURIComponent(name)}`);
+      j = await res.json().catch(() => null);
+    } catch(e) { continue; }
+    if (res.status === 429 || (j && j.error === 'steam_rate_limited')) { sawRate = true; continue; }
+    if (res.ok && j) { priceActiveRelay = base; return { ok: true, j }; }
+    return { ok: false, error: (j && j.error) || ('HTTP ' + res.status) };
+  }
+  return { ok: false, error: sawRate ? 'rate' : 'network' };
+}
+
 async function priceRunQueue(){
   if (priceBusy) return;
   priceBusy = true;
   try {
     await priceEnsureFx();
     while (priceQueue.length) {
-      const base = priceRelayUrl();
-      if (!base) break;
       const name = priceQueue[0];
-      let res = null, j = null;
-      try {
-        res = await fetch(`${base}/price?currency=THB&name=${encodeURIComponent(name)}`);
-        j = await res.json().catch(() => null);
-      } catch(e) {
-        priceLastError = 'network';
-        priceUpdateBars();
-        break;   // relay unreachable: stop instead of hammering; the refresh button retries
-      }
-      if (res.status === 429 || (j && j.error === 'steam_rate_limited')) {
+      const r = await priceFetchViaRelays(name);
+      if (!r.ok && r.error === 'network') { priceLastError = 'network'; priceUpdateBars(); break; }
+      if (!r.ok && r.error === 'rate') {
         priceLastError = 'rate';
         priceUpdateBars();
-        await new Promise(r => setTimeout(r, 60000));   // Steam asked us to slow down
+        await new Promise(res => setTimeout(res, 60000));   // every relay was throttled: back off
         continue;
       }
       priceQueue.shift();
-      if (res.ok && j) {
+      if (r.ok) {
+        const j = r.j;
         priceCache[name] = { listed: !!j.listed, thb: priceParseThb(j.lowest_price || j.median_price), median: priceParseThb(j.median_price), volume: j.volume || null, at: Date.now() };
         priceSaveCache();
         priceLastError = null;
         priceRefreshCells(name);
       } else {
-        priceLastError = (j && j.error) || ('HTTP ' + res.status);
+        priceLastError = r.error;
       }
       priceUpdateBars();
-      if (priceQueue.length) await new Promise(r => setTimeout(r, PRICE_GAP_MS));
+      if (priceQueue.length) await new Promise(res => setTimeout(res, PRICE_GAP_MS));
     }
   } finally {
     priceBusy = false;
@@ -4307,12 +4343,18 @@ async function priceRunQueue(){
 
 function priceStatusText(){
   const th = currentLang === 'th';
-  if (!priceRelayUrl()) return th ? 'ยังไม่ได้ตั้งค่าเซิร์ฟเวอร์ตัวกลาง — ตอนนี้แสดงราคาชุด 14 ก.ย.' : 'No relay set - showing the 14 Sep snapshot';
-  if (priceLastError === 'network') return th ? '⚠️ ติดต่อเซิร์ฟเวอร์ตัวกลางไม่ได้ ตรวจ URL หรือกดทดสอบ' : '⚠️ Relay unreachable - check the URL or press Test';
-  if (priceLastError === 'rate') return th ? '⏳ Steam ขอให้ช้าลง รอ 1 นาทีแล้วเช็คต่อเอง' : '⏳ Steam asked us to slow down - resuming in a minute';
+  const via = priceRelayLabel(priceActiveRelay, th);
+  const startHint = th ? 'ดับเบิลคลิก start-local-relay.vbs (ในโฟลเดอร์ workers/steam-price-relay) เพื่อเปิดตัวช่วยบนเครื่องนี้' : 'double-click start-local-relay.vbs (in workers/steam-price-relay) to start the relay on this PC';
+  if (priceLastError === 'network') return (th ? '⚠️ ไม่มีตัวช่วยเช็คราคาตัวไหนตอบเลย — ' : '⚠️ No price relay answered - ') + startHint + (th ? ' แล้วกด "เช็คราคาหน้านี้ใหม่"' : ', then press "Re-check this page"');
+  if (priceLastError === 'rate') return (th ? '⏳ Steam จำกัดการเช็คราคา (Cloudflare โดนบล็อกเป็นประจำ) — ' : '⏳ Steam is rate-limiting (it routinely blocks Cloudflare) - ') + startHint + (th ? ' · จะลองใหม่ใน 1 นาที' : ' · retrying in a minute');
   if (priceLastError) return (th ? '⚠️ เช็คราคาไม่ได้: ' : '⚠️ Price check failed: ') + priceLastError;
-  if (priceQueue.length) return th ? `กำลังเช็คราคาสด เหลืออีก ${priceQueue.length} ชิ้น (~${Math.ceil(priceQueue.length * PRICE_GAP_MS / 1000)} วิ)` : `Checking live prices - ${priceQueue.length} left (~${Math.ceil(priceQueue.length * PRICE_GAP_MS / 1000)}s)`;
-  return th ? '✅ ราคาในหน้านี้เป็นราคาสดแล้ว' : '✅ Prices on this page are live';
+  if (priceQueue.length) {
+    return (th ? `กำลังเช็คราคาสด เหลืออีก ${priceQueue.length} ชิ้น (~${Math.ceil(priceQueue.length * PRICE_GAP_MS / 1000)} วิ)` : `Checking live prices - ${priceQueue.length} left (~${Math.ceil(priceQueue.length * PRICE_GAP_MS / 1000)}s)`)
+      + (priceActiveRelay ? ` · ${th ? 'ผ่าน' : 'via'} ${via}` : '');
+  }
+  return priceActiveRelay
+    ? (th ? `✅ ราคาในหน้านี้เป็นราคาสดแล้ว · ผ่าน${via}` : `✅ Prices on this page are live · via ${via}`)
+    : (th ? 'พร้อมเช็คราคาสด' : 'Ready to check live prices');
 }
 function priceUpdateBars(){
   document.querySelectorAll('.price-bar').forEach(bar => {
@@ -4325,12 +4367,12 @@ function priceUpdateBars(){
 
 function priceBarHtml(){
   const th = currentLang === 'th';
-  const url = priceRelayUrl();
+  const url = priceSavedRelay();
   return `<div class="price-bar">
     <b>💱 ${th ? 'ราคาตลาด Steam' : 'Steam market prices'}</b>
     <span class="hint">${th ? 'เช็คเป็นเงินบาท แล้วแปลงเป็น USD' : 'checked in THB, converted to USD'}</span>
     <span class="hint price-fx"></span>
-    <input type="text" class="price-relay-input" placeholder="https://wog-steam-price-relay.xxxx.workers.dev" value="${esc(url)}" aria-label="${th ? 'URL เซิร์ฟเวอร์ตัวกลาง' : 'Relay URL'}">
+    <input type="text" class="price-relay-input" placeholder="${th ? 'ว่างไว้ = ใช้ตัวช่วยบนเครื่องนี้ก่อน แล้วค่อย Cloudflare' : 'blank = this PC first, then Cloudflare'}" value="${esc(url)}" aria-label="${th ? 'URL เซิร์ฟเวอร์ตัวกลาง' : 'Relay URL'}">
     <button class="btn btn-outline price-relay-save">${th ? 'บันทึก' : 'Save'}</button>
     <button class="btn btn-outline price-relay-test">${th ? 'ทดสอบ' : 'Test'}</button>
     <button class="btn btn-outline price-refresh">${th ? '🔄 เช็คราคาหน้านี้ใหม่' : '🔄 Re-check this page'}</button>
@@ -4352,20 +4394,39 @@ function priceMountBar(viewId){
       const v = input.value.trim();
       try { v ? localStorage.setItem(PRICE_RELAY_KEY, v) : localStorage.removeItem(PRICE_RELAY_KEY); } catch(e) {}
       priceLastError = null;
+      priceActiveRelay = null;   // try the newly saved relay first
       toast(currentLang === 'th' ? 'บันทึก URL แล้ว' : 'Relay URL saved');
       priceUpdateBars();
       priceQueueVisible(viewId, false);
     });
     bar.querySelector('.price-relay-test').addEventListener('click', async () => {
-      const base = input.value.trim().replace(/\/+$/, '');
-      if (!base) { toast(currentLang === 'th' ? 'ใส่ URL ก่อน' : 'Enter a URL first'); return; }
-      try {
-        const res = await fetch(`${base}/health`);
-        const j = await res.json();
-        toast(j && j.ok ? (currentLang === 'th' ? '✅ เซิร์ฟเวอร์ตัวกลางใช้ได้' : '✅ Relay is working') : (currentLang === 'th' ? '⚠️ ตอบกลับไม่ถูกต้อง' : '⚠️ Unexpected answer'));
-      } catch(e) {
-        toast(currentLang === 'th' ? '⚠️ ติดต่อไม่ได้ (URL ผิด หรือยังไม่ได้ deploy)' : '⚠️ Unreachable (wrong URL or not deployed)');
+      const typed = input.value.trim().replace(/\/+$/, '');
+      const list = [...new Set([typed, ...PRICE_DEFAULT_RELAYS].filter(Boolean))];
+      const th2 = currentLang === 'th';
+      toast(th2 ? 'กำลังทดสอบตัวช่วยเช็คราคา…' : 'Testing price relays…');
+      const parts = [];
+      for (const base of list) {
+        let verdict;
+        try {
+          const h = await fetch(`${base}/health`);
+          const hj = await h.json().catch(() => null);
+          if (!hj || !hj.ok) {
+            verdict = th2 ? 'ตอบผิดรูปแบบ' : 'bad answer';
+          } else {
+            // /health alone isn't enough: the Cloudflare Worker passed it while
+            // Steam refused every real price request.
+            const p = await fetch(`${base}/price?currency=THB&name=${encodeURIComponent('Advanced Jewel of Life')}`);
+            const pj = await p.json().catch(() => null);
+            if (p.ok && pj && pj.listed != null) verdict = th2 ? '✅ ใช้ได้' : '✅ works';
+            else if (p.status === 429 || (pj && pj.error === 'steam_rate_limited')) verdict = th2 ? '⚠️ ติดต่อได้ แต่ Steam บล็อก (429)' : '⚠️ reachable, but Steam blocks it (429)';
+            else verdict = th2 ? '⚠️ ดึงราคาไม่ได้' : '⚠️ price request failed';
+          }
+        } catch(e) {
+          verdict = th2 ? '✖ ยังไม่ได้เปิด / ติดต่อไม่ได้' : '✖ not running / unreachable';
+        }
+        parts.push(`${priceRelayLabel(base, th2)}: ${verdict}`);
       }
+      toast(parts.join(' · '));
     });
     bar.querySelector('.price-refresh').addEventListener('click', () => {
       if (!priceRelayUrl()) { toast(currentLang === 'th' ? 'ต้องตั้งค่าเซิร์ฟเวอร์ตัวกลางก่อน' : 'Set the relay URL first'); return; }

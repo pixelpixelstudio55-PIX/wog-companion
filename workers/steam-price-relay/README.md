@@ -44,9 +44,41 @@ no personal data.
 https://wog-steam-price-relay.<your-name>.workers.dev/price?currency=THB&name=Advanced%20Jewel%20of%20Life
 ```
 
+## ⚠️ Steam blocks Cloudflare — use the relay on your own PC
+
+Verified 2026-09-16 after deploying to `https://wog-steam-price-relay.luckycut.workers.dev`:
+
+- `/health` on the Worker: **200 OK** (it's deployed correctly).
+- `/price` through the Worker: **429 rate-limited** on the very first request,
+  and again after waiting a minute.
+- The exact same Steam request **from this PC**: **200** in 0.3 s
+  (Advanced Jewel of Life ฿33.31) — with or without a User-Agent.
+
+So Steam throttles Cloudflare's shared IP addresses, not our requests. The fix is
+`local-relay.js`: the same API as the Worker, but it runs on your PC, so Steam
+sees your home connection. The site tries relays in this order and switches on
+its own when one isn't running or is blocked:
+
+1. a URL you saved in the price bar (if any)
+2. the relay on this PC — `http://127.0.0.1:8932`
+3. your Cloudflare Worker (kept as a fallback)
+
+### Start the relay on this PC
+
+Double-click **`start-local-relay.vbs`** in this folder. It starts silently
+(no console window) and answers on `http://127.0.0.1:8932` — open
+`http://127.0.0.1:8932/health` to check. Only this PC can reach it.
+
+To start it automatically when Windows starts: press `Win + R`, type
+`shell:startup`, and put a shortcut to `start-local-relay.vbs` in that folder.
+
+To stop it: Task Manager → Details → end the `node.exe` that was started from
+this folder (or just restart the PC).
+
 ## Limits worth knowing
 
-- Steam sometimes throttles cloud IPs. If the bar says Steam asked to slow down,
-  the site waits a minute and resumes on its own.
+- Steam allows roughly 20 price requests a minute from one connection. The site
+  checks only the rows on screen, one every 3.3 s, and caches each price for
+  30 minutes; the local relay also spaces requests and backs off a minute on 429.
 - The Cloudflare free plan allows 100,000 requests a day, far above what this
-  site uses.
+  site uses — but see above: Steam blocks it, so it's a fallback only.
