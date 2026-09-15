@@ -177,6 +177,26 @@
   .prof-cur-val { font-size: 14px; font-weight: 700; color: var(--gold-bright); font-family: 'Cinzel', serif; white-space: nowrap; }
   .empty-state { text-align: center; padding: 50px 20px; color: var(--text-dim); }
 
+  /* ---- Resource Optimizer ---- */
+  .opt-goals { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 4px; }
+  .opt-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(420px, 1fr)); gap: 16px; align-items: start; margin-top: 14px; }
+  .opt-wide { grid-column: 1 / -1; }
+  .opt-actions { list-style: none; margin: 0; padding: 0; }
+  .opt-actions li { display: flex; gap: 10px; align-items: flex-start; padding: 9px 0; border-bottom: 1px dashed rgba(255,255,255,.07); font-size: 13px; line-height: 1.6; }
+  .opt-actions li:last-child { border-bottom: none; }
+  .opt-step { flex: 0 0 24px; height: 24px; border-radius: 50%; background: var(--gold); color: #1a1408; font-weight: 800; font-size: 12px; display: flex; align-items: center; justify-content: center; }
+  .opt-lines { font-size: 11px; color: var(--text-dim); line-height: 1.55; margin-top: 2px; }
+  .opt-tag { display: inline-block; font-size: 10.5px; padding: 1px 7px; border-radius: 999px; border: 1px solid var(--line); color: var(--text-dim); white-space: nowrap; vertical-align: middle; }
+  .opt-tag.go { border-color: rgba(126,231,135,.45); color: #7ee787; }
+  .opt-tag.warn { border-color: rgba(255,166,87,.45); color: #ffa657; }
+  .opt-tag.bad { border-color: rgba(248,81,73,.45); color: #f85149; }
+  @media (max-width: 900px) { .opt-grid { grid-template-columns: 1fr; } }
+
+  /* ---- Live Steam prices ---- */
+  .price-bar { display: flex; align-items: center; gap: 8px 12px; flex-wrap: wrap; background: var(--bg2); border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; margin-bottom: 14px; font-size: 12.5px; }
+  .price-bar .price-relay-input { flex: 1 1 260px; min-width: 0; max-width: 100%; }
+  .price-bar .btn { padding: 5px 11px; font-size: 12px; }
+
   /* ---- Farm Ranking ---- */
   .farm-rank { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; font-size: 12px; font-weight: 700; }
   .farm-rank.r1 { background: var(--gold); color: #1a1408; box-shadow: 0 0 8px rgba(212,175,55,.55); }
@@ -345,7 +365,12 @@
   .main-content { flex: 1; min-width: 0; }
 
   @media (max-width: 860px) {
-    .app-shell { flex-direction: column; }
+    /* The base rule's align-items:flex-start stops the content column from
+       stretching once the shell is a column, so it sized itself to its widest
+       table (Farm Ranking reached 1,174px on a 375px phone) and every
+       .table-scroll grew instead of scrolling. */
+    .app-shell { flex-direction: column; align-items: stretch; }
+    .main-content { width: 100%; }
     .sidebar { width: 100%; min-height: auto; position: static; border-right: none; border-bottom: 1px solid var(--line); }
   }
 
@@ -458,6 +483,7 @@
   <button class="sidebar-link" data-view="dpsbreak">⚔️ <span data-i="tab_dpsbreak">Skill DPS (Combat Breakdown)</span></button>
   <button class="sidebar-link" data-view="history">📜 <span data-i="tab_history">Stage Run History</span></button>
   <button class="sidebar-link" data-view="smart">🧠 <span data-i="tab_smart">Smart Analysis</span><span class="sidebar-badge">Live</span></button>
+  <button class="sidebar-link" data-view="optimize">🧬 <span data-i="tab_optimize">Resource Optimizer</span><span class="sidebar-badge">New</span></button>
   <button class="sidebar-link" data-view="profile">👤 <span data-i="tab_profile">Profile &amp; EXP</span></button>
   <button class="sidebar-link" data-view="forge">🔨 <span data-i="tab_forge">Jewel Forge &amp; Storage</span></button>
 </aside>
@@ -675,6 +701,27 @@
       <div class="sa-card"><div class="sa-card-head sa-h-gold" id="sa-head-farm"></div><div class="sa-card-body" id="sa-farm"></div></div>
     </div>
     <p class="hint" style="margin-top:14px;" data-i="smart-foot">หมายเหตุ: "DPS จริง" และสถิติทุกตัวอ่านจากเกมโดยตรง ส่วน "+DPS ที่จะได้" เป็นการประมาณจาก % ดาเมจและคูลดาวน์ในฐานข้อมูลสกิล ใช้เพื่อจัดลำดับว่าควรอัปตัวไหนก่อน ไม่ใช่ตัวเลขเป๊ะจากเกม</p>
+  </div>
+
+  <div class="view" id="view-optimize">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:12px;">
+      <div>
+        <h3 style="margin:0;color:var(--gold-bright);" data-i="opt-head-title">🧬 รีดศักยภาพทรัพยากร</h3>
+        <p class="hint" style="margin:4px 0 0;" data-i="opt-head-sub">อ่านของทุกชิ้น สกิล และแต้มที่บอสมีอยู่จริงจากเกม แล้วบอกว่าควรเล่นอาชีพไหน อัปอะไร ใส่อะไร และฟาร์มที่ไหนคุ้มที่สุด — แนะนำอย่างเดียว ไม่แตะเกม</p>
+      </div>
+      <button class="btn btn-outline" id="btn-opt-refresh" data-i="opt-btn-refresh">🔄 รีเฟรช</button>
+    </div>
+    <div class="opt-goals" id="opt-goals"></div>
+    <p class="hint" id="opt-goal-note" style="margin:4px 0 0;"></p>
+    <div class="opt-grid">
+      <div class="sa-card opt-wide"><div class="sa-card-head sa-h-gold" id="opt-head-summary"></div><div class="sa-card-body" id="opt-summary"></div></div>
+      <div class="sa-card"><div class="sa-card-head sa-h-blue" id="opt-head-class"></div><div class="sa-card-body" id="opt-class"></div></div>
+      <div class="sa-card"><div class="sa-card-head sa-h-green" id="opt-head-map"></div><div class="sa-card-body" id="opt-map"></div></div>
+      <div class="sa-card opt-wide"><div class="sa-card-head sa-h-red" id="opt-head-gear"></div><div class="sa-card-body" id="opt-gear"></div></div>
+      <div class="sa-card opt-wide"><div class="sa-card-head sa-h-green" id="opt-head-skills"></div><div class="sa-card-body" id="opt-skills"></div></div>
+      <div class="sa-card opt-wide"><div class="sa-card-head sa-h-blue" id="opt-head-other"></div><div class="sa-card-body" id="opt-other"></div></div>
+    </div>
+    <p class="hint" style="margin-top:14px;" data-i="opt-foot">ที่มาของข้อมูล: ของที่มี กฎการใส่ของ ค่าอัปสกิล และค่าฮีโร่ อ่านจากเกมโดยตรง · ผลแมพวัดจากรอบจริง · "คะแนน" เป็นค่าประมาณที่แปลงค่าสถานะเป็น "% เทียบเท่า" ตามเป้าหมายที่เลือก ใช้จัดอันดับ ไม่ใช่ตัวเลขในเกม</p>
   </div>
 
   <div class="view" id="view-forge">
@@ -906,6 +953,11 @@ const UI_STRINGS = {
   'forge-sw-skills-d': { th: 'ใส่สกิล Active ที่เรียนแล้วจริงของคลาสนั้น เรียงตามเลเวลที่ลงไว้มากสุดก่อน (สกิล Passive ไม่ต้องใส่ช่อง ใช้งานอัตโนมัติอยู่แล้ว)', en: "Equips the real learned Active skills for that class, highest invested level first (Passive skills don't need a slot - they apply automatically)." },
   'forge-sw-reconnect-t': { th: 'ยืนยันเชื่อมต่อใหม่อัตโนมัติเมื่อเน็ตหลุด', en: 'Auto-confirm reconnect on network error' },
   'forge-sw-reconnect-d': { th: 'เจอกล่อง "Reconnect Failed" จะกด Confirm ให้เองไม่ให้ AFK สะดุด — จุดนี้ยังไม่เคยเจอเหตุการณ์จริงให้ทดสอบ ทำตามโครงสร้างที่เจอในโค้ดต้นฉบับ ถ้าเกมเปลี่ยนหน้าตา popup อาจไม่ทำงาน', en: 'Clicks "Confirm" automatically when a "Reconnect Failed" dialog appears, so AFK farming isn\'t interrupted - built from the reference site\'s own code structure but never seen a real disconnect to test against, so it may silently not fire if the game\'s popup shape differs.' },
+  tab_optimize: { th: 'รีดศักยภาพทรัพยากร', en: 'Resource Optimizer' },
+  'opt-head-title': { th: '🧬 รีดศักยภาพทรัพยากร', en: '🧬 Resource Optimizer' },
+  'opt-head-sub': { th: 'อ่านของทุกชิ้น สกิล และแต้มที่บอสมีอยู่จริงจากเกม แล้วบอกว่าควรเล่นอาชีพไหน อัปอะไร ใส่อะไร และฟาร์มที่ไหนคุ้มที่สุด — แนะนำอย่างเดียว ไม่แตะเกม', en: 'Reads every item, skill and point you actually own from the game, then tells you which class to play, what to upgrade, what to wear and where to farm - recommendations only, nothing is changed in the game.' },
+  'opt-btn-refresh': { th: '🔄 รีเฟรช', en: '🔄 Refresh' },
+  'opt-foot': { th: 'ที่มาของข้อมูล: ของที่มี กฎการใส่ของ ค่าอัปสกิล และค่าฮีโร่ อ่านจากเกมโดยตรง · ผลแมพวัดจากรอบจริง · "คะแนน" เป็นค่าประมาณที่แปลงค่าสถานะเป็น "% เทียบเท่า" ตามเป้าหมายที่เลือก ใช้จัดอันดับ ไม่ใช่ตัวเลขในเกม', en: 'Sources: owned items, wear rules, skill costs and hero data come straight from the game; map results are measured from real runs; "score" is an estimate that turns stats into a "% equivalent" for the chosen goal - it ranks options, it is not an in-game number.' },
   'farm-head-title': { th: '🏆 จัดอันดับด่านฟาร์มทอง & EXP', en: '🏆 Gold & EXP Farm Ranking' },
   'farm-head-sub': { th: 'จัดอันดับจากผลการตีจริงของบอส (จากเมนูประวัติเข้าด่าน) รวมรอบที่ตายด้วย — ด่านที่ยังไม่เคยตีจะปรับค่าอ้างอิงของเกมตามจังหวะจริงของบอส และจะไม่แนะนำด่านที่ยากกว่าด่านที่เคยผ่านได้ เพราะยังไม่รู้ว่าจะตายไหม', en: "Ranked from your own real runs (Stage Run History), deaths included. Stages you haven't run yet use the game's estimate scaled to your measured pace, and nothing harder than the hardest stage you've actually cleared is ever recommended - its death risk is unknown." },
   'hist-head-title': { th: '📜 ประวัติเข้าด่าน (100 รอบล่าสุด)', en: '📜 Stage Run History (last 100 runs)' },
@@ -1063,7 +1115,7 @@ document.getElementById('gamedata-toggle').addEventListener('click', () => {
 });
 function renderCurrentView(){
   ({ skills: renderSkills, training: renderTraining, equipment: renderEquipment, jewels: renderJewels, farm: renderFarm, profile: renderProfile,
-     dpsbreak: renderDpsBreakdown, history: renderHistory, smart: renderSmartAnalysis, forge: renderForge })[currentView]();
+     dpsbreak: renderDpsBreakdown, history: renderHistory, smart: renderSmartAnalysis, forge: renderForge, optimize: renderOptimizer })[currentView]();
 }
 
 /* ================= SKILL TREE ================= */
@@ -1330,8 +1382,8 @@ function renderEquipment(){
     tier_desc: (a,b) => b.tier - a.tier,
     tier_asc: (a,b) => a.tier - b.tier,
     name: (a,b) => a.name_en.localeCompare(b.name_en),
-    steam_desc: (a,b) => (b.steam_price_usd||0) - (a.steam_price_usd||0),
-    steam_asc: (a,b) => { const av=a.steam_price_usd, bv=b.steam_price_usd; if(av==null) return 1; if(bv==null) return -1; return av-bv; },
+    steam_desc: (a,b) => (priceUsdForSort(b)||0) - (priceUsdForSort(a)||0),
+    steam_asc: (a,b) => { const av=priceUsdForSort(a), bv=priceUsdForSort(b); if(av==null) return 1; if(bv==null) return -1; return av-bv; },
   };
   list = [...list].sort(sorters[sortKey] || sorters.lvl_asc);
 
@@ -1347,7 +1399,7 @@ function renderEquipment(){
       <td><div class="ec-name-cell">${equipIconBoxHtml(e)}<div class="ec-name-text"><b>${esc(e.name_en)}</b></div></div></td>
       <td>${esc(fld(e,'slot_name'))}</td><td>${tierBadgeHtml(e.tier)}</td><td><b style="color:var(--gold-bright);">Lv.${e.level_req}</b></td>
       <td>${(e.stats||[]).map(s=>esc(fld(s,'text'))).join('<br>')}</td>
-      <td style="text-align:right;">${e.steam_price_text ? `<a href="${e.steam_url}" target="_blank" rel="noopener" style="color:#3fb950;font-weight:700;text-decoration:none;">${esc(e.steam_price_text)}</a><div class="hint" style="font-size:10px;">${e.steam_listings} listings</div>` : '<span class="hint">—</span>'}</td>
+      ${priceCellHtml(e)}
     </tr>`).join('') || `<tr><td class="empty-state">—</td></tr>`;
 
   pager.innerHTML = `
@@ -1442,12 +1494,12 @@ function renderJewels(){
     }
     if (cat && j.category_vi !== cat) return false;
     if (grade && String(j.grade) !== grade) return false;
-    if (market === 'market_only' && !(j.steam_price_usd > 0)) return false;
+    if (market === 'market_only' && !(priceUsdForSort(j) > 0)) return false;
     return true;
   });
   const sorters = {
-    steam_desc: (a,b) => (b.steam_price_usd||0) - (a.steam_price_usd||0) || (b.grade-a.grade),
-    steam_asc: (a,b) => { const av=a.steam_price_usd||999999, bv=b.steam_price_usd||999999; return av-bv || (b.grade-a.grade); },
+    steam_desc: (a,b) => (priceUsdForSort(b)||0) - (priceUsdForSort(a)||0) || (b.grade-a.grade),
+    steam_asc: (a,b) => { const av=priceUsdForSort(a)||999999, bv=priceUsdForSort(b)||999999; return av-bv || (b.grade-a.grade); },
     grade_desc: (a,b) => b.grade - a.grade || ((b.steam_price_usd||0)-(a.steam_price_usd||0)),
     grade_asc: (a,b) => a.grade - b.grade || ((b.steam_price_usd||0)-(a.steam_price_usd||0)),
     name: (a,b) => a.name_en.localeCompare(b.name_en),
@@ -1472,7 +1524,7 @@ function renderJewels(){
       <td>${gradeBadgeHtml(j.grade, fld(j,'grade_name'))}</td>
       <td>${opts}</td>
       <td style="font-size:12px;color:var(--text-dim);">${esc(fld(j,'desc'))}</td>
-      <td style="text-align:right;">${j.steam_price_text ? `<a href="${j.steam_url}" target="_blank" rel="noopener" style="color:#3fb950;font-weight:700;text-decoration:none;">${esc(j.steam_price_text)}</a><div class="hint" style="font-size:10px;">${j.steam_listings} listings</div>` : '<span class="hint">—</span>'}</td>
+      ${priceCellHtml(j)}
     </tr>`;
   }).join('') || `<tr><td class="empty-state">—</td></tr>`;
 
@@ -1945,7 +1997,11 @@ const PROFILE_FIELDS = [
      equipped gear   items at location 3 + nn.db.equip.get for slot/tier/level
      training skills nn.net.data.tree.getTreeAllInfo(1), level encoded as
                      treeTid - groupTid
-     learned skills  same call with tree type 4, plus the equipped skill preset
+     learned skills  same call with tree type 4, plus the equipped skill preset.
+                     Level = (treeTid - groupTid)/10 + 1: verified against the
+                     game's own getSkillGroupReachedLevel() on all 19 learned
+                     skills (every page showed one level too low before
+                     2026-09-16). Training levels are treeTid - groupTid.
    ============================================================================ */
 /* Ability ids, taken from the GAME'S OWN table - do not re-guess these.
    `nn.db.ability._convertFinalToBaseMap` maps each final stat (1xx) to its base
@@ -2007,7 +2063,7 @@ function buildProfileExpr(){
       function readTree(tt){
         try {
           return nn.net.data.tree.getTreeAllInfo(tt).map(function(x){
-            return { g: x._groupTid, lv: Math.round((x._treeTid - x._groupTid) / (tt === 1 ? 1 : 10)) };
+            return { g: x._groupTid, lv: tt === 1 ? (x._treeTid - x._groupTid) : Math.round((x._treeTid - x._groupTid) / 10) + 1 };
           });
         } catch(e) { return []; }
       }
@@ -2533,6 +2589,11 @@ function connectLiveSync(){
     if (currentView === 'dpsbreak' && Date.now() - lastDpsBreakRefreshAt > 4000) {
       lastDpsBreakRefreshAt = Date.now();
       refreshDpsBreakLive();
+    }
+    // The optimizer reads every owned item and skill row - slowest cadence.
+    if (currentView === 'optimize' && Date.now() - lastOptRefreshAt > 8000) {
+      lastOptRefreshAt = Date.now();
+      refreshOptimizerLive();
     }
     setTimeout(pollLiveOnce, 2000);
   };
@@ -3406,6 +3467,941 @@ document.getElementById('btn-smart-refresh').addEventListener('click', () => {
   toast(currentLang === 'th' ? 'กำลังอ่านค่าใหม่จากเกม' : 'Re-reading from the game');
 });
 
+/* ================= RESOURCE OPTIMIZER =================
+   Boss's brief (2026-09-16): squeeze the most out of what the account already
+   owns - which class to play, which skills are worth it at this level, which
+   gear and jewels from the bag/vault to wear, and the best map for EXP/gold.
+   RECOMMEND-ONLY for now (boss's decision): nothing on this page writes to the
+   game. A "wear it for me" button is a later phase.
+
+   What is exact, measured or estimated - kept visible in the UI:
+   - exact (read from the game): what is owned and where, each item's base stats
+     and socketed jewels, who can wear what (the game's own canEquipByHeroClass /
+     getEquipLimitLevel), jewel fit (gear JewelGroupID vs the jewel's GroupID),
+     skill unlock level / prerequisite / point cost (skill table), training gold
+     cost, hero promotion level and cost.
+   - measured: map performance (stagePerfTable, deaths included).
+   - estimated: the SCORE used to rank. The game has no "what if" combat-power
+     calculator (ServiceCombatPower only reads finalCp after gear is actually
+     worn), so every stat is turned into a "% equivalent" for the chosen goal by
+     optLineEffect(). It ranks options; it is not an in-game number. */
+let optGoal = (() => { try { return localStorage.getItem('wog_opt_goal') || 'survive'; } catch(e) { return 'survive'; } })();
+let lastOptRefreshAt = 0;
+let lastOptData = null;
+
+// Verified 2026-09-16 against the game's own tree service:
+// getSkillGroupReachedLevel() reads nn.db.skill.get(treeTid).Level, and for
+// Arcane Burst treeTid 8303050 that row is Level 5 while (treeTid-groupTid)/10
+// is 4 - so combat skill level = step + 1. Training rows are keyed
+// groupTid + level (reached 11014, next enchant target 11015), so no offset.
+const OPT_TREE_LEVEL_OFFSET = 1;
+const OPT_TRAIN_LEVEL_OFFSET = 0;
+
+const OPT_SKILL_POINT_TID = { Melee: 8000, Ranged: 8100, Mage: 8200 };
+
+const OPT_GOALS = {
+  survive:  { th: '🛡️ อยู่รอด & ดันด่าน', en: '🛡️ Survive & push stages',
+              note_th: 'ให้น้ำหนักเลือด ป้องกัน และลดดาเมจที่รับมากที่สุด เพราะรอบจริงของบอสติดที่การตาย ไม่ใช่ดาเมจ',
+              note_en: 'Weighs HP, defense and damage taken most - your real runs are limited by deaths, not damage.',
+              w: { dmg: .35, surv: 1, acc: .1, gold: 0, exp: 0, drop: .1, farmSpeed: .2 } },
+  farm:     { th: '💰 ฟาร์มทอง/EXP ต่อชั่วโมง', en: '💰 Gold & EXP per hour',
+              note_th: 'ให้น้ำหนักทอง/EXP/ดรอปที่ได้เพิ่ม และความอยู่รอดพอประมาณ เพราะรอบที่ตายไม่ได้อะไรเลย',
+              note_en: 'Weighs gold/EXP/drop gains with some survival - a run that dies earns nothing.',
+              w: { dmg: .5, surv: .45, acc: .1, gold: 1, exp: 1, drop: .8, farmSpeed: 1 } },
+  damage:   { th: '⚔️ ดาเมจสูงสุด', en: '⚔️ Max damage',
+              note_th: 'ให้น้ำหนักพลังโจมตี คริ ความเร็วโจมตี และโบนัสดาเมจ สำหรับอารีน่า/บอสโลก (ตอนนี้ยังติดรหัส 21028)',
+              note_en: 'Weighs attack, crit, attack speed and damage bonuses, for Arena / World Boss (currently blocked by error 21028).',
+              w: { dmg: 1, surv: .1, acc: .3, gold: 0, exp: 0, drop: 0, farmSpeed: 0 } },
+  balanced: { th: '⚖️ สมดุล', en: '⚖️ Balanced',
+              note_th: 'เฉลี่ยคะแนนของทั้ง 3 เป้าหมายเท่าๆ กัน',
+              note_en: 'Averages the three goals equally.',
+              w: null },
+};
+
+// Game ability name key -> scoring bucket. Keys come from the game's own table
+// (nn.db.ability._abilityTypeMap), resolved live, never guessed from ids.
+function optBucketOf(key){
+  const k = String(key || '').replace(/^Ability(Type|Tip)_/, '');
+  if (!k) return { bucket: 'other', sign: 1 };
+  const neg = k.match(/^(Attack|AttackPer|Defense|DefensePer|HP|HPPer|AttackSpeedPer|CriticalRate|CriticalDamage|HitRate|Evasion)_Minus$/);
+  if (neg) return { bucket: optBucketOf(neg[1] + '_Plus').bucket, sign: -1 };
+  const table = [
+    [/^(Attack|PvE_Attack)_Plus$/, 'atkFlat'], [/^(AttackPer|PvE_AttackPer)_Plus$/, 'atkPct'],
+    [/^CriticalRate_Plus$/, 'critRate'], [/^CriticalDamage_Plus$/, 'critDmg'],
+    [/^(DamagePer|PvE_DamagePer|BossDamagePer|EndDamagePer|ShockDamage|BurnDamage|PoisonDamage)_Plus$|^BombDamage$/, 'dmg'],
+    [/^(ShockRate|BurnRate|PoisonRate)_Plus$/, 'dmgProc'],
+    [/^AttackSpeedPer_Plus$/, 'atkSpeed'], [/^SkillCoolTimePer_Minus$/, 'cdPct'],
+    [/^HP_Plus$/, 'hpFlat'], [/^HPPer_Plus$/, 'hpPct'],
+    [/^RecoveryAmount_Plus$/, 'regenFlat'], [/^(RecoveryAmountPer_Plus|Heal_Amount_Plus)$/, 'regenPct'],
+    [/^(Defense|PvE_Defense)_Plus$/, 'defFlat'], [/^(DefensePer|PvE_DefensePer)_Plus$/, 'defPct'],
+    [/^(DamagePer|PvE_DamagePer|EndDamagePer)_Minus$/, 'dmgTaken'],
+    [/^BlockRate_Plus$/, 'block'], [/^Evasion_Plus$/, 'evaFlat'], [/_Resist$/, 'resist'],
+    [/^HitRate_Plus$/, 'accFlat'],
+    [/GoldGain/, 'gold'], [/ExpGain/, 'exp'],
+    [/^MobKillCnt_Minus$/, 'killCnt'], [/Drop/, 'drop'],
+  ];
+  for (const [re, b] of table) if (re.test(k)) return { bucket: b, sign: 1 };
+  return { bucket: 'other', sign: 1 };
+}
+
+// Turns one stat line into "% equivalent" contributions. These conversions are
+// the estimate the whole page ranks by - written out so they can be argued with:
+//   damage: attack% and damage% count 1:1; flat attack as a share of current
+//     attack; crit through the expected-hit multiplier M = 1 + rate x critDmg
+//     (the same convention as every DPS figure on this site); attack speed only
+//     speeds up normal attacks and skill cooldown only speeds up skills, each
+//     weighted by that source's share of damage.
+//   survival: HP% 1:1, flat HP as a share of current HP; "damage taken -x%" is
+//     worth 100x/(100-x)% effective HP; defense counts half (the game doesn't
+//     expose its mitigation formula); evasion, regen and resistances count less.
+function optLineEffect(l, ctx){
+  const v = (Number(l.value) || 0) * (l.sign || 1);
+  const pct = l.per === 1;
+  const r = (ctx.critRate || 0) / 100, cd = (ctx.critDmg || 0) / 100, M = 1 + r * cd;
+  switch (l.bucket) {
+    case 'atkPct':    return { dmg: v };
+    case 'atkFlat':   return { dmg: ctx.atk > 0 ? 100 * v / ctx.atk : 0 };
+    case 'dmg':       return { dmg: v };
+    case 'dmgProc':   return { dmg: 0.5 * v };
+    case 'critRate':  return { dmg: 100 * (v / 100) * cd / M };
+    case 'critDmg':   return { dmg: 100 * r * (v / 100) / M };
+    case 'atkSpeed':  return { dmg: v * (ctx.basicShare || 0.5) };
+    case 'cdPct':     return { dmg: v * (ctx.skillShare || 0.5) };
+    case 'hpPct':     return { surv: v };
+    case 'hpFlat':    return { surv: ctx.hp > 0 ? 100 * v / ctx.hp : 0 };
+    case 'defPct':    return { surv: 0.5 * v };
+    case 'defFlat':   return { surv: ctx.def > 0 ? 50 * v / ctx.def : 0 };
+    case 'dmgTaken':  return { surv: v >= 99 ? 100 : 100 * v / (100 - v) };
+    case 'block':     return { surv: v };
+    case 'evaFlat':   return { surv: ctx.eva > 0 ? 30 * v / ctx.eva : 0 };
+    case 'regenFlat': return { surv: ctx.hp > 0 ? 100 * v / ctx.hp : 0 };
+    case 'regenPct':  return { surv: 0.3 * v };
+    case 'resist':    return { surv: 0.2 * v };
+    case 'accFlat':   return { acc: ctx.acc > 0 ? 100 * v / ctx.acc : 0 };
+    case 'gold':      return pct ? { gold: v } : {};
+    case 'exp':       return pct ? { exp: v } : {};
+    case 'drop':      return pct ? { drop: v } : { drop: 0.5 * v };
+    case 'killCnt':   return { farmSpeed: 100 * v / (ctx.bossReq || 70) };
+  }
+  return {};
+}
+
+function optGoalScore(eff, goal){
+  if (goal === 'balanced') return (optGoalScore(eff, 'survive') + optGoalScore(eff, 'farm') + optGoalScore(eff, 'damage')) / 3;
+  const w = (OPT_GOALS[goal] || OPT_GOALS.survive).w;
+  return Object.keys(w).reduce((s, k) => s + (eff[k] || 0) * w[k], 0);
+}
+
+const OPT_KEY_TH = {
+  Attack_Plus: 'โจมตี', AttackPer_Plus: 'โจมตี', Defense_Plus: 'ป้องกัน', DefensePer_Plus: 'ป้องกัน',
+  HP_Plus: 'เลือด', HPPer_Plus: 'เลือด', AttackSpeedPer_Plus: 'ความเร็วโจมตี', CriticalRate_Plus: 'อัตราคริ',
+  CriticalDamage_Plus: 'ดาเมจคริ', HitRate_Plus: 'ความแม่นยำ', Evasion_Plus: 'หลบหลีก', DamagePer_Plus: 'ดาเมจ',
+  DamagePer_Minus: 'ดาเมจที่รับ', PvE_AttackPer_Plus: 'พลังโจมตี PvE', PvE_Attack_Plus: 'พลังโจมตี PvE',
+  PvE_DefensePer_Plus: 'ป้องกัน PvE', PvE_Defense_Plus: 'ป้องกัน PvE', PvE_DamagePer_Plus: 'ดาเมจ PvE',
+  PvE_DamagePer_Minus: 'ดาเมจ PvE ที่รับ', BossDamagePer_Plus: 'ดาเมจต่อบอส', BlockRate_Plus: 'บล็อก',
+  RecoveryAmount_Plus: 'ฟื้นฟูเลือด', RecoveryAmountPer_Plus: 'ฟื้นฟูเลือด', ShockRate_Plus: 'โอกาสสายฟ้า',
+  BurnRate_Plus: 'โอกาสไฟ', PoisonRate_Plus: 'โอกาสพิษ', ShockDamage_Plus: 'ดาเมจสายฟ้า', BurnDamage_Plus: 'ดาเมจไฟ',
+  PoisonDamage_Plus: 'ดาเมจพิษ', SkillCoolTimePer_Minus: 'คูลดาวน์สกิล', MoveSpeedPer_Plus: 'ความเร็วเคลื่อนที่',
+  AttackDistance_Plus: 'ระยะโจมตี', LimitLevel_Minus: 'เลเวลที่ต้องใช้', EndDamagePer_Plus: 'ดาเมจสุดท้าย',
+  MobGoldGainPer_Plus: 'ทองจากมอบ', AllGoldGainPer_Plus: 'ทองที่ได้', AllExpGainPer_Plus: 'EXP ที่ได้',
+  MobExpGainPer_Plus: 'EXP จากมอบ', MobKillCnt_Minus: 'มอบที่ต้องฆ่าก่อนเรียกบอส', DebuffShock_Plus: 'สายฟ้า',
+  DebuffBurn_Plus: 'เผาไหม้', DebuffPoison_Plus: 'พิษ',
+};
+function optLineText(l, th){
+  const stem = String(l.key || '').replace(/^Ability(Type|Tip)_/, '');
+  const minus = /_Minus$/.test(stem) || /-\{0\}/.test(l.en || '');
+  const v = Math.abs(Number(l.value) || 0);
+  const num = (Math.round(v * 100) / 100).toLocaleString() + (l.per === 1 ? '%' : '');
+  const enLabel = String(l.en || stem || ('#' + l.type)).replace(/\s*[+-]?\{0\}\s*/, '').trim();
+  const label = th ? (OPT_KEY_TH[stem] || enLabel) : enLabel;
+  return `${label} ${minus ? '−' : '+'}${num}`;
+}
+
+function buildOptimizerExpr(extraTypes, skillGroups){
+  return `(function(){
+    try {
+      var out = {};
+      var types = {};
+      var addType = function(t){ t = Number(t); if (t) types[t] = 1; };
+      ${JSON.stringify(extraTypes)}.forEach(addType);
+
+      // hero / class rows
+      try { out.heroTid = nn.services.hero.getCurrentHeroTid(); } catch(e){}
+      var heroes = [];
+      try {
+        for (var he of nn.db.hero.container.entries()) {
+          var v = he[1];
+          heroes.push({ id: v.HeroID, cls: v.HeroClassType, open: v.OpenLevel, costTid: v.OpenItemID, cost: v.OpenItemCnt,
+            atk: v.BaseAttack, def: v.BaseDefense, hp: v.BaseHP, spd: v.BaseAttackSpeed, range: v.BaseAttackDistance,
+            crit: v.BaseCriticalRate, critDmg: v.BaseCriticalDamage, hit: v.BaseHitRate, eva: v.BaseEvasion, rating: v.RatingType });
+        }
+      } catch(e){ out.heroErr = e.message; }
+      out.heroes = heroes;
+
+      // every owned non-stack item, with the game's own wear rules
+      var se = null;
+      for (var sv of nn.services._mapService.entries()) { if ((sv[0].name || '') === 'ServiceEquipment') se = sv[1]; }
+      out.items = nn.net.data.item.getAllItemNotStack().map(function(it){
+        var o = { id: String(it.itemId), tid: it.itemTid, loc: it.location, lock: !!it.isLock };
+        o.opts = (it.randomOptions || []).filter(function(x){ return x.slotIdx > 0; }).map(function(x){
+          return { slot: x.slotIdx, tid: x.itemTid, abil: (x.abilityInfos || []).map(function(a){ addType(a.abilityType); return [a.abilityType, Number(a.abilityValue) / 100]; }) };
+        });
+        var er = nn.db.equip.get(it.itemTid);
+        if (er) {
+          (er.EquipAbilityType || []).forEach(addType);
+          var limitNow = er.LimitLevel;
+          try { if (se) limitNow = se.getEquipLimitLevel(it.itemTid, it.itemId); } catch(e){}
+          o.equip = { parts: er.PartsType, type: er.EquipType, rating: er.RatingType, cls: er.HeroClassType, limit: er.LimitLevel, limitNow: limitNow,
+            sockets: er.RandomOptionCnt || 0, jewelGroups: er.JewelGroupID || [],
+            base: (er.EquipAbilityType || []).map(function(t, i){ return [t, (er.EquipAbilityDetail || [])[i]]; }).filter(function(p){ return p[0]; }),
+            canWear: [1, 2, 3].map(function(c){ try { return !!nn.db.equip.canEquipByHeroClass(it.itemTid, c); } catch(e){ return false; } }) };
+        } else {
+          var ir = null; try { ir = nn.db.item.get(it.itemTid); } catch(e){}
+          if (ir) {
+            o.item = { type: ir.ItemType, group: ir.GroupID, rating: ir.RatingType };
+            try { var ln = nn.db.locale.get(ir.ItemName); o.name = ln ? (ln.EN || '') : ''; } catch(e){}
+          }
+        }
+        return o;
+      });
+
+      // learned trees (raw steps; the page applies the verified level offsets)
+      var tree4 = {}, tree1 = {};
+      try { nn.net.data.tree.getTreeAllInfo(4).forEach(function(t){ tree4[t._groupTid] = Math.round((t._treeTid - t._groupTid) / 10); }); } catch(e){}
+      try { nn.net.data.tree.getTreeAllInfo(1).forEach(function(t){ tree1[t._groupTid] = t._treeTid - t._groupTid; }); } catch(e){}
+      out.tree4 = tree4; out.tree1 = tree1;
+
+      // skill table rows around each skill's current level: unlock level,
+      // prerequisites and point cost come from the game, not our data file
+      var rowInfo = function(id){
+        var r = null; try { r = nn.db.skill.get(id); } catch(e){}
+        if (!r) return null;
+        return { id: r.SkillID, g: r.GroupID, lv: r.Level, open: r.OpenLevel, cls: r.HeroClassType,
+          costTid: (r.LevelUpItemID || [])[0] || 0, cost: (r.LevelUpItemCnt || [])[0] || 0,
+          conds: (r.ConditionID || []).filter(function(c){ return c; }).map(function(c){
+            var cr = null; try { cr = nn.db.skill.get(c); } catch(e){}
+            return cr ? { g: cr.GroupID, lv: cr.Level } : { raw: c };
+          }) };
+      };
+      var skillRows = {};
+      ${JSON.stringify(skillGroups)}.forEach(function(g){
+        var step = tree4[g];
+        var levels = step == null ? [1, 2] : [Math.max(1, step), step + 1, step + 2];
+        levels.forEach(function(L){ var id = g + (L - 1) * 10; if (skillRows[id]) return; var ri = rowInfo(id); if (ri) skillRows[id] = ri; });
+      });
+      out.skillRows = skillRows;
+
+      // the game's own names for every stat id seen above
+      var am = nn.db.ability._abilityTypeMap, names = {};
+      Object.keys(types).forEach(function(t){
+        var row = null; try { row = am.get(Number(t)) || am.get(t); } catch(e){}
+        if (!row) return;
+        var en = ''; try { var l = nn.db.locale.get(row.AbilityName); en = l ? (l.EN || '') : ''; } catch(e){}
+        names[t] = { key: row.AbilityName, per: row.PerType, en: en };
+      });
+      out.names = names;
+      return JSON.stringify(out);
+    } catch(e) { return JSON.stringify({ error: e.message }); }
+  })()`;
+}
+
+function renderOptimizer(){ refreshOptimizerLive(); }
+
+function renderOptGoals(){
+  const th = currentLang === 'th';
+  const box = document.getElementById('opt-goals');
+  if (!box) return;
+  box.innerHTML = Object.keys(OPT_GOALS).map(k =>
+    `<button class="dpsb-mode ${k === optGoal ? 'active' : ''}" data-goal="${k}">${esc(OPT_GOALS[k][th ? 'th' : 'en'])}</button>`).join('');
+  box.querySelectorAll('[data-goal]').forEach(b => b.addEventListener('click', () => {
+    optGoal = b.dataset.goal;
+    try { localStorage.setItem('wog_opt_goal', optGoal); } catch(e) {}
+    renderOptGoals();
+    if (lastOptData) optRenderAll(lastOptData.d, lastOptData.x);
+  }));
+  const g = OPT_GOALS[optGoal] || OPT_GOALS.survive;
+  document.getElementById('opt-goal-note').textContent = th ? g.note_th : g.note_en;
+}
+
+async function refreshOptimizerLive(){
+  const th = currentLang === 'th';
+  renderOptGoals();
+  const heads = {
+    'opt-head-summary': th ? '🎯 ทำสิ่งนี้ก่อน (เรียงตามความคุ้ม)' : '🎯 Do these first (most worthwhile first)',
+    'opt-head-class': th ? '1️⃣ ควรเล่นอาชีพอะไร' : '1️⃣ Which class to play',
+    'opt-head-map': th ? '4️⃣ แมพที่คุ้มที่สุด' : '4️⃣ Best maps',
+    'opt-head-gear': th ? '3️⃣ อุปกรณ์ & อัญมณีที่ควรใส่ (จากที่มีอยู่)' : '3️⃣ Gear & jewels to wear (from what you own)',
+    'opt-head-skills': th ? '2️⃣ อัปสกิลไหนคุ้ม ณ เลเวลนี้' : '2️⃣ Skills worth upgrading at this level',
+    'opt-head-other': th ? '➕ อื่นๆ ที่ยังรีดได้อีก' : '➕ Other things still left on the table',
+  };
+  Object.keys(heads).forEach(id => { const el = document.getElementById(id); if (el) el.textContent = heads[id]; });
+  const bodies = ['opt-summary', 'opt-class', 'opt-map', 'opt-gear', 'opt-skills', 'opt-other'].map(id => document.getElementById(id));
+  if (!bodies[0]) return;
+  const skillGroups = allSkillsFlatList().map(s => s.group_id);
+  const extra = new Set();
+  GAME_DATA.trainingSkills.forEach(ts => ts.levels.forEach(l => (l.stats || []).forEach(s => extra.add(s.ability_id))));
+  GAME_DATA.jewelDatabase.forEach(j => (j.options || []).forEach(o => extra.add(o.stat_id)));
+  let d, x;
+  try {
+    [d, x] = await Promise.all([sendLiveEval(buildProfileExpr()), sendLiveEval(buildOptimizerExpr([...extra], skillGroups))]);
+    if (!d || d.error || !x || x.error) throw new Error((d && d.error) || (x && x.error) || 'no data');
+  } catch(e) {
+    bodies.forEach(el => { if (el) el.innerHTML = `<div class="empty-state" style="padding:24px 10px;">${th ? 'อ่านไม่ได้ (เกมไม่ได้เปิด หรือยังไม่ได้เชื่อมต่อ Live Sync)' : 'Unavailable (game not running / not connected)'}</div>`; });
+    return;
+  }
+  lastOptData = { d, x };
+  optRenderAll(d, x);
+}
+
+function optItemName(it){
+  const e = GAME_DATA.equipments.find(z => z.id === it.tid);
+  if (e) return fld(e, 'name');
+  const j = GAME_DATA.jewelDatabase.find(z => z.id === it.tid);
+  if (j) return fld(j, 'name');
+  return it.name || ('#' + it.tid);
+}
+function optLocTag(loc, th){
+  return loc === 1 ? (th ? '🎒 กระเป๋า' : '🎒 Bag') : loc === 2 ? (th ? '🏛 คลัง' : '🏛 Vault') : (th ? '✅ สวมอยู่' : '✅ Worn');
+}
+
+function optRenderAll(d, x){
+  const th = currentLang === 'th';
+  const goal = optGoal;
+  const names = x.names || {};
+  const ab = d.ability || {};
+  const m = smartDpsModel(d);
+  const ctx = {
+    atk: ab.attack || 0, def: ab.defense || 0, hp: ab.hp || 0, eva: ab.evasion || 0, acc: ab.hitRate || 0,
+    critRate: ab.critRate || 0, critDmg: ab.critDmg || 0,
+    basicShare: m.totalDps > 0 ? m.basicDps / m.totalDps : 0.5,
+    skillShare: m.totalDps > 0 ? m.skillDps / m.totalDps : 0.5,
+    bossReq: 70,
+  };
+  const stages = GAME_DATA.stageData || [];
+  const curStage = stages.find(s => s.stage_id === d.stageTid) || null;
+  if (curStage && curStage.boss_req_mobs) ctx.bossReq = curStage.boss_req_mobs;
+  const lv = d.level || 0;
+  const cls = d.classType;
+  const clsCode = HERO_CLASSTYPE_TO_SKILLCLASS[cls];
+  const cur = tid => { const c = (d.currencies || []).find(v => v.tid === tid); return c ? Number(c.cnt) : 0; };
+  const gold = cur(1000);
+  const items = x.items || [];
+  const equips = items.filter(i => i.equip);
+  const jewels = items.filter(i => !i.equip && i.item && i.item.type === 6 && i.loc !== 3);
+
+  const lineOf = (t, v, source, jewelTid) => {
+    const n = names[t] || {};
+    const b = optBucketOf(n.key);
+    return { type: t, value: Number(v), key: n.key, per: n.per, en: n.en, bucket: b.bucket, sign: b.sign, source, jewelTid };
+  };
+  const itemLines = it => [
+    ...(it.equip ? it.equip.base.map(([t, v]) => lineOf(t, v, 'base')) : []),
+    ...(it.opts || []).flatMap(o => o.abil.map(([t, v]) => lineOf(t, v, 'socket', o.tid))),
+  ];
+  const effOf = lines => lines.reduce((acc, l) => {
+    const e = optLineEffect(l, ctx);
+    Object.keys(e).forEach(k => { acc[k] = (acc[k] || 0) + e[k]; });
+    return acc;
+  }, {});
+  const score = eff => optGoalScore(eff, goal);
+  const itemScore = it => score(effOf(itemLines(it)));
+  const linesHtml = (lines, max) => {
+    const shown = lines.slice(0, max || 6).map(l => {
+      const src = l.source === 'socket' ? '💎 ' : '';
+      return esc(src + optLineText(l, th));
+    }).join(' · ');
+    return shown + (lines.length > (max || 6) ? ` · +${lines.length - (max || 6)}` : '');
+  };
+  const scoreTag = s => `<span class="opt-tag">${th ? 'คะแนน' : 'score'} ${saFmt(s, 1)}</span>`;
+  const wearable = (it, c) => !!(it.equip && it.equip.canWear[c - 1] && (it.equip.limitNow || 0) <= lv);
+
+  // ================= 3. gear per slot =================
+  const slots = PROF_MAIN_ORDER.concat(PROF_ACC_ORDER);
+  const gearRows = slots.map(slot => {
+    const worn = equips.find(i => i.loc === 3 && i.equip.parts === slot) || null;
+    const wornScore = worn ? itemScore(worn) : 0;
+    const cands = equips.filter(i => i.loc !== 3 && i.equip.parts === slot && wearable(i, cls))
+      .map(i => ({ it: i, s: itemScore(i) })).sort((a, b) => b.s - a.s);
+    const best = cands[0] || null;
+    const swap = !!best && best.s > wornScore + 0.3 && (!worn || best.s > wornScore * 1.02);
+    const upcoming = equips.filter(i => i.loc !== 3 && i.equip.parts === slot && i.equip.canWear[cls - 1] && (i.equip.limitNow || 0) > lv)
+      .map(i => ({ it: i, s: itemScore(i) })).filter(c => c.s > wornScore).sort((a, b) => a.it.equip.limitNow - b.it.equip.limitNow)[0] || null;
+    return { slot, worn, wornScore, best, swap, upcoming, candCount: cands.length };
+  });
+
+  // ================= 3b. jewels into empty sockets =================
+  const sockets = [];
+  equips.filter(i => i.loc === 3).forEach(i => {
+    const free = Math.max(0, (i.equip.sockets || 0) - (i.opts || []).length);
+    for (let k = 0; k < free; k++) sockets.push({ it: i, groups: i.equip.jewelGroups || [] });
+  });
+  const socketedSample = tid => equips.flatMap(i => i.opts || []).find(o => o.tid === tid) || null;
+  const jewelEst = j => {
+    const db = GAME_DATA.jewelDatabase.find(z => z.id === j.tid);
+    if (!db || !(db.options || []).length) return null;
+    const lines = db.options.map(o => lineOf(o.stat_id, (Number(o.min) + Number(o.max)) / 2, 'jewel', j.tid));
+    // A socketed instance of the same jewel shows how many lines actually apply.
+    // With that evidence and a full set, all lines count; otherwise the pool is
+    // treated as one-of and the expected value is the mean of the options.
+    const seen = socketedSample(j.tid);
+    const allApply = !!seen && seen.abil.length >= lines.length;
+    const effs = lines.map(l => effOf([l]));
+    const eff = {};
+    effs.forEach(e => Object.keys(e).forEach(k => { eff[k] = (eff[k] || 0) + e[k] / (allApply ? 1 : effs.length); }));
+    return { db, eff, lines, allApply };
+  };
+  const pairs = [];
+  jewels.forEach(j => {
+    const est = jewelEst(j);
+    if (!est) return;
+    sockets.forEach((s, si) => { if (s.groups.includes(j.item.group)) pairs.push({ j, est, si, sock: s, s: score(est.eff) }); });
+  });
+  pairs.sort((a, b) => b.s - a.s);
+  const usedJ = new Set(), usedS = new Set(), jewelPlan = [];
+  pairs.forEach(p => { if (usedJ.has(p.j.id) || usedS.has(p.si) || p.s <= 0) return; usedJ.add(p.j.id); usedS.add(p.si); jewelPlan.push(p); });
+  const unfillable = sockets.length - jewelPlan.length;
+
+  // ================= 2. skills =================
+  const learned4 = g => (x.tree4 && x.tree4[g] != null) ? x.tree4[g] + OPT_TREE_LEVEL_OFFSET : 0;
+  const tree = GAME_DATA.skillTrees[clsCode];
+  const pointTid = OPT_SKILL_POINT_TID[clsCode];
+  const combat = [];
+  if (tree) tree.branches.forEach(b => b.skills.forEach(sk => {
+    const g = sk.group_id;
+    const curLv = learned4(g);
+    const nextLv = curLv + 1;
+    if (nextLv > sk.levels.length) return;
+    const row = x.skillRows ? x.skillRows[g + (nextLv - 1) * 10] : null;
+    const openLv = row ? row.open : sk.req_player_level;
+    const condsOk = row ? row.conds.every(c => c.g == null || learned4(c.g) >= c.lv) : true;
+    const missing = row ? row.conds.filter(c => c.g != null && learned4(c.g) < c.lv) : [];
+    const costTid = row && row.costTid ? row.costTid : pointTid;
+    const cost = row ? (row.cost || 1) : 1;
+    const pts = cur(costTid);
+    let gainPct = null, note = '';
+    const L = sk.levels, curL = curLv > 0 ? L[curLv - 1] : null, nextL = L[nextLv - 1];
+    if (!sk.is_passive && nextL && nextL.damage_percent && nextL.cooldown_sec) {
+      const f = m.attack * m.critMult * m.bonusMult;
+      const curDps = (curL && curL.damage_percent && curL.cooldown_sec) ? f * (curL.damage_percent / 100) / curL.cooldown_sec : 0;
+      const nextDps = f * (nextL.damage_percent / 100) / nextL.cooldown_sec;
+      let delta = nextDps - curDps;
+      if (!m.equippedSet.has(g)) {
+        if (m.freeSlots > 0) { delta = nextDps; note = th ? 'มีช่องสกิลว่าง' : 'a skill slot is free'; }
+        else if (m.weakest) { delta = nextDps - m.weakest.dps; note = th ? `ต้องสลับแทน ${fld(m.weakest.meta, 'name')}` : `replaces ${fld(m.weakest.meta, 'name')}`; }
+      }
+      gainPct = m.totalDps > 0 ? 100 * delta / m.totalDps : 0;
+    }
+    const locked = lv < openLv || !condsOk;
+    combat.push({ sk, curLv, nextLv, openLv, condsOk, missing, cost, costTid, pts, locked,
+      affordable: pts >= cost, gainPct, note, equipped: m.equippedSet.has(g),
+      s: gainPct != null ? score({ dmg: gainPct }) : null });
+  }));
+  const combatReady = combat.filter(c => !c.locked && c.s != null).sort((a, b) => b.s - a.s);
+  const combatLocked = combat.filter(c => c.locked).sort((a, b) => a.openLv - b.openLv);
+  const passives = combat.filter(c => !c.locked && c.s == null);
+
+  const training = [];
+  GAME_DATA.trainingSkills.forEach(ts => {
+    const raw = x.tree1 ? x.tree1[ts.group_id] : null;
+    const curLv = raw != null ? raw + OPT_TRAIN_LEVEL_OFFSET : 0;
+    const next = ts.levels.find(l => l.level === curLv + 1);
+    if (!next) return;
+    const curL = ts.levels.find(l => l.level === curLv);
+    const lines = (next.stats || []).map(st => {
+      const before = curL ? (((curL.stats || []).find(z => z.ability_id === st.ability_id) || {}).value || 0) : 0;
+      return lineOf(st.ability_id, st.value - before, 'train');
+    }).filter(l => l.value);
+    const sc = score(effOf(lines));
+    training.push({ ts, curLv, next, lines, s: sc, per1k: next.cost_gold > 0 ? 1000 * sc / next.cost_gold : 0, affordable: gold >= next.cost_gold });
+  });
+  training.sort((a, b) => b.per1k - a.per1k);
+
+  // ================= 1. class =================
+  const heroes = x.heroes || [];
+  const tier = x.heroTid ? x.heroTid % 100 : null;
+  const curHero = heroes.find(h => h.id === x.heroTid) || null;
+  let classLog = {};
+  try { classLog = JSON.parse(localStorage.getItem('wog_class_dps_log') || '{}'); } catch(e) {}
+  const classInfo = [1, 2, 3].map(c => {
+    const code = HERO_CLASSTYPE_TO_SKILLCLASS[c];
+    const row = tier != null ? (heroes.find(h => h.id === c * 100 + tier) || null) : null;
+    const perSlot = slots.map(slot => {
+      const cs = equips.filter(i => i.equip.parts === slot && wearable(i, c));
+      return cs.length ? Math.max(...cs.map(itemScore)) : 0;
+    });
+    const skillLevels = Object.keys(x.tree4 || {}).filter(g => (SKILL_META_BY_GROUPID[g] || {}).classCode === code)
+      .reduce((a, g) => a + x.tree4[g] + OPT_TREE_LEVEL_OFFSET, 0);
+    let baseEdge = 0;
+    if (row && curHero && c !== cls) {
+      const eff = {
+        dmg: 100 * (row.atk / Math.max(1, curHero.atk) - 1) + 100 * (row.spd / Math.max(1, curHero.spd) - 1) * ctx.basicShare,
+        surv: 100 * (row.hp / Math.max(1, curHero.hp) - 1) + 50 * (row.def / Math.max(1, curHero.def) - 1),
+      };
+      baseEdge = score(eff);
+    }
+    return { c, code, row, gearScore: perSlot.reduce((a, b) => a + b, 0), slotsCovered: perSlot.filter(v => v > 0).length,
+      skillLevels, pts: cur(OPT_SKILL_POINT_TID[code]), snap: classLog[code] || null, baseEdge };
+  });
+  const me = classInfo.find(ci => ci.c === cls) || classInfo[0];
+  classInfo.forEach(ci => {
+    const gearEdge = me.gearScore > 0 ? 100 * (ci.gearScore / me.gearScore - 1) : 0;
+    ci.gearEdge = ci.c === cls ? 0 : gearEdge;
+    // Readiness: can this class actually be played well with what's owned?
+    ci.ready = ci.c === cls || (ci.slotsCovered >= me.slotsCovered - 1 && ci.skillLevels >= 0.6 * Math.max(1, me.skillLevels));
+    ci.total = ci.c === cls ? 0 : ci.baseEdge * 0.5 + ci.gearEdge * 0.5;
+  });
+  const alt = classInfo.filter(ci => ci.c !== cls && ci.ready && ci.total > 10).sort((a, b) => b.total - a.total)[0] || null;
+
+  // ================= 4. maps =================
+  const P = stagePerfTable();
+  const cleared = stages.find(s => s.stage_id === d.clearStageTid) || null;
+  const maxNum = cleared ? cleared.stage_num + 1 : (curStage ? curStage.stage_num : Infinity);
+  const unlocked = stages.filter(s => s.stage_num <= maxNum);
+  const rate = s => P.hasRuns ? P.perf.get(s.stage_id)
+    : { basis: 'game', runs: 0, ok: 0, died: 0, deathRate: null, clearSec: s.est_clear_sec, gps: s.gold_per_sec, eps: saExpPerSec(s), risky: false };
+  const safe = unlocked.filter(s => !rate(s).risky);
+  const bestGold = [...safe].sort((a, b) => rate(b).gps - rate(a).gps)[0] || null;
+  const bestExp = [...safe].sort((a, b) => rate(b).eps - rate(a).eps)[0] || null;
+  const safestHigh = stages.filter(s => { const r = P.perf.get(s.stage_id); return r && r.basis === 'measured' && r.ok >= 2 && r.died === 0; })
+    .sort((a, b) => b.stage_num - a.stage_num)[0] || null;
+
+  // ================= other =================
+  const nextHero = x.heroTid ? (heroes.find(h => h.id === x.heroTid + 1 && h.cls === cls) || null) : null;
+  const unspent = cur(pointTid);
+  const bestSpend = combatReady.filter(c => c.affordable && c.s > 0)[0] || null;
+
+  // ================= summary =================
+  const actions = [];
+  const stageTag = s => s ? esc(fld(s, 'display_tag')) : '—';
+  if (curStage && P.hasRuns) {
+    const cr = P.perf.get(curStage.stage_id);
+    const target = goal === 'survive' ? (safestHigh || bestGold) : (goal === 'farm' ? bestGold : bestGold);
+    if (cr && cr.basis === 'measured' && cr.deathRate >= 0.25 && target && target.stage_id !== curStage.stage_id) {
+      actions.push({ pri: 0, gain: 999, html: th
+        ? `ย้ายด่านจาก <b>${stageTag(curStage)}</b> (ตาย ${cr.died}/${cr.runs} รอบ) ไป <b>${stageTag(target)}</b> — รอบที่ตายไม่ได้ทองและ EXP เลย`
+        : `Move from <b>${stageTag(curStage)}</b> (died ${cr.died}/${cr.runs} runs) to <b>${stageTag(target)}</b> - a run that dies earns nothing` });
+    }
+  }
+  gearRows.filter(r => r.swap).forEach(r => {
+    const e = GAME_DATA.equipments.find(z => z.id === r.best.it.tid);
+    actions.push({ pri: 1, gain: r.best.s - r.wornScore, html: th
+      ? `ใส่ <b>${esc(optItemName(r.best.it))}</b> (${optLocTag(r.best.it.loc, th)}) ที่ช่อง <b>${esc(PROF_SLOT_LABELS[r.slot][0])}</b> แทน ${r.worn ? esc(optItemName(r.worn)) : 'ช่องว่าง'} ${scoreTag(r.best.s - r.wornScore)}`
+      : `Wear <b>${esc(optItemName(r.best.it))}</b> (${optLocTag(r.best.it.loc, th)}) in <b>${esc(PROF_SLOT_LABELS[r.slot][1])}</b> instead of ${r.worn ? esc(optItemName(r.worn)) : 'nothing'} ${scoreTag(r.best.s - r.wornScore)}` });
+  });
+  jewelPlan.forEach(p => {
+    actions.push({ pri: 1, gain: p.s, html: th
+      ? `ฝัง <b>${esc(fld(p.est.db, 'name'))}</b> (${optLocTag(p.j.loc, th)}) ลงช่องว่างของ <b>${esc(optItemName(p.sock.it))}</b> ${scoreTag(p.s)}`
+      : `Socket <b>${esc(fld(p.est.db, 'name'))}</b> (${optLocTag(p.j.loc, th)}) into an empty socket on <b>${esc(optItemName(p.sock.it))}</b> ${scoreTag(p.s)}` });
+  });
+  if (bestSpend && unspent >= bestSpend.cost) {
+    actions.push({ pri: 2, gain: bestSpend.s, html: th
+      ? `ใช้แต้มสกิลที่เหลือ (${saFmt(unspent)} แต้ม) อัป <b>${esc(fld(bestSpend.sk, 'name'))}</b> เป็นเลเวล ${bestSpend.nextLv} (+${saFmt(bestSpend.gainPct, 1)}% DPS โดยประมาณ)`
+      : `Spend your ${saFmt(unspent)} skill points on <b>${esc(fld(bestSpend.sk, 'name'))}</b> level ${bestSpend.nextLv} (about +${saFmt(bestSpend.gainPct, 1)}% DPS)` });
+  }
+  const bestTrain = training.find(t => t.affordable && t.s > 0) || null;
+  if (bestTrain) {
+    actions.push({ pri: 3, gain: bestTrain.s, html: th
+      ? `อัปสกิลฝึกฝน <b>${esc(fld(bestTrain.ts, 'name'))}</b> เป็นเลเวล ${bestTrain.next.level} ใช้ทอง ${saFmt(bestTrain.next.cost_gold)} (${linesHtml(bestTrain.lines, 3)}) — คุ้มต่อทองที่สุดตอนนี้`
+      : `Train <b>${esc(fld(bestTrain.ts, 'name'))}</b> to level ${bestTrain.next.level} for ${saFmt(bestTrain.next.cost_gold)} gold (${linesHtml(bestTrain.lines, 3)}) - best value per gold right now` });
+  }
+  if (nextHero && lv >= nextHero.open && gold >= nextHero.cost) {
+    actions.push({ pri: 1, gain: 50, html: th
+      ? `เลื่อนขั้นฮีโร่เป็นระดับถัดไปได้แล้ว (ทอง ${saFmt(nextHero.cost)}) — พลังโจมตีพื้นฐาน ${saFmt(curHero ? curHero.atk : 0)} → ${saFmt(nextHero.atk)}, เลือด ${saFmt(curHero ? curHero.hp : 0)} → ${saFmt(nextHero.hp)}`
+      : `Hero promotion is available now (${saFmt(nextHero.cost)} gold) - base attack ${saFmt(curHero ? curHero.atk : 0)} → ${saFmt(nextHero.atk)}, HP ${saFmt(curHero ? curHero.hp : 0)} → ${saFmt(nextHero.hp)}` });
+  }
+  actions.sort((a, b) => a.pri - b.pri || b.gain - a.gain);
+  document.getElementById('opt-summary').innerHTML = actions.length
+    ? `<ol class="opt-actions">${actions.slice(0, 8).map((a, i) => `<li><span class="opt-step">${i + 1}</span><div>${a.html}</div></li>`).join('')}</ol>`
+      + `<div class="sa-advice info" style="margin-top:10px;">ℹ️ ${th ? 'แนะนำอย่างเดียว ยังไม่มีปุ่มกดใส่ให้ — บอสทำตามในเกมเอง · "คะแนน" คือค่าประมาณสำหรับเป้าหมายที่เลือก ใช้เทียบกันเอง ไม่ใช่ตัวเลขในเกม' : 'Recommendations only - nothing is applied for you; do these in the game yourself. "Score" is an estimate for the chosen goal, for comparing options, not an in-game number.'}</div>`
+    : `<div class="sa-advice go">✅ ${th ? 'ตอนนี้ของที่มีถูกใช้คุ้มแล้วสำหรับเป้าหมายนี้ ไม่มีอะไรต้องเปลี่ยน' : 'What you own is already used well for this goal - nothing to change right now.'}</div>`;
+
+  // ---- render: class ----
+  const clsName = c => ((CLASS_LABELS[HERO_CLASSTYPE_TO_SKILLCLASS[c]] || {})[currentLang]) || '—';
+  document.getElementById('opt-class').innerHTML =
+    saRow(th ? 'เล่นอยู่ตอนนี้' : 'Playing now', `${esc(clsName(cls))}${x.heroTid ? ` · ${th ? 'ฮีโร่ขั้น' : 'hero stage'} ${x.heroTid % 100}${curHero ? ` (${th ? 'ระดับดาว' : 'rating'} ${curHero.rating})` : ''}` : ''}`, 'sm')
+    + `<div class="table-scroll" style="margin-top:8px;"><table class="data-table"><thead><tr>
+        <th>${th ? 'อาชีพ' : 'Class'}</th><th>${th ? 'ค่าพื้นฐาน (โจมตี/เลือด/ป้องกัน)' : 'Base atk / HP / def'}</th>
+        <th>${th ? 'ช่องที่มีของใส่ได้' : 'Slots you can fill'}</th><th>${th ? 'เลเวลสกิลรวม' : 'Skill levels'}</th>
+        <th>${th ? 'แต้มสกิลเหลือ' : 'Points left'}</th><th>${th ? 'เทียบกับอาชีพปัจจุบัน' : 'vs current'}</th></tr></thead><tbody>`
+    + classInfo.map(ci => `<tr${ci.c === cls ? ' style="background:rgba(56,139,253,.10);"' : ''}>
+        <td><b>${esc(clsName(ci.c))}</b>${ci.c === cls ? ` <span class="sidebar-badge">${th ? 'ปัจจุบัน' : 'current'}</span>` : ''}</td>
+        <td>${ci.row ? `${saFmt(ci.row.atk)} / ${saFmt(ci.row.hp)} / ${saFmt(ci.row.def)}` : '—'}</td>
+        <td>${ci.slotsCovered} / ${slots.length}</td>
+        <td>${saFmt(ci.skillLevels)}</td>
+        <td>${saFmt(ci.pts)}</td>
+        <td>${ci.c === cls ? '—' : `<span class="opt-tag ${ci.total > 10 ? 'go' : ci.total < -10 ? 'bad' : ''}">${ci.total >= 0 ? '+' : ''}${saFmt(ci.total, 0)}%</span>${ci.ready ? '' : ` <span class="opt-tag warn">${th ? 'ของ/สกิลยังไม่พร้อม' : 'gear/skills not ready'}</span>`}`}</td>
+      </tr>`).join('') + `</tbody></table></div>`
+    + (alt
+      ? `<div class="sa-advice go" style="margin-top:10px;">💡 ${th ? `ลองเล่น <b>${esc(clsName(alt.c))}</b> ดู — ค่าพื้นฐานและของที่มีดีกว่าราว +${saFmt(alt.total, 0)}% สำหรับเป้าหมายนี้` : `Consider <b>${esc(clsName(alt.c))}</b> - its base stats and your gear for it come out about +${saFmt(alt.total, 0)}% for this goal`}</div>`
+      : `<div class="sa-advice info" style="margin-top:10px;">✅ ${th ? `เล่น <b>${esc(clsName(cls))}</b> ต่อ — อาชีพอื่นยังไม่ได้เปรียบชัดเจน หรือของ/สกิลยังไม่พร้อม` : `Stay on <b>${esc(clsName(cls))}</b> - no other class is clearly ahead, or its gear/skills aren't ready`}</div>`)
+    + `<div class="sa-advice hold" style="margin-top:8px;">⚠️ ${th ? 'ความมั่นใจ: <b>กลาง-ต่ำ</b> — เกมคำนวณค่าสถานะเต็มเฉพาะอาชีพที่เล่นอยู่ อาชีพอื่นเทียบได้แค่ค่าพื้นฐานจากตารางเกม + ของที่มีที่อาชีพนั้นใส่ได้' : "Confidence: <b>medium-low</b> - the game only computes full stats for the class being played; other classes are compared on the game's base-stat table plus the gear you own that they can wear."}</div>`;
+
+  // ---- render: maps ----
+  const mapLine = (label, s) => {
+    if (!s) return saRow(label, '—', 'sm');
+    const r = rate(s);
+    return `<div class="sa-item" style="margin-top:6px;"><span class="sa-rank">${farmAreaIcon(s)}</span><div style="flex:1;min-width:0;">
+      <div class="sa-item-name">${esc(label)}: ${esc(fld(s, 'display_tag'))}</div>
+      <div class="sa-item-meta">${esc(fld(s, 'area_name'))} · ${esc(farmBasisTag(r, P, th))}${r.basis === 'measured' ? ` · ${th ? 'ผ่าน/ตาย' : 'clear/died'} ${r.ok}/${r.died}` : ''}</div></div>
+      <div class="sa-item-val">${saFmt(r.gps, 1)}<small>${th ? 'ทอง/วิ' : 'gold/s'} · ${saFmt(r.eps, 1)} EXP/s</small></div></div>`;
+  };
+  document.getElementById('opt-map').innerHTML =
+    saRow(th ? 'ด่านที่ฟาร์มอยู่' : 'Farming now', curStage ? esc(fld(curStage, 'display_tag')) : '—', 'sm')
+    + mapLine(th ? '💰 ทองคุ้มสุด' : '💰 Best gold', bestGold)
+    + mapLine(th ? '📈 EXP คุ้มสุด' : '📈 Best EXP', bestExp)
+    + mapLine(th ? '🛡️ สูงสุดที่ผ่านแบบไม่ตาย' : '🛡️ Highest cleared with no deaths', safestHigh)
+    + (goal === 'damage' ? `<div class="sa-advice hold" style="margin-top:8px;">⚠️ ${th ? 'เป้าหมายดาเมจเน้นอารีน่า/บอสโลก ส่วนแมพฟาร์มยังคิดแบบรวมรอบตายเหมือนเดิม' : 'The damage goal targets Arena / World Boss; farm maps are still ranked with deaths counted.'}</div>` : '')
+    + `<div class="sa-advice info" style="margin-top:8px;">ℹ️ ${th ? 'ตัวเลขเดียวกับเมนูจัดอันดับฟาร์ม (วัดจริงรวมรอบที่ตาย) — ดูตารางเต็มได้ที่เมนูนั้น' : 'Same numbers as Farm Ranking (measured, deaths included) - see that tab for the full table.'}</div>`;
+
+  // ---- render: gear ----
+  document.getElementById('opt-gear').innerHTML =
+    `<div class="table-scroll"><table class="data-table"><thead><tr>
+      <th>${th ? 'ช่อง' : 'Slot'}</th><th>${th ? 'สวมอยู่' : 'Worn now'}</th>
+      <th>${th ? 'ตัวเลือกดีสุดที่มี (อาชีพ+เลเวลนี้ใส่ได้)' : 'Best you own (wearable now)'}</th><th>${th ? 'คำแนะนำ' : 'Verdict'}</th></tr></thead><tbody>`
+    + gearRows.map(r => {
+      const label = esc((PROF_SLOT_LABELS[r.slot] || ['?', '?'])[th ? 0 : 1]);
+      const cell = (it, s) => {
+        if (!it) return `<span class="hint">${th ? 'ว่าง' : 'empty'}</span>`;
+        const lines = itemLines(it);
+        const free = Math.max(0, (it.equip.sockets || 0) - (it.opts || []).length);
+        return `<div><b>${esc(optItemName(it))}</b> ${tierBadgeHtml(it.equip.rating || 1)} ${scoreTag(s)}</div>
+          <div class="opt-lines">${optLocTag(it.loc, th)}${it.lock ? ' 🔒' : ''} · ${linesHtml(lines, 5)}${free ? ` · <span style="color:#ffa657;">${th ? `ช่องอัญมณีว่าง ${free}` : `${free} empty socket${free > 1 ? 's' : ''}`}</span>` : ''}</div>`;
+      };
+      let verdict;
+      if (r.swap) verdict = `<span class="opt-tag go">⬆️ ${th ? 'เปลี่ยนเลย' : 'swap'} +${saFmt(r.best.s - r.wornScore, 1)}</span>`;
+      else if (r.best) verdict = `<span class="opt-tag">✅ ${th ? 'ของเดิมดีกว่า/ใกล้กัน' : 'keep (as good or better)'}</span>`;
+      else verdict = `<span class="hint">${th ? 'ไม่มีตัวเลือกอื่นที่ใส่ได้' : 'nothing else wearable'}</span>`;
+      if (r.upcoming) verdict += `<div class="opt-lines">🔜 ${th ? `มี ${esc(optItemName(r.upcoming.it))} ที่ดีกว่า ใส่ได้ตอน Lv ${r.upcoming.it.equip.limitNow}` : `${esc(optItemName(r.upcoming.it))} is better, wearable at Lv ${r.upcoming.it.equip.limitNow}`}</div>`;
+      return `<tr${r.swap ? ' style="background:rgba(126,231,135,.07);"' : ''}><td><b>${label}</b></td><td>${cell(r.worn, r.wornScore)}</td><td>${r.best ? cell(r.best.it, r.best.s) : `<span class="hint">—</span>`}</td><td>${verdict}</td></tr>`;
+    }).join('') + `</tbody></table></div>`
+    + `<div class="sa-sub">${th ? '💎 อัญมณีในกระเป๋า/คลัง → ช่องว่างบนของที่สวมอยู่' : '💎 Jewels in bag/vault → empty sockets on worn gear'}</div>`
+    + (jewelPlan.length
+      ? jewelPlan.map(p => `<div class="sa-item"><span class="sa-rank">💎</span><div style="flex:1;min-width:0;">
+          <div class="sa-item-name">${esc(fld(p.est.db, 'name'))} → ${esc(optItemName(p.sock.it))}</div>
+          <div class="sa-item-meta">${optLocTag(p.j.loc, th)} · ${p.est.lines.map(l => esc(optLineText(l, th))).join(' · ')} · ${p.est.allApply ? (th ? 'ทุกบรรทัดมีผล' : 'all lines apply') : (th ? 'สุ่มได้ 1 บรรทัด คิดค่าเฉลี่ย' : 'rolls one line - averaged')}</div></div>
+          <div class="sa-item-val">+${saFmt(p.s, 1)}<small>${th ? 'คะแนน' : 'score'}</small></div></div>`).join('')
+      : `<div class="hint" style="padding:6px 0;">${sockets.length ? (th ? 'มีช่องว่าง แต่ไม่มีอัญมณีที่ใส่ช่องนั้นได้ในกระเป๋า/คลัง' : 'There are empty sockets, but no jewel you own fits them') : (th ? 'ของที่สวมอยู่ไม่มีช่องอัญมณีว่าง' : 'No empty sockets on worn gear')}</div>`)
+    + (unfillable > 0 && jewelPlan.length ? `<div class="hint" style="margin-top:4px;">${th ? `ยังเหลือช่องว่างที่ไม่มีอัญมณีใส่ได้ ${unfillable} ช่อง` : `${unfillable} empty socket(s) still have no fitting jewel`}</div>` : '')
+    + `<div class="sa-advice info" style="margin-top:10px;">ℹ️ ${th ? 'ตรวจว่าใส่ได้ด้วยกฎของเกมเอง (อาชีพ + เลเวลที่ต้องใช้ + กลุ่มอัญมณีที่ช่องรับได้) · อัญมณีที่ฝังแล้วติดไปกับอุปกรณ์ชิ้นนั้น ถ้าเปลี่ยนชิ้น อัญมณีจะไม่ย้ายตาม · ยังไม่ได้แนะนำการถอดอัญมณีเก่าออกเพื่อใส่ตัวที่ดีกว่า' : "Wearability uses the game's own rules (class + level requirement + which jewel groups a socket accepts). Socketed jewels stay with their item, so swapping gear doesn't carry them over. Removing an old jewel to fit a better one isn't covered yet."}</div>`;
+
+  // ---- render: skills ----
+  const skillRowHtml = c => `<tr>
+      <td>${profIconHtml(c.sk.icon, '⚔️')}</td>
+      <td><b>${esc(fld(c.sk, 'name'))}</b>${c.equipped ? ` <span class="sidebar-badge">${th ? 'ใส่อยู่' : 'equipped'}</span>` : ''}${c.note ? `<div class="opt-lines" style="color:#ffa657;">↪ ${esc(c.note)}</div>` : ''}</td>
+      <td>${c.curLv} → ${c.nextLv}</td>
+      <td>${c.gainPct != null ? `${c.gainPct >= 0 ? '+' : ''}${saFmt(c.gainPct, 1)}%` : `<span class="hint">${th ? 'ไม่มีตัวเลข' : 'no numbers'}</span>`}</td>
+      <td>${saFmt(c.cost)} ${th ? 'แต้ม' : 'pt'}</td>
+      <td>${c.locked
+        ? `<span class="opt-tag warn">🔒 ${c.condsOk ? `Lv ${c.openLv}` : (th ? 'ต้องอัปสกิลก่อนหน้า' : 'needs a prerequisite')}</span>`
+        : c.affordable ? `<span class="opt-tag go">${th ? 'อัปได้เลย' : 'ready'}</span>` : `<span class="opt-tag warn">${th ? 'แต้มไม่พอ' : 'not enough points'}</span>`}</td>
+    </tr>`;
+  document.getElementById('opt-skills').innerHTML =
+    saRow(th ? 'แต้มสกิลของอาชีพนี้ที่ยังไม่ได้ใช้' : 'Unspent skill points (this class)', saFmt(unspent), unspent > 0 ? 'warn' : 'good')
+    + `<div class="sa-sub">${th ? '⚔️ สกิลต่อสู้ — เรียงตาม DPS ที่เพิ่มขึ้นจริง (คิดการสลับช่องสกิลแล้ว)' : '⚔️ Combat skills - by real DPS gained (slot swaps accounted for)'}</div>`
+    + (combatReady.length || combatLocked.length
+      ? `<div class="table-scroll"><table class="data-table"><thead><tr><th></th><th>${th ? 'สกิล' : 'Skill'}</th><th>${th ? 'เลเวล' : 'Level'}</th><th>+DPS</th><th>${th ? 'ค่าอัป' : 'Cost'}</th><th>${th ? 'สถานะ' : 'Status'}</th></tr></thead><tbody>`
+        + combatReady.slice(0, 8).map(skillRowHtml).join('')
+        + combatLocked.slice(0, 4).map(skillRowHtml).join('')
+        + `</tbody></table></div>`
+      : `<div class="hint">${th ? 'ไม่มีสกิลที่อัปต่อได้' : 'No upgradable skills'}</div>`)
+    + (passives.length ? `<div class="hint" style="margin-top:6px;">${th ? `สกิลพาสซีฟที่อัปได้ ${passives.length} ตัว — ข้อมูลเกมไม่มีตัวเลขผลลัพธ์ เลยจัดอันดับไม่ได้ ไม่ได้แปลว่าไม่คุ้ม` : `${passives.length} passive skill(s) can be upgraded - the game data has no effect numbers for them, so they can't be ranked (that doesn't mean they're not worth it)`}</div>` : '')
+    + `<div class="sa-sub">${th ? '🏋️ สกิลฝึกฝน — เรียงตามความคุ้มต่อทอง 1,000' : '🏋️ Training skills - by value per 1,000 gold'} (${th ? 'ทองที่มี' : 'gold on hand'} ${saFmt(gold)})</div>`
+    + (training.length
+      ? `<div class="table-scroll"><table class="data-table"><thead><tr><th>${th ? 'สกิลฝึกฝน' : 'Training'}</th><th>${th ? 'เลเวล' : 'Level'}</th><th>${th ? 'ได้เพิ่ม' : 'Gain'}</th><th>${th ? 'ทอง' : 'Gold'}</th><th>${th ? 'คุ้มต่อ 1K ทอง' : 'Value / 1K gold'}</th></tr></thead><tbody>`
+        + training.slice(0, 10).map(t => `<tr${t.affordable ? '' : ' style="opacity:.6;"'}>
+            <td>${profIconHtml(t.ts.icon, '🏋️')} <b>${esc(fld(t.ts, 'name'))}</b></td>
+            <td>${t.curLv} → ${t.next.level}</td>
+            <td class="opt-lines" style="font-size:11.5px;">${linesHtml(t.lines, 3) || '—'}</td>
+            <td>${saFmt(t.next.cost_gold)}${t.affordable ? '' : `<div class="opt-lines" style="color:#ffa657;">${th ? 'ทองไม่พอ' : 'not enough gold'}</div>`}</td>
+            <td><span class="opt-tag ${t.per1k > 0 ? 'go' : ''}">${saFmt(t.per1k, 3)}</span></td>
+          </tr>`).join('') + `</tbody></table></div>`
+      : `<div class="hint">${th ? 'สกิลฝึกฝนเต็มหมดแล้ว' : 'All training skills are maxed'}</div>`)
+    + `<div class="sa-advice info" style="margin-top:10px;">ℹ️ ${th ? 'เลเวลที่ปลดล็อก สกิลที่ต้องอัปก่อน และค่าอัป อ่านจากตารางสกิลของเกมโดยตรง · +DPS เป็นค่าประมาณจาก %ดาเมจ÷คูลดาวน์ ส่วนสัดส่วนระหว่างสกิลเชื่อได้' : "Unlock level, prerequisites and cost come straight from the game's skill table. +DPS is estimated from damage% ÷ cooldown; the ratio between skills is reliable."}</div>`;
+
+  // ---- render: other ----
+  const other = [];
+  if (nextHero) {
+    const readyLv = lv >= nextHero.open, readyGold = gold >= nextHero.cost;
+    other.push(`<div class="sa-item"><span class="sa-rank">🦸</span><div style="flex:1;min-width:0;">
+      <div class="sa-item-name">${th ? 'เลื่อนขั้นฮีโร่ระดับถัดไป' : 'Next hero promotion'}</div>
+      <div class="sa-item-meta">${th ? 'ต้อง' : 'needs'} Lv ${nextHero.open} ${readyLv ? '✅' : `(${th ? 'อีก' : 'in'} ${nextHero.open - lv} ${th ? 'เลเวล' : 'levels'})`} · ${th ? 'ทอง' : 'gold'} ${saFmt(nextHero.cost)} ${readyGold ? '✅' : `(${th ? 'ขาด' : 'short'} ${saFmt(nextHero.cost - gold)})`}
+        · ${th ? 'โจมตี' : 'atk'} ${saFmt(curHero ? curHero.atk : 0)} → ${saFmt(nextHero.atk)} · ${th ? 'เลือด' : 'HP'} ${saFmt(curHero ? curHero.hp : 0)} → ${saFmt(nextHero.hp)} · ${th ? 'ป้องกัน' : 'def'} ${saFmt(curHero ? curHero.def : 0)} → ${saFmt(nextHero.def)}</div></div>
+      <div class="sa-item-val">${readyLv && readyGold ? (th ? 'ทำได้เลย' : 'ready') : (th ? 'ยัง' : 'not yet')}</div></div>`);
+  }
+  if (unspent > 0) other.push(`<div class="sa-item"><span class="sa-rank">⭐</span><div style="flex:1;min-width:0;"><div class="sa-item-name">${th ? `แต้มสกิลค้างอยู่ ${saFmt(unspent)} แต้ม` : `${saFmt(unspent)} unspent skill points`}</div><div class="sa-item-meta">${bestSpend ? (th ? `ตัวที่คุ้มสุดตอนนี้: ${esc(fld(bestSpend.sk, 'name'))}` : `best use right now: ${esc(fld(bestSpend.sk, 'name'))}`) : (th ? 'ยังไม่มีสกิลที่ปลดล็อกให้ใช้แต้ม' : 'no unlocked skill to spend them on yet')}</div></div></div>`);
+  classInfo.filter(ci => ci.c !== cls && ci.pts > 0).forEach(ci => other.push(`<div class="sa-item"><span class="sa-rank">🎓</span><div style="flex:1;min-width:0;"><div class="sa-item-name">${th ? `แต้มสกิลของ ${esc(clsName(ci.c))} ค้างอยู่ ${saFmt(ci.pts)} แต้ม` : `${saFmt(ci.pts)} unspent ${esc(clsName(ci.c))} skill points`}</div><div class="sa-item-meta">${th ? 'ใช้ได้ตอนเล่นอาชีพนั้น' : 'usable while playing that class'}</div></div></div>`));
+  if (sockets.length > jewelPlan.length) other.push(`<div class="sa-item"><span class="sa-rank">💎</span><div style="flex:1;min-width:0;"><div class="sa-item-name">${th ? `ช่องอัญมณีว่างที่ยังไม่มีของใส่ ${sockets.length - jewelPlan.length} ช่อง` : `${sockets.length - jewelPlan.length} empty socket(s) with nothing to fill them`}</div><div class="sa-item-meta">${th ? 'หาอัญมณีกลุ่มที่ช่องนั้นรับได้ หรือหลอมจากที่มี (เมนูหลอมอัญมณี)' : 'find a jewel of a group that socket accepts, or fuse one (Jewel Forge tab)'}</div></div></div>`);
+  const upcomingAll = gearRows.filter(r => r.upcoming);
+  if (upcomingAll.length) other.push(`<div class="sa-item"><span class="sa-rank">🔜</span><div style="flex:1;min-width:0;"><div class="sa-item-name">${th ? `มีของที่ดีกว่ารอเลเวลอยู่ ${upcomingAll.length} ชิ้น` : `${upcomingAll.length} better item(s) waiting for a level`}</div><div class="sa-item-meta">${upcomingAll.map(r => `${esc(optItemName(r.upcoming.it))} (Lv ${r.upcoming.it.equip.limitNow})`).join(' · ')}</div></div></div>`);
+  document.getElementById('opt-other').innerHTML = other.length ? other.join('') : `<div class="hint">${th ? 'ไม่มีอะไรค้างอยู่' : 'Nothing left on the table'}</div>`;
+}
+
+document.getElementById('btn-opt-refresh').addEventListener('click', () => {
+  refreshOptimizerLive();
+  toast(currentLang === 'th' ? 'กำลังอ่านค่าใหม่จากเกม' : 'Re-reading from the game');
+});
+
+/* ================= LIVE STEAM PRICES (THB first, then USD) =================
+   Boss's brief (2026-09-16): check market prices in Thai baht, then convert to
+   US dollars; show them on the Equipment and Jewels tabs only.
+
+   Steam's priceoverview endpoint has no CORS headers, so this page can't read
+   it directly (verified: the browser blocks the fetch). Prices go through the
+   small Cloudflare Worker in workers/steam-price-relay/, whose URL the boss
+   pastes into the bar at the top of those tabs. Until then the column keeps the
+   old 14 Sep snapshot, clearly labelled, converted to THB when a rate is known.
+
+   Steam allows roughly 20 priceoverview requests a minute, so only the rows on
+   screen are checked, one every PRICE_GAP_MS, cached for PRICE_TTL_MS.
+   THB -> USD comes from open.er-api.com (free, CORS-enabled, verified). */
+const PRICE_RELAY_KEY = 'wog_price_relay';
+const PRICE_CACHE_KEY = 'wog_price_cache';
+const PRICE_TTL_MS = 30 * 60 * 1000;
+const PRICE_GAP_MS = 3300;
+const FX_KEY = 'wog_fx_thb_usd';
+const FX_TTL_MS = 12 * 60 * 60 * 1000;
+
+let priceQueue = [];
+let priceBusy = false;
+let priceLastError = null;
+let priceCache = {};
+let priceFx = null;
+try { priceCache = JSON.parse(localStorage.getItem(PRICE_CACHE_KEY) || '{}') || {}; } catch(e) { priceCache = {}; }
+try { priceFx = JSON.parse(localStorage.getItem(FX_KEY) || 'null'); } catch(e) { priceFx = null; }
+
+function priceRelayUrl(){
+  try { return (localStorage.getItem(PRICE_RELAY_KEY) || '').trim().replace(/\/+$/, ''); } catch(e) { return ''; }
+}
+function priceSaveCache(){ try { localStorage.setItem(PRICE_CACHE_KEY, JSON.stringify(priceCache)); } catch(e) {} }
+
+async function priceEnsureFx(){
+  if (priceFx && priceFx.rate && Date.now() - priceFx.at < FX_TTL_MS) return priceFx;
+  try {
+    const res = await fetch('https://open.er-api.com/v6/latest/THB');
+    const j = await res.json();
+    if (j && j.rates && j.rates.USD) {
+      priceFx = { rate: j.rates.USD, date: j.time_last_update_utc || '', at: Date.now() };
+      try { localStorage.setItem(FX_KEY, JSON.stringify(priceFx)); } catch(e) {}
+    }
+  } catch(e) { /* no rate: the column simply won't show the converted figure */ }
+  return priceFx;
+}
+
+// Steam returns formatted strings ("฿24.25", sometimes with thousands commas).
+function priceParseThb(s){
+  if (!s) return null;
+  let t = String(s).replace(/[^0-9.,]/g, '');
+  if (t.includes(',') && t.includes('.')) t = t.replace(/,/g, '');
+  else if (t.includes(',')) t = /,\d{2}$/.test(t) ? t.replace(',', '.') : t.replace(/,/g, '');
+  const n = parseFloat(t);
+  return isFinite(n) ? n : null;
+}
+function priceFmtThb(n){ return '฿' + Number(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+function priceFmtUsd(n){ return '$' + Number(n).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: n < 1 ? 3 : 2 }); }
+
+// What the price column shows for one item.
+function priceOf(item){
+  if (!item) return null;
+  const rate = priceFx && priceFx.rate;
+  const live = priceCache[item.name_en];
+  if (live && Date.now() - live.at < 24 * 60 * 60 * 1000) {
+    if (!live.listed || live.thb == null) return { source: 'live', listed: false, at: live.at };
+    return { source: 'live', listed: true, thb: live.thb, usd: rate ? live.thb * rate : null, volume: live.volume,
+             at: live.at, stale: Date.now() - live.at > PRICE_TTL_MS };
+  }
+  if (item.steam_price_usd != null) {
+    return { source: 'snapshot', listed: true, usd: item.steam_price_usd, thb: rate ? item.steam_price_usd / rate : null, listings: item.steam_listings };
+  }
+  return null;
+}
+function priceUsdForSort(item){
+  const p = priceOf(item);
+  return p && p.listed && p.usd != null ? p.usd : null;
+}
+
+function priceCellHtml(item){
+  const th = currentLang === 'th';
+  const p = priceOf(item);
+  const attr = `data-price-name="${esc(item.name_en)}"`;
+  if (!p) return `<td style="text-align:right;" ${attr}><span class="hint">—</span></td>`;
+  if (!p.listed) {
+    return `<td style="text-align:right;" ${attr}><span class="hint">${th ? 'ไม่มีขายบนตลาด' : 'not listed'}</span><div style="font-size:10px;color:#7ee787;">● ${th ? 'เช็คสดแล้ว' : 'checked live'}</div></td>`;
+  }
+  // THB is what Steam was asked for; USD is converted from it.
+  const main = th ? (p.thb != null ? priceFmtThb(p.thb) : priceFmtUsd(p.usd)) : (p.usd != null ? priceFmtUsd(p.usd) : priceFmtThb(p.thb));
+  const sub = th ? (p.thb != null && p.usd != null ? '≈ ' + priceFmtUsd(p.usd) : '') : (p.thb != null && p.usd != null ? '≈ ' + priceFmtThb(p.thb) : '');
+  const tag = p.source === 'live'
+    ? `<span style="color:#7ee787;">● ${th ? 'สด' : 'live'}</span>${p.stale ? ` <span class="hint">(${th ? 'เกิน 30 นาที' : '>30 min old'})</span>` : ''}${p.volume ? ` <span class="hint">· ${th ? 'ขายใน 24 ชม.' : '24h sold'} ${esc(p.volume)}</span>` : ''}`
+    : `<span class="hint">${th ? 'ราคาชุด 14 ก.ย.' : '14 Sep snapshot'}${p.listings ? ` · ${p.listings} listings` : ''}</span>`;
+  const url = item.steam_url || `https://steamcommunity.com/market/search?appid=4891320&q=${encodeURIComponent(item.name_en)}`;
+  return `<td style="text-align:right;" ${attr}><a href="${esc(url)}" target="_blank" rel="noopener" style="color:#3fb950;font-weight:700;text-decoration:none;">${esc(main)}</a>${sub ? `<div style="font-size:11px;color:var(--text-dim);">${esc(sub)}</div>` : ''}<div style="font-size:10px;">${tag}</div></td>`;
+}
+
+function priceFindItem(name){
+  return GAME_DATA.equipments.find(e => e.name_en === name) || GAME_DATA.jewelDatabase.find(j => j.name_en === name) || null;
+}
+function priceRefreshCells(name){
+  const item = priceFindItem(name);
+  if (!item) return;
+  document.querySelectorAll('[data-price-name]').forEach(td => { if (td.dataset.priceName === name) td.outerHTML = priceCellHtml(item); });
+}
+function priceRefreshAllCells(){
+  document.querySelectorAll('[data-price-name]').forEach(td => { const it = priceFindItem(td.dataset.priceName); if (it) td.outerHTML = priceCellHtml(it); });
+}
+
+function priceQueueVisible(viewId, force){
+  if (!priceRelayUrl()) return;
+  const view = document.getElementById(viewId);
+  if (!view) return;
+  const names = [...new Set([...view.querySelectorAll('[data-price-name]')].map(el => el.dataset.priceName))];
+  names.forEach(n => {
+    const c = priceCache[n];
+    if (!force && c && Date.now() - c.at < PRICE_TTL_MS) return;
+    if (!priceQueue.includes(n)) priceQueue.push(n);
+  });
+  priceUpdateBars();
+  priceRunQueue();
+}
+
+async function priceRunQueue(){
+  if (priceBusy) return;
+  priceBusy = true;
+  try {
+    await priceEnsureFx();
+    while (priceQueue.length) {
+      const base = priceRelayUrl();
+      if (!base) break;
+      const name = priceQueue[0];
+      let res = null, j = null;
+      try {
+        res = await fetch(`${base}/price?currency=THB&name=${encodeURIComponent(name)}`);
+        j = await res.json().catch(() => null);
+      } catch(e) {
+        priceLastError = 'network';
+        priceUpdateBars();
+        break;   // relay unreachable: stop instead of hammering; the refresh button retries
+      }
+      if (res.status === 429 || (j && j.error === 'steam_rate_limited')) {
+        priceLastError = 'rate';
+        priceUpdateBars();
+        await new Promise(r => setTimeout(r, 60000));   // Steam asked us to slow down
+        continue;
+      }
+      priceQueue.shift();
+      if (res.ok && j) {
+        priceCache[name] = { listed: !!j.listed, thb: priceParseThb(j.lowest_price || j.median_price), median: priceParseThb(j.median_price), volume: j.volume || null, at: Date.now() };
+        priceSaveCache();
+        priceLastError = null;
+        priceRefreshCells(name);
+      } else {
+        priceLastError = (j && j.error) || ('HTTP ' + res.status);
+      }
+      priceUpdateBars();
+      if (priceQueue.length) await new Promise(r => setTimeout(r, PRICE_GAP_MS));
+    }
+  } finally {
+    priceBusy = false;
+    priceUpdateBars();
+  }
+}
+
+function priceStatusText(){
+  const th = currentLang === 'th';
+  if (!priceRelayUrl()) return th ? 'ยังไม่ได้ตั้งค่าเซิร์ฟเวอร์ตัวกลาง — ตอนนี้แสดงราคาชุด 14 ก.ย.' : 'No relay set - showing the 14 Sep snapshot';
+  if (priceLastError === 'network') return th ? '⚠️ ติดต่อเซิร์ฟเวอร์ตัวกลางไม่ได้ ตรวจ URL หรือกดทดสอบ' : '⚠️ Relay unreachable - check the URL or press Test';
+  if (priceLastError === 'rate') return th ? '⏳ Steam ขอให้ช้าลง รอ 1 นาทีแล้วเช็คต่อเอง' : '⏳ Steam asked us to slow down - resuming in a minute';
+  if (priceLastError) return (th ? '⚠️ เช็คราคาไม่ได้: ' : '⚠️ Price check failed: ') + priceLastError;
+  if (priceQueue.length) return th ? `กำลังเช็คราคาสด เหลืออีก ${priceQueue.length} ชิ้น (~${Math.ceil(priceQueue.length * PRICE_GAP_MS / 1000)} วิ)` : `Checking live prices - ${priceQueue.length} left (~${Math.ceil(priceQueue.length * PRICE_GAP_MS / 1000)}s)`;
+  return th ? '✅ ราคาในหน้านี้เป็นราคาสดแล้ว' : '✅ Prices on this page are live';
+}
+function priceUpdateBars(){
+  document.querySelectorAll('.price-bar').forEach(bar => {
+    const st = bar.querySelector('.price-status');
+    if (st) st.textContent = priceStatusText();
+    const fx = bar.querySelector('.price-fx');
+    if (fx) fx.textContent = priceFx && priceFx.rate ? `1 ฿ = $${priceFx.rate.toFixed(5)}` : (currentLang === 'th' ? 'ยังไม่มีอัตราแลกเงิน' : 'no exchange rate yet');
+  });
+}
+
+function priceBarHtml(){
+  const th = currentLang === 'th';
+  const url = priceRelayUrl();
+  return `<div class="price-bar">
+    <b>💱 ${th ? 'ราคาตลาด Steam' : 'Steam market prices'}</b>
+    <span class="hint">${th ? 'เช็คเป็นเงินบาท แล้วแปลงเป็น USD' : 'checked in THB, converted to USD'}</span>
+    <span class="hint price-fx"></span>
+    <input type="text" class="price-relay-input" placeholder="https://wog-steam-price-relay.xxxx.workers.dev" value="${esc(url)}" aria-label="${th ? 'URL เซิร์ฟเวอร์ตัวกลาง' : 'Relay URL'}">
+    <button class="btn btn-outline price-relay-save">${th ? 'บันทึก' : 'Save'}</button>
+    <button class="btn btn-outline price-relay-test">${th ? 'ทดสอบ' : 'Test'}</button>
+    <button class="btn btn-outline price-refresh">${th ? '🔄 เช็คราคาหน้านี้ใหม่' : '🔄 Re-check this page'}</button>
+    <span class="price-status hint" style="flex-basis:100%;"></span>
+  </div>`;
+}
+
+function priceMountBar(viewId){
+  const view = document.getElementById(viewId);
+  if (!view) return;
+  let bar = view.querySelector('.price-bar');
+  if (bar && bar.dataset.lang !== currentLang) { bar.remove(); bar = null; }
+  if (!bar) {
+    view.insertAdjacentHTML('afterbegin', priceBarHtml());
+    bar = view.querySelector('.price-bar');
+    bar.dataset.lang = currentLang;
+    const input = bar.querySelector('.price-relay-input');
+    bar.querySelector('.price-relay-save').addEventListener('click', () => {
+      const v = input.value.trim();
+      try { v ? localStorage.setItem(PRICE_RELAY_KEY, v) : localStorage.removeItem(PRICE_RELAY_KEY); } catch(e) {}
+      priceLastError = null;
+      toast(currentLang === 'th' ? 'บันทึก URL แล้ว' : 'Relay URL saved');
+      priceUpdateBars();
+      priceQueueVisible(viewId, false);
+    });
+    bar.querySelector('.price-relay-test').addEventListener('click', async () => {
+      const base = input.value.trim().replace(/\/+$/, '');
+      if (!base) { toast(currentLang === 'th' ? 'ใส่ URL ก่อน' : 'Enter a URL first'); return; }
+      try {
+        const res = await fetch(`${base}/health`);
+        const j = await res.json();
+        toast(j && j.ok ? (currentLang === 'th' ? '✅ เซิร์ฟเวอร์ตัวกลางใช้ได้' : '✅ Relay is working') : (currentLang === 'th' ? '⚠️ ตอบกลับไม่ถูกต้อง' : '⚠️ Unexpected answer'));
+      } catch(e) {
+        toast(currentLang === 'th' ? '⚠️ ติดต่อไม่ได้ (URL ผิด หรือยังไม่ได้ deploy)' : '⚠️ Unreachable (wrong URL or not deployed)');
+      }
+    });
+    bar.querySelector('.price-refresh').addEventListener('click', () => {
+      if (!priceRelayUrl()) { toast(currentLang === 'th' ? 'ต้องตั้งค่าเซิร์ฟเวอร์ตัวกลางก่อน' : 'Set the relay URL first'); return; }
+      priceLastError = null;
+      priceQueueVisible(viewId, true);
+    });
+  }
+  priceUpdateBars();
+}
+
+function priceAfterRender(viewId){
+  priceMountBar(viewId);
+  const hadRate = !!(priceFx && priceFx.rate);
+  priceEnsureFx().then(() => {
+    if (!hadRate && priceFx && priceFx.rate) priceRefreshAllCells();
+    priceUpdateBars();
+  });
+  priceQueueVisible(viewId, false);
+}
+
+// Re-run after every table render. Watching the view (instead of wrapping the
+// render functions) also catches renders triggered by listeners that captured
+// the original function reference. Changes inside the bar itself are ignored so
+// status updates can't retrigger this.
+['view-equipment', 'view-jewels'].forEach(viewId => {
+  const view = document.getElementById(viewId);
+  if (!view) return;
+  let timer = null;
+  new MutationObserver(muts => {
+    if (muts.every(mu => mu.target.closest && mu.target.closest('.price-bar'))) return;
+    if (muts.every(mu => [...mu.addedNodes].every(n => n.nodeType === 1 && n.matches && n.matches('td[data-price-name]')))) return;
+    clearTimeout(timer);
+    timer = setTimeout(() => { if (view.classList.contains('active')) priceAfterRender(viewId); }, 350);
+  }).observe(view, { childList: true, subtree: true });
+});
+
 /* ================= JEWEL FORGE & STORAGE (read-only counts + one safe toggle) ================= */
 const JEWEL_TIDS_BY_GRADE = (() => {
   const out = {};
@@ -3883,7 +4879,7 @@ function buildLearnedSkillsExpr(){
       var info = nn.net.data.tree.getTreeAllInfo(4);
       out.learned = info.map(function(e){
         var groupId = e._groupTid, treeTid = e._treeTid;
-        var level = Math.round((treeTid - groupId) / 10);
+        var level = Math.round((treeTid - groupId) / 10) + 1;
         return { groupId: groupId, level: level };
       });
       var slots = {};

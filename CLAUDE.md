@@ -140,6 +140,37 @@ testing/bookmarking.
   `est_clear_sec`, so every gold/sec and EXP/sec figure derived from it (Farm Ranking, the
   Smart Analysis farm card) is optimistic for this account — the history table's own
   gold-per-sec column is the real one.
+- **Combat skill level = (treeTid − groupTid)/10 + 1.** Verified 2026-09-16 against the game's own
+  `nn.services.tree.getSkillGroupReachedLevel()` on all 19 learned skills (it reads
+  `nn.db.skill.get(treeTid).Level`; skill rows are keyed `groupTid + (level−1)×10`). Before that
+  date **every page showed one level too low** and used each skill's previous-level damage %.
+  Training levels are `treeTid − groupTid` (matches `getReachedLevel(1, …)` exactly).
+- **Resource Optimizer** (`#optimize`) — built 2026-09-16, **recommend-only** by boss's decision
+  (a "wear it for me" button is a later phase, and writes are risky while error 21028 is open).
+  Four goals the viewer picks from (survive & push / gold+EXP per hour / max damage / balanced),
+  sections for class, skills, gear + jewels, maps and "other" (hero promotion, unspent points,
+  empty sockets, gear waiting for a level), topped by a ranked "do these first" list.
+  Exact from the game: owned items with base stats + socketed jewels (`randomOptions` with
+  `slotIdx > 0` are the sockets), wear rules via the game's own `canEquipByHeroClass` and
+  `getEquipLimitLevel`, socket count `RandomOptionCnt`, jewel fit `JewelGroupID.includes(jewel
+  GroupID)`, skill unlock level / prerequisites / point cost from `nn.db.skill`, hero promotion
+  from `nn.db.hero`, stat names from `nn.db.ability._abilityTypeMap`. **Estimated:** the score —
+  the game has no "what if" combat-power calculator (`ServiceCombatPower` only reads `finalCp`
+  after gear is worn), so `optLineEffect()` converts each stat into a "% equivalent" for the goal
+  (formulas documented there). Class comparison is medium-low confidence by nature: the game
+  computes full stats only for the class being played.
+- **Live Steam prices** (Equipment + Jewels tabs only, boss's call) — checked in **THB** then
+  converted to USD via open.er-api.com. Steam's `priceoverview` has no CORS headers (verified:
+  the browser blocks it), so prices go through `workers/steam-price-relay/` (Cloudflare Worker,
+  deploy steps in its README; boss must deploy it with their own Cloudflare account — until then
+  the column shows the old 14 Sep snapshot, labelled). Only rows on screen are checked, one every
+  3.3 s, cached 30 min, because Steam rate-limits the endpoint (~20/min). The game client itself
+  has no price data (`nn.services.steamMarket` only lists/withdraws items).
+- **Phone layout (fixed 2026-09-16, pre-existing bug).** At ≤860px `.app-shell` becomes a column,
+  but its base rule kept `align-items: flex-start`, so the content column sized itself to its widest
+  table instead of the screen and every `.table-scroll` grew rather than scrolled — on a 375px
+  phone Farm Ranking was 1,174px wide, History 903, Skill DPS 909, Jewels 583. The mobile rule now
+  sets `align-items: stretch` and `.main-content { width: 100% }`. Keep that if the shell changes.
 - **Smart Analysis** (`#smart`) — built 2026-09-15 on top of Live Sync, so it no longer needs
   the manual profile form at all. Four cards, all driven by one `buildProfileExpr()` snapshot:
   Account Overview, DPS Analysis (measured run DPS + our estimate + normal-attack vs skill

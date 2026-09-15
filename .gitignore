@@ -1,2 +1,4 @@
 *.png
 raw/
+.wrangler/
+node_modules/
