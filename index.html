@@ -499,13 +499,22 @@
   </div>
 
   <div class="view" id="view-farm">
+    <div style="margin-bottom:14px;">
+      <h3 style="margin:0;color:var(--gold-bright);" data-i="farm-head-title">🏆 จัดอันดับด่านฟาร์มทอง &amp; EXP</h3>
+      <p class="hint" style="margin:4px 0 0;" data-i="farm-head-sub">จัดอันดับจากผลการตีจริงของบอส (จากเมนูประวัติเข้าด่าน) รวมรอบที่ตายด้วย — ด่านที่ยังไม่เคยตีจะปรับค่าอ้างอิงของเกมตามจังหวะจริงของบอส และจะไม่แนะนำด่านที่ยากกว่าด่านที่เคยผ่านได้ เพราะยังไม่รู้ว่าจะตายไหม</p>
+    </div>
+    <div class="sa-grid" id="farm-cards" style="grid-template-columns:repeat(auto-fit,minmax(260px,1fr));margin-bottom:12px;"></div>
+    <div id="farm-advice" style="margin-bottom:14px;"></div>
     <div class="controls">
       <div class="search-box"><span class="ic">🔍</span><input type="text" id="farm-search" data-i-ph="search_farm"></div>
+      <select id="farm-scope"></select>
       <select id="farm-difficulty-filter"><option value="">--</option></select>
       <select id="farm-sort"></select>
+      <select id="farm-basis"></select>
     </div>
     <div class="result-count" id="farm-count"></div>
     <div class="table-scroll"><table class="data-table" id="farm-table"></table></div>
+    <p class="hint" id="farm-foot" style="margin-top:12px;"></p>
   </div>
 
   <div class="view" id="view-profile">
@@ -882,6 +891,8 @@ const UI_STRINGS = {
   'forge-sw-skills-d': { th: 'ใส่สกิล Active ที่เรียนแล้วจริงของคลาสนั้น เรียงตามเลเวลที่ลงไว้มากสุดก่อน (สกิล Passive ไม่ต้องใส่ช่อง ใช้งานอัตโนมัติอยู่แล้ว)', en: "Equips the real learned Active skills for that class, highest invested level first (Passive skills don't need a slot - they apply automatically)." },
   'forge-sw-reconnect-t': { th: 'ยืนยันเชื่อมต่อใหม่อัตโนมัติเมื่อเน็ตหลุด', en: 'Auto-confirm reconnect on network error' },
   'forge-sw-reconnect-d': { th: 'เจอกล่อง "Reconnect Failed" จะกด Confirm ให้เองไม่ให้ AFK สะดุด — จุดนี้ยังไม่เคยเจอเหตุการณ์จริงให้ทดสอบ ทำตามโครงสร้างที่เจอในโค้ดต้นฉบับ ถ้าเกมเปลี่ยนหน้าตา popup อาจไม่ทำงาน', en: 'Clicks "Confirm" automatically when a "Reconnect Failed" dialog appears, so AFK farming isn\'t interrupted - built from the reference site\'s own code structure but never seen a real disconnect to test against, so it may silently not fire if the game\'s popup shape differs.' },
+  'farm-head-title': { th: '🏆 จัดอันดับด่านฟาร์มทอง & EXP', en: '🏆 Gold & EXP Farm Ranking' },
+  'farm-head-sub': { th: 'จัดอันดับจากผลการตีจริงของบอส (จากเมนูประวัติเข้าด่าน) รวมรอบที่ตายด้วย — ด่านที่ยังไม่เคยตีจะปรับค่าอ้างอิงของเกมตามจังหวะจริงของบอส และจะไม่แนะนำด่านที่ยากกว่าด่านที่เคยผ่านได้ เพราะยังไม่รู้ว่าจะตายไหม', en: "Ranked from your own real runs (Stage Run History), deaths included. Stages you haven't run yet use the game's estimate scaled to your measured pace, and nothing harder than the hardest stage you've actually cleared is ever recommended - its death risk is unknown." },
   'hist-head-title': { th: '📜 ประวัติเข้าด่าน (100 รอบล่าสุด)', en: '📜 Stage Run History (last 100 runs)' },
   'hist-head-sub': { th: 'จับทุกรอบการตีจากตัวเกมโดยตรง — รู้เวลาที่ใช้จริง จำนวนมอบที่ฆ่าจริง เลือดที่เหลือต่ำสุด และแยกได้ว่า ผ่าน / ตาย / ออกกลางทาง เริ่มเก็บนับจากตอนนี้ ย้อนหลังไม่ได้ และต้องเปิดหน้านี้ค้างไว้ระบบจึงจับได้', en: "Every run is caught from the game itself - real duration, real kill count, lowest HP reached, and whether it was cleared, died or abandoned. Recording starts now (no backfill) and this page has to stay open to catch runs." },
   'hist-btn-export': { th: '💾 บันทึกเป็น CSV', en: '💾 Export CSV' },
@@ -1318,7 +1329,7 @@ function renderEquipment(){
   const tbody = document.getElementById('equip-tbody');
   const myToken = ++equipRenderToken;
   tbody.innerHTML = pageList.map(e => `<tr>
-      <td><div class="ec-name-cell">${equipIconBoxHtml(e)}<div class="ec-name-text"><b>${esc(e.name_en)}</b><span class="ec-sub">${esc(e.name_vi)}</span></div></div></td>
+      <td><div class="ec-name-cell">${equipIconBoxHtml(e)}<div class="ec-name-text"><b>${esc(e.name_en)}</b></div></div></td>
       <td>${esc(fld(e,'slot_name'))}</td><td>${tierBadgeHtml(e.tier)}</td><td><b style="color:var(--gold-bright);">Lv.${e.level_req}</b></td>
       <td>${(e.stats||[]).map(s=>esc(fld(s,'text'))).join('<br>')}</td>
       <td style="text-align:right;">${e.steam_price_text ? `<a href="${e.steam_url}" target="_blank" rel="noopener" style="color:#3fb950;font-weight:700;text-decoration:none;">${esc(e.steam_price_text)}</a><div class="hint" style="font-size:10px;">${e.steam_listings} listings</div>` : '<span class="hint">—</span>'}</td>
@@ -1441,7 +1452,7 @@ function renderJewels(){
       ? j.options.map(o => `<div style="color:#7ee787;font-size:12px;margin-bottom:2px;">• ${esc(fld(o,'text'))}</div>`).join('')
       : `<span class="hint">${currentLang==='th'?'ค่าคงที่หรือโบนัสยกระดับ':'Fixed stats or enhancement bonus'}</span>`;
     return `<tr>
-      <td><div class="ec-name-cell">${jewelIconBoxHtml(j)}<div class="ec-name-text"><b>${esc(j.name_en)}</b><span class="ec-sub">${esc(j.name_vi)}</span></div></div></td>
+      <td><div class="ec-name-cell">${jewelIconBoxHtml(j)}<div class="ec-name-text"><b>${esc(j.name_en)}</b></div></div></td>
       <td><span class="tier-badge" style="color:var(--text);border-color:var(--navy-line);background:var(--bg3);">${esc(fld(j,'category'))}</span></td>
       <td>${gradeBadgeHtml(j.grade, fld(j,'grade_name'))}</td>
       <td>${opts}</td>
@@ -1467,36 +1478,305 @@ document.getElementById('jewel-sort').addEventListener('change', renderJewels);
 document.getElementById('btn-jewel-reset').addEventListener('click', jewelResetFilters);
 
 /* ================= FARM RANKING ================= */
-let farmSortKey = 'gold_per_sec', farmSortDir = 1; // 1 = highest first (most useful default for a farm-ranking list)
+/* ================= FARM RANKING =================
+   Two bases, picked by the viewer and always labelled on every row:
+   - "game": the game's own precomputed gold_per_sec / est_clear_sec, which
+     assume a reference character.
+   - "personal" (default once runs exist): built from Stage Run History.
+     Measured 2026-09-16: this account's real clears ran ~2.9x the game's
+     estimate, and the game's #1 gold stage for it (4-2, 321 gold/s on paper)
+     died 4 of 5 runs and earned nothing, while 3-9 really paid 94/s. Ranking by
+     the game's numbers was actively wrong advice.
+   A stage with runs uses its measured rate INCLUDING deaths (gold actually
+   earned / seconds actually spent). A stage without runs uses est_clear_sec
+   scaled by this account's measured slowdown, labelled as an estimate. Stages
+   harder than the hardest one ever cleared are never recommended - their death
+   risk is unknown, not zero. */
+let farmSortKey = localStorage.getItem('wog_farm_sort') || 'gps';
+let farmScope = localStorage.getItem('wog_farm_scope') || 'unlocked';
+let farmBasis = localStorage.getItem('wog_farm_basis') || 'personal';
+
+function saExpPerSec(s){ return (s && s.est_clear_sec) ? s.total_exp / s.est_clear_sec : 0; }
+
+// Shared by Farm Ranking and the Smart Analysis farm card.
+function stagePerfTable(){
+  const stages = GAME_DATA.stageData || [];
+  const byId = new Map(stages.map(s => [s.stage_id, s]));
+  const agg = new Map();
+  stageRunsLoad().forEach(r => {
+    const s = byId.get(r.stageTid);
+    if (!s) return;
+    // Partial runs were caught mid-battle, so their duration can't be trusted.
+    // Abandoned runs were the player leaving on purpose - not the stage's fault,
+    // and no gold was on offer for that time anyway.
+    if (r.status !== 'success' && r.status !== 'failed') return;
+    const a = agg.get(r.stageTid) || { ok: 0, died: 0, okSec: 0, diedSec: 0, estOk: 0 };
+    if (r.status === 'success') { a.ok++; a.okSec += r.duration; a.estOk += s.est_clear_sec || 0; }
+    else { a.died++; a.diedSec += r.duration; }
+    agg.set(r.stageTid, a);
+  });
+
+  let sumOkSec = 0, sumEst = 0, maxClearedNum = null;
+  agg.forEach((a, tid) => {
+    sumOkSec += a.okSec; sumEst += a.estOk;
+    if (a.ok > 0) { const n = byId.get(tid).stage_num; maxClearedNum = maxClearedNum == null ? n : Math.max(maxClearedNum, n); }
+  });
+  const factor = (sumEst > 0 && sumOkSec > 0) ? sumOkSec / sumEst : null;
+
+  const perf = new Map();
+  stages.forEach(s => {
+    const a = agg.get(s.stage_id);
+    const tries = a ? a.ok + a.died : 0;
+    if (tries > 0) {
+      const spent = a.okSec + a.diedSec;
+      perf.set(s.stage_id, {
+        basis: 'measured', runs: tries, ok: a.ok, died: a.died, deathRate: a.died / tries,
+        clearSec: a.ok ? a.okSec / a.ok : null,
+        gps: spent > 0 ? s.total_gold * a.ok / spent : 0,
+        eps: spent > 0 ? s.total_exp * a.ok / spent : 0,
+        risky: a.ok === 0 || a.died / tries >= 0.5,
+      });
+    } else if (factor) {
+      const sec = (s.est_clear_sec || 0) * factor;
+      perf.set(s.stage_id, {
+        basis: 'adjusted', runs: 0, ok: 0, died: 0, deathRate: null, clearSec: sec,
+        gps: sec > 0 ? s.total_gold / sec : 0, eps: sec > 0 ? s.total_exp / sec : 0,
+        risky: maxClearedNum != null && s.stage_num > maxClearedNum,
+      });
+    } else {
+      perf.set(s.stage_id, {
+        basis: 'game', runs: 0, ok: 0, died: 0, deathRate: null, clearSec: s.est_clear_sec,
+        gps: s.gold_per_sec, eps: saExpPerSec(s), risky: false,
+      });
+    }
+  });
+  return { perf, factor, maxClearedNum, hasRuns: agg.size > 0 };
+}
+
+function farmBasisTag(r, P, th){
+  if (r.basis === 'measured') return th ? `วัดจริง ${r.runs} รอบ` : `measured, ${r.runs} runs`;
+  if (r.basis === 'adjusted') return th ? `ประมาณ ×${P.factor.toFixed(1)} ตามจังหวะจริง` : `est. ×${P.factor.toFixed(1)} to your pace`;
+  return th ? 'ค่าอ้างอิงของเกม' : 'game estimate';
+}
+
 function initFarmFilters(){
-  const diffSel = document.getElementById('farm-difficulty-filter');
-  if(diffSel.children.length <= 1){
-    const diffs = [...new Set(GAME_DATA.stageData.map(s=>s.difficulty))];
-    diffSel.innerHTML = `<option value="">${t('all_difficulty')}</option>` + diffs.map(d=>`<option value="${esc(d)}">${esc(d)}</option>`).join('');
-    const sortSel = document.getElementById('farm-sort');
-    sortSel.innerHTML = ['gold_per_sec','total_exp','total_hp','est_clear_sec'].map(k=>`<option value="${k}">${t(k==='gold_per_sec'?'gold_sec':k==='total_exp'?'exp_sec':k==='total_hp'?'total_hp':'clear_sec')}</option>`).join('');
-    sortSel.addEventListener('change', () => { farmSortKey = sortSel.value; renderFarm(); });
-  } else {
-    diffSel.options[0].textContent = t('all_difficulty');
+  const th = currentLang === 'th';
+  const stages = GAME_DATA.stageData || [];
+  const keep = (el, opts) => {
+    const prev = el.value;
+    el.innerHTML = opts.map(([v, label]) => `<option value="${esc(v)}">${esc(label)}</option>`).join('');
+    if (opts.some(([v]) => v === prev)) el.value = prev;
+  };
+  // Option VALUES stay the raw difficulty key (Smart Analysis links in with it);
+  // only the visible text is translated.
+  const diffs = [];
+  stages.forEach(s => { if (!diffs.some(d => d[0] === s.difficulty)) diffs.push([s.difficulty, fld(s, 'difficulty')]); });
+  keep(document.getElementById('farm-difficulty-filter'), [['', t('all_difficulty')], ...diffs]);
+  keep(document.getElementById('farm-sort'), [
+    ['gps', th ? 'เรียงตาม: ทอง/วินาที' : 'Sort: gold/sec'],
+    ['eps', th ? 'เรียงตาม: EXP/วินาที' : 'Sort: EXP/sec'],
+    ['total_gold', th ? 'เรียงตาม: ทองต่อรอบ' : 'Sort: gold per clear'],
+    ['total_exp', th ? 'เรียงตาม: EXP ต่อรอบ' : 'Sort: EXP per clear'],
+    ['clear', th ? 'เรียงตาม: เคลียร์เร็วสุด' : 'Sort: fastest clear'],
+    ['stage', th ? 'เรียงตาม: ลำดับด่าน' : 'Sort: stage order'],
+  ]);
+  keep(document.getElementById('farm-scope'), [
+    ['all', th ? 'ทุกด่าน (400)' : 'All stages (400)'],
+    ['unlocked', th ? 'เฉพาะด่านที่ปลดล็อกแล้ว' : 'Unlocked stages only'],
+    ['measured', th ? 'เฉพาะด่านที่เคยตีจริง' : 'Stages you have run'],
+  ]);
+  keep(document.getElementById('farm-basis'), [
+    ['personal', th ? 'ตัวเลข: ของบอสจริง' : 'Numbers: your real runs'],
+    ['game', th ? 'ตัวเลข: ค่าอ้างอิงของเกม' : "Numbers: game's estimate"],
+  ]);
+  document.getElementById('farm-sort').value = farmSortKey;
+  document.getElementById('farm-scope').value = farmScope;
+  document.getElementById('farm-basis').value = farmBasis;
+
+  const box = document.getElementById('farm-search');
+  if (box.dataset.bound !== '1') {
+    box.dataset.bound = '1';
+    box.addEventListener('input', renderFarm);
+    document.getElementById('farm-difficulty-filter').addEventListener('change', renderFarm);
+    [['farm-sort', v => { farmSortKey = v; localStorage.setItem('wog_farm_sort', v); }],
+     ['farm-scope', v => { farmScope = v; localStorage.setItem('wog_farm_scope', v); }],
+     ['farm-basis', v => { farmBasis = v; localStorage.setItem('wog_farm_basis', v); }]]
+      .forEach(([id, set]) => document.getElementById(id).addEventListener('change', e => { set(e.target.value); renderFarm(); }));
   }
 }
+
 function renderFarm(){
   initFarmFilters();
+  const th = currentLang === 'th';
+  const stages = GAME_DATA.stageData || [];
+  const P = stagePerfTable();
+  const personal = farmBasis === 'personal' && P.hasRuns;
+  const gameRate = s => ({ basis: 'game', runs: 0, ok: 0, died: 0, deathRate: null, clearSec: s.est_clear_sec, gps: s.gold_per_sec, eps: saExpPerSec(s), risky: false });
+  const rate = s => personal ? P.perf.get(s.stage_id) : gameRate(s);
+
+  const live = lastLiveData || {};
+  const curTid = live.stageTid || null;
+  const clearTid = (live.run && live.run.clearStageTid != null) ? live.run.clearStageTid : null;
+  const clearedObj = clearTid ? stages.find(s => s.stage_id === clearTid) : null;
+  const maxUnlockedNum = clearedObj ? clearedObj.stage_num + 1 : null;
+  const isUnlocked = s => maxUnlockedNum == null || s.stage_num <= maxUnlockedNum;
+
+  // ---- recommendation candidates: unlocked, and not a known/unknown death risk ----
+  // Death risk is real data whichever basis is on screen, so it always applies:
+  // flipping to the game's numbers must never put a stage that kills this
+  // character back at the top (it did - 4-2 came back as "best" at 0/5 clears).
+  const riskOf = s => P.hasRuns && P.perf.get(s.stage_id).risky;
+  const candidates = stages.filter(s => isUnlocked(s) && !riskOf(s));
+  const bestGold = [...candidates].sort((a, b) => rate(b).gps - rate(a).gps)[0] || null;
+  const bestExp = [...candidates].sort((a, b) => rate(b).eps - rate(a).eps)[0] || null;
+  const cur = curTid ? stages.find(s => s.stage_id === curTid) : null;
+
+  const card = (cls, head, s, big, sub, lines) => `
+    <div class="sa-card"><div class="sa-card-head ${cls}">${head}</div><div class="sa-card-body">
+      <div style="font-size:15px;font-weight:700;color:var(--text);">${s ? esc(fld(s, 'display_tag')) : '—'} <span class="hint" style="font-size:11px;font-weight:400;">${s ? esc(fld(s, 'area_name')) : ''}</span></div>
+      <div style="font-size:21px;font-weight:700;font-family:'Cinzel',serif;margin:6px 0 2px;">${big}</div>
+      <div class="hint" style="font-size:11.5px;">${sub}</div>
+      ${lines}
+    </div></div>`;
+  const rowsFor = (s) => {
+    if (!s) return '';
+    const r = rate(s);
+    return saRow(th ? 'ทอง/ชั่วโมง (AFK)' : 'Gold/hour (AFK)', saFmt(r.gps * 3600), 'gold')
+      + saRow(th ? 'EXP/ชั่วโมง (AFK)' : 'EXP/hour (AFK)', saFmt(r.eps * 3600), 'good')
+      + saRow(th ? 'เวลาต่อรอบ' : 'Time per clear', r.clearSec ? r.clearSec.toFixed(1) + 's' : '—', 'sm')
+      + (r.basis === 'measured' ? saRow(th ? 'ผลจริง (ผ่าน/ตาย)' : 'Real result (clear/died)', `${r.ok} / ${r.died}`, r.died ? 'warn' : 'good') : '');
+  };
+  document.getElementById('farm-cards').innerHTML =
+    card('sa-h-gold', th ? '🌟 ฟาร์มทองดีที่สุดสำหรับบอส' : '🌟 Best gold stage for you', bestGold,
+      bestGold ? `<span style="color:var(--gold-bright);">${saFmt(rate(bestGold).gps, 1)}</span> <span class="hint" style="font-size:12px;">${th ? 'ทอง/วิ' : 'gold/s'}</span>` : '—',
+      bestGold ? esc(farmBasisTag(rate(bestGold), P, th)) : '', rowsFor(bestGold))
+    + card('sa-h-green', th ? '📈 ดัน EXP เร็วที่สุด' : '📈 Fastest EXP', bestExp,
+      bestExp ? `<span style="color:#bc8cff;">${saFmt(rate(bestExp).eps, 1)}</span> <span class="hint" style="font-size:12px;">EXP/${th ? 'วิ' : 's'}</span>` : '—',
+      bestExp ? esc(farmBasisTag(rate(bestExp), P, th)) : '', rowsFor(bestExp))
+    + card('sa-h-blue', th ? '📍 ด่านที่ฟาร์มอยู่ตอนนี้' : '📍 Farming right now', cur,
+      cur ? `<span style="color:var(--gold-bright);">${saFmt(rate(cur).gps, 1)}</span> <span class="hint" style="font-size:12px;">${th ? 'ทอง/วิ' : 'gold/s'}</span>` : (th ? 'ไม่ได้เชื่อมต่อเกม' : 'not connected'),
+      cur ? esc(farmBasisTag(rate(cur), P, th)) : '', rowsFor(cur));
+
+  // ---- advice ----
+  const adv = document.getElementById('farm-advice');
+  const cr = cur ? rate(cur) : null;
+  if (cur && cr && cr.died > 0 && cr.deathRate >= 0.25 && bestGold && bestGold.stage_id !== cur.stage_id) {
+    adv.className = 'sa-advice hold';
+    adv.innerHTML = `💀 ${th
+      ? `ด่านที่ฟาร์มอยู่ <b>${esc(fld(cur, 'display_tag'))}</b> ตายไป <b>${cr.died} จาก ${cr.runs}</b> รอบ ได้จริงแค่ ${saFmt(cr.gps, 1)} ทอง/วิ — ย้ายไป <b>${esc(fld(bestGold, 'display_tag'))}</b> ได้จริง <b>${saFmt(rate(bestGold).gps, 1)}</b> ทอง/วิ (ในเกม: ล็อกไม่ให้ขึ้นด่านอัตโนมัติ แล้วเลือกด่านนั้นเอง)`
+      : `Your current stage <b>${esc(fld(cur, 'display_tag'))}</b> died <b>${cr.died} of ${cr.runs}</b> runs and really pays only ${saFmt(cr.gps, 1)} gold/s - moving to <b>${esc(fld(bestGold, 'display_tag'))}</b> really pays <b>${saFmt(rate(bestGold).gps, 1)}</b> gold/s (in game: stop auto-advancing and pick that stage yourself)`}`;
+  } else if (cur && cr && bestGold && bestGold.stage_id !== cur.stage_id && rate(bestGold).gps > cr.gps * 1.03) {
+    const g = cr.gps > 0 ? `+${(100 * (rate(bestGold).gps - cr.gps) / cr.gps).toFixed(0)}%` : '';
+    adv.className = 'sa-advice go';
+    adv.innerHTML = `💰 ${th
+      ? `ย้ายไป <b>${esc(fld(bestGold, 'display_tag'))}</b> ได้ทองมากกว่าตอนนี้ <b>${g}</b>`
+      : `Moving to <b>${esc(fld(bestGold, 'display_tag'))}</b> earns <b>${g}</b> more gold than now`}`;
+  } else if (cur && bestGold) {
+    adv.className = 'sa-advice info';
+    adv.innerHTML = `✅ ${th ? 'ด่านที่ฟาร์มอยู่ดีที่สุดแล้ว (หรือต่างกันไม่ถึง 3%)' : 'You are already on the best stage (or within 3%)'}`;
+  } else {
+    adv.className = ''; adv.innerHTML = '';
+  }
+  // When the pick is an estimate (a stage never actually run), say so, and name
+  // the best stage PROVEN on real runs - so moving isn't a blind jump.
+  if (P.hasRuns && bestGold && P.perf.get(bestGold.stage_id).basis !== 'measured') {
+    const proven = candidates
+      .filter(x => { const pm = P.perf.get(x.stage_id); return pm.basis === 'measured' && pm.ok > 0; })
+      .sort((a, b) => P.perf.get(b.stage_id).gps - P.perf.get(a.stage_id).gps)[0];
+    if (!adv.className) adv.className = 'sa-advice info';
+    adv.innerHTML += `<div style="margin-top:6px;">🧪 ${th
+      ? `<b>${esc(fld(bestGold, 'display_tag'))}</b> ยังไม่เคยตีจริง ตัวเลขนี้เป็นประมาณการ — ตีสัก 2-3 รอบแล้วอันดับจะเปลี่ยนเป็นค่าจริงเอง${proven ? ` · ตัวเลือกที่<b>พิสูจน์แล้ว</b>ดีที่สุดคือ <b>${esc(fld(proven, 'display_tag'))}</b> ได้จริง ${saFmt(P.perf.get(proven.stage_id).gps, 1)} ทอง/วิ` : ''}`
+      : `<b>${esc(fld(bestGold, 'display_tag'))}</b> hasn't been run yet, so its number is an estimate - two or three runs there will replace it with the real figure.${proven ? ` The best <b>proven</b> stage is <b>${esc(fld(proven, 'display_tag'))}</b> at a real ${saFmt(P.perf.get(proven.stage_id).gps, 1)} gold/s.` : ''}`}</div>`;
+  }
+  if (!P.hasRuns) {
+    adv.className = 'sa-advice hold';
+    adv.innerHTML = `⚠️ ${th
+      ? 'ยังไม่มีรอบจริงในเมนูประวัติเข้าด่าน ตัวเลขทั้งหมดตอนนี้เป็น<b>ค่าอ้างอิงของเกม</b> ซึ่งวัดจริงแล้วพบว่าช้ากว่าที่เกมบอกได้ถึง ~3 เท่า และไม่รู้ว่าด่านไหนจะตาย — เปิดเกมค้างไว้ให้ระบบเก็บรอบจริงสักพัก อันดับจะแม่นขึ้นเอง'
+      : "No real runs recorded yet, so every number is the <b>game's estimate</b> - which real runs have shown can be ~3x optimistic and says nothing about which stages kill you. Leave the game running for a while and this ranking corrects itself."}`;
+  }
+
+  // ---- list ----
   const q = document.getElementById('farm-search').value.trim().toLowerCase();
   const diff = document.getElementById('farm-difficulty-filter').value;
-  let list = GAME_DATA.stageData.filter(s =>
-    (!q || fld(s,'area_name').toLowerCase().includes(q) || s.chapter_stage.includes(q)) &&
-    (!diff || s.difficulty === diff)
+  let list = stages.filter(s =>
+    (!q || String(s.stage_id).includes(q) || s.chapter_stage.includes(q)
+        || String(fld(s, 'area_name')).toLowerCase().includes(q)
+        || String(fld(s, 'display_tag')).toLowerCase().includes(q)) &&
+    (!diff || s.difficulty === diff) &&
+    (farmScope !== 'unlocked' || isUnlocked(s)) &&
+    (farmScope !== 'measured' || (P.perf.get(s.stage_id) || {}).runs > 0)
   );
-  list = [...list].sort((a,b) => (b[farmSortKey]-a[farmSortKey]) * (farmSortDir));
-  document.getElementById('farm-count').innerHTML = `${t('showing')} <b>${list.length}</b> ${t('items')}`;
+  const cmp = {
+    gps: (a, b) => rate(b).gps - rate(a).gps,
+    eps: (a, b) => rate(b).eps - rate(a).eps,
+    total_gold: (a, b) => b.total_gold - a.total_gold,
+    total_exp: (a, b) => b.total_exp - a.total_exp,
+    // Faster is better, and a stage never cleared (no time) goes last.
+    clear: (a, b) => (rate(a).clearSec || Infinity) - (rate(b).clearSec || Infinity),
+    stage: (a, b) => a.stage_num - b.stage_num,
+  }[farmSortKey] || ((a, b) => rate(b).gps - rate(a).gps);
+  // Value sorts rank SAFE stages first. Without this, rows #1-3 were stages
+  // harder than anything ever cleared, topped by an estimate that silently
+  // assumes the hero survives there - the same trap as ranking 4-2 first.
+  // Plain stage order is left alone.
+  list = list.sort(farmSortKey === 'stage' ? cmp : (a, b) => (riskOf(a) - riskOf(b)) || cmp(a, b));
+
+  document.getElementById('farm-count').innerHTML = `${t('showing')} <b>${list.length}</b> ${t('items')}`
+    + (personal && P.factor ? ` · <span class="hint">${th ? `จังหวะจริงของบอส ช้ากว่าค่าอ้างอิงของเกม ×${P.factor.toFixed(2)}` : `your real pace vs the game's estimate: ×${P.factor.toFixed(2)}`}</span>` : '');
+
   const table = document.getElementById('farm-table');
-  table.innerHTML = `<thead><tr><th>${t('stage')}</th><th>${t('area')}</th><th>${t('difficulty')}</th><th>${t('gold_sec')}</th><th>${t('exp_sec')}</th><th>${t('total_hp')}</th><th>${t('clear_sec')}</th></tr></thead><tbody></tbody>`;
-  const tbody = table.querySelector('tbody');
-  tbody.innerHTML = list.slice(0, 400).map(s => `<tr>
-    <td>${esc(s.chapter_stage)}</td><td>${esc(fld(s,'area_name'))}</td><td>${esc(fld(s,'difficulty'))}</td>
-    <td>${s.gold_per_sec.toFixed(2)}</td><td>${(s.total_exp/s.est_clear_sec).toFixed(2)}</td><td>${s.total_hp.toLocaleString()}</td><td>${s.est_clear_sec}</td>
-  </tr>`).join('');
+  if (!list.length) {
+    table.innerHTML = `<tbody><tr><td class="empty-state">${farmScope === 'measured'
+      ? (th ? 'ยังไม่มีด่านที่ตีจริง — เปิดเกมค้างไว้ให้เมนูประวัติเข้าด่านเก็บรอบก่อน' : 'No stages run yet - keep the game running so Stage Run History can record some')
+      : (th ? 'ไม่พบด่านที่ตรงกับตัวกรอง' : 'No stages match these filters')}</td></tr></tbody>`;
+  } else {
+    table.innerHTML = `<thead><tr>
+        <th style="width:48px;text-align:center;">#</th>
+        <th>🗺️ ${th ? 'ด่าน' : 'Stage'}</th>
+        <th>🌲 ${th ? 'พื้นที่' : 'Area'}</th>
+        <th>${t('difficulty')}</th>
+        <th style="color:var(--gold-bright);">💰 ${th ? 'ทอง/วิ' : 'Gold/s'}</th>
+        <th style="color:#bc8cff;">📈 EXP/${th ? 'วิ' : 's'}</th>
+        <th>🪙 ${th ? 'ทอง/นาที' : 'Gold/min'}</th>
+        <th>🎁 ${th ? 'ทองต่อรอบ (ด่าน+บอส)' : 'Gold per clear (stage+boss)'}</th>
+        <th>⭐ ${th ? 'EXP ต่อรอบ' : 'EXP per clear'}</th>
+        <th>⏱️ ${th ? 'เวลาต่อรอบ' : 'Time per clear'}</th>
+        <th>❤️ ${th ? 'เลือดมอบรวม' : 'Total HP'}</th>
+        <th>📊 ${th ? 'ผลจริง ผ่าน/ตาย' : 'Real clear/died'}</th>
+        <th>${th ? 'คำแนะนำ' : 'Verdict'}</th>
+      </tr></thead><tbody>` +
+      list.slice(0, 400).map((s, i) => {
+        const r = rate(s);
+        const isCur = s.stage_id === curTid, isBest = bestGold && s.stage_id === bestGold.stage_id;
+        let verdict;
+        if (!isUnlocked(s)) verdict = `<span style="color:var(--text-dim);">🔒 ${th ? 'ยังไม่ปลดล็อก' : 'locked'}</span>`;
+        else if (riskOf(s) && P.perf.get(s.stage_id).basis === 'measured') verdict = `<b style="color:#f85149;">💀 ${th ? 'ตายบ่อย' : 'dies often'}</b>`;
+        else if (riskOf(s)) verdict = `<span style="color:#ffa657;">⚠️ ${th ? 'ยากกว่าที่เคยผ่าน' : 'harder than any clear'}</span>`;
+        else if (isBest) verdict = `<b style="color:var(--gold-bright);">⭐ ${personal ? (th ? 'ดีที่สุดสำหรับบอส' : 'best for you') : (th ? 'ดีที่สุดตามค่าเกม' : 'best by game estimate')}</b>`;
+        else verdict = '<span style="color:var(--text-dim);">—</span>';
+        const bg = isBest ? 'background:rgba(212,175,55,.10);' : isCur ? 'background:rgba(56,139,253,.10);' : '';
+        return `<tr style="${bg}">
+          <td style="text-align:center;">${i + 1}</td>
+          <td><b style="color:#58a6ff;">${esc(fld(s, 'display_tag'))}</b>${isCur ? ` <span class="sidebar-badge">${th ? 'ฟาร์มอยู่' : 'current'}</span>` : ''}<div class="dpsb-skillsub">ID: ${s.stage_id}</div></td>
+          <td>${esc(fld(s, 'area_name'))}</td>
+          <td>${esc(fld(s, 'difficulty'))}</td>
+          <td style="color:var(--gold-bright);font-weight:700;">${saFmt(r.gps, 2)}</td>
+          <td style="color:#bc8cff;font-weight:700;">${saFmt(r.eps, 2)}</td>
+          <td>${saFmt(r.gps * 60)}</td>
+          <td>${saFmt(s.total_gold)}<div class="dpsb-skillsub">${saFmt(s.clear_gold)} + ${th ? 'บอส' : 'boss'} ${saFmt(s.boss_gold)}</div></td>
+          <td>${saFmt(s.total_exp)}</td>
+          <td>${r.clearSec ? r.clearSec.toFixed(1) + 's' : '—'}<div class="dpsb-skillsub" style="color:${r.basis === 'measured' ? '#7ee787' : r.basis === 'adjusted' ? '#ffa657' : 'var(--text-dim)'};">${esc(farmBasisTag(r, P, th))}</div></td>
+          <td>${saFmt(s.total_hp)}</td>
+          <td>${(() => { const pm = P.perf.get(s.stage_id); return pm && pm.basis === 'measured' ? `<b style="color:${pm.died ? '#ffa657' : '#7ee787'};">${pm.ok} / ${pm.died}</b>` : '<span style="color:var(--text-dim);">—</span>'; })()}</td>
+          <td>${verdict}</td>
+        </tr>`;
+      }).join('') + `</tbody>`;
+  }
+
+  document.getElementById('farm-foot').innerHTML = personal
+    ? (th ? `ที่มาของตัวเลข: <span style="color:#7ee787;">วัดจริง</span> = ทองที่ได้จริง ÷ เวลาที่ใช้จริง <b>รวมรอบที่ตาย</b> (รอบที่ตายเสียเวลาแต่ไม่ได้ทอง) · <span style="color:#ffa657;">ประมาณ ×${P.factor ? P.factor.toFixed(1) : '?'}</span> = ด่านที่ยังไม่เคยตี ใช้ค่าอ้างอิงของเกมคูณจังหวะจริงของบอส ยังไม่รู้ความเสี่ยงตาย · ไม่นับรอบ "ออกกลางทาง" และ "จับได้ไม่ครบรอบ" เพราะเวลาไม่ตรง`
+          : `Where the numbers come from: <span style="color:#7ee787;">measured</span> = gold actually earned ÷ time actually spent, <b>deaths included</b> (a death costs time and pays nothing). <span style="color:#ffa657;">est. ×${P.factor ? P.factor.toFixed(1) : '?'}</span> = a stage you haven't run, using the game's estimate scaled to your real pace; its death risk is unknown. Abandoned and partial runs are left out because their timing isn't trustworthy.`)
+    : (th ? 'ตัวเลขทั้งหมดเป็นค่าอ้างอิงที่เกมคำนวณไว้ล่วงหน้า สำหรับตัวละครมาตรฐาน ไม่ใช่ของบอส' : "Every number here is the game's own precomputed reference for a standard character, not yours.");
 }
 
 /* ================= PROFILE + DPS ================= */
@@ -1518,8 +1798,10 @@ const PROFILE_FIELDS = [
      nickname        nn.net.data.user._user._nick
      level / EXP     nn.services.user.getCurrentExpInfo()
      combat power    nn.net.data.user._profile._combatPower
-     real DPS        nn.services.contentState.getValue(103)  (the game's own
-                     combat DPS stat - matches what the game UI shows)
+     combat stats    nn.services.contentState.getValue(id) - ids and their real
+                     names are in the comment above PROFILE_ABILITY_IDS. There is
+                     NO DPS stat; 103 is HP (an earlier note here said otherwise
+                     and was wrong).
      currencies      NetContainerItem._mapItemStack, named via nn.db.item.get
                      + nn.db.locale (so names are the game's own, not guesses)
      stage           NetContainerStage._stageInfo (_stageTid = farming now,
@@ -2500,6 +2782,7 @@ function finishStageRun(now){
   });
   stageRunsSave(list);
   if (currentView === 'history') renderHistory();
+  if (currentView === 'farm') renderFarm();
 }
 
 const RUN_STATUS_META = {
@@ -2682,8 +2965,6 @@ function saFmt(n, dp){
   if (n == null || !isFinite(n)) return '—';
   return Number(n).toLocaleString(undefined, { maximumFractionDigits: dp == null ? 0 : dp });
 }
-function saExpPerSec(s){ return (s && s.est_clear_sec) ? s.total_exp / s.est_clear_sec : 0; }
-
 // Same DPS model as the top bar (calibrated additive stacking of the three
 // "increased %" categories), applied per skill instead of once overall.
 function smartDpsModel(d){
@@ -2900,47 +3181,74 @@ function saRenderSkill(d, m, th){
 }
 
 /* ---- card 4: best gold / EXP farming stage ---- */
+// Uses the same personal performance table as Farm Ranking. This card used to
+// rank by the game's own gold_per_sec and told the boss to move to 4-2 (+4.7%
+// on paper) - a stage that then died 4 of 5 runs and paid nothing.
 function saRenderFarm(d, th){
   const stages = GAME_DATA.stageData || [];
+  const P = stagePerfTable();
+  const personal = P.hasRuns;
   const cur = stages.find(s => s.stage_id === d.stageTid);
   const cleared = stages.find(s => s.stage_id === d.clearStageTid);
   // The next stage after the highest cleared one is playable too, so +1.
   const maxNum = cleared ? cleared.stage_num + 1 : (cur ? cur.stage_num : Infinity);
   const unlocked = stages.filter(s => s.stage_num <= maxNum);
-  const byGold = [...unlocked].sort((a, b) => b.gold_per_sec - a.gold_per_sec);
-  const byExp = [...unlocked].sort((a, b) => saExpPerSec(b) - saExpPerSec(a));
+  const rate = s => personal ? P.perf.get(s.stage_id)
+    : { basis: 'game', runs: 0, ok: 0, died: 0, deathRate: null, clearSec: s.est_clear_sec, gps: s.gold_per_sec, eps: saExpPerSec(s), risky: false };
+  const safe = unlocked.filter(s => !rate(s).risky);
+  const byGold = [...safe].sort((a, b) => rate(b).gps - rate(a).gps);
+  const byExp = [...safe].sort((a, b) => rate(b).eps - rate(a).eps);
   const bestGold = byGold[0], bestExp = byExp[0];
-  const curGps = cur ? cur.gold_per_sec : 0;
-  const gain = (bestGold && curGps > 0) ? 100 * (bestGold.gold_per_sec - curGps) / curGps : 0;
-  const stageLine = (s) => `<div class="sa-item" data-stage-id="${s.stage_id}" style="cursor:pointer;">
+  const cr = cur ? rate(cur) : null;
+  const curGps = cr ? cr.gps : 0;
+  const stageLine = (s) => {
+    const r = rate(s);
+    return `<div class="sa-item" data-stage-id="${s.stage_id}" style="cursor:pointer;">
       <span class="sa-rank">▸</span>
       <div style="flex:1;min-width:0;">
         <div class="sa-item-name">${esc(fld(s, 'display_tag'))}</div>
-        <div class="sa-item-meta">${esc(fld(s, 'area_name'))} · ${th ? 'เคลียร์ ~' : '~'}${s.est_clear_sec}s</div>
+        <div class="sa-item-meta">${esc(fld(s, 'area_name'))} · ${esc(farmBasisTag(r, P, th))}</div>
       </div>
-      <div class="sa-item-val">${saFmt(s.gold_per_sec, 1)}<small>${saFmt(saExpPerSec(s), 1)} EXP/s</small></div>
+      <div class="sa-item-val">${saFmt(r.gps, 1)}<small>${saFmt(r.eps, 1)} EXP/s</small></div>
     </div>`;
+  };
+
+  let advice;
+  if (cur && cr && cr.died > 0 && cr.deathRate >= 0.25 && bestGold && bestGold.stage_id !== cur.stage_id) {
+    advice = `<div class="sa-advice hold">💀 ${th
+      ? `ด่านที่ฟาร์มอยู่ตายไป <b>${cr.died} จาก ${cr.runs}</b> รอบ ได้จริงแค่ ${saFmt(curGps, 1)} ทอง/วิ — ย้ายไป <b>${esc(fld(bestGold, 'display_tag'))}</b> ได้จริง <b>${saFmt(rate(bestGold).gps, 1)}</b> ทอง/วิ`
+      : `Your current stage died <b>${cr.died} of ${cr.runs}</b> runs and really pays ${saFmt(curGps, 1)} gold/s - <b>${esc(fld(bestGold, 'display_tag'))}</b> really pays <b>${saFmt(rate(bestGold).gps, 1)}</b>`}</div>`;
+  } else if (bestGold && cur && bestGold.stage_id !== cur.stage_id && curGps > 0 && rate(bestGold).gps > curGps * 1.03) {
+    const gain = 100 * (rate(bestGold).gps - curGps) / curGps;
+    advice = `<div class="sa-advice go">💰 ${th
+      ? `ย้ายไปฟาร์ม <b>${esc(fld(bestGold, 'display_tag'))}</b> ได้ทองมากกว่าราว <b>+${gain.toFixed(1)}%</b> (${saFmt(rate(bestGold).gps, 2)} ทอง/วิ)`
+      : `Switch to <b>${esc(fld(bestGold, 'display_tag'))}</b> for about <b>+${gain.toFixed(1)}%</b> more gold (${saFmt(rate(bestGold).gps, 2)}/s)`}</div>`;
+  } else {
+    advice = `<div class="sa-advice info">✅ ${th ? 'ด่านที่ฟาร์มอยู่ให้ทองดีที่สุดเท่าที่ปลอดภัยแล้ว (หรือต่างกันไม่ถึง 3% ไม่คุ้มย้าย)' : 'Your current stage is already the best safe gold stage (or within 3%, not worth switching)'}</div>`;
+  }
+  if (!personal) {
+    advice += `<div class="sa-advice hold" style="margin-top:8px;">⚠️ ${th ? 'ยังไม่มีรอบจริงบันทึกไว้ ตัวเลขนี้เป็นค่าอ้างอิงของเกม ซึ่งเคยวัดได้ว่าช้ากว่าจริง ~3 เท่า และไม่รู้ว่าด่านไหนจะตาย' : "No real runs yet - these are the game's estimates, which have measured ~3x optimistic and say nothing about deaths."}</div>`;
+  }
+
   const el = document.getElementById('sa-farm');
   el.innerHTML =
     saRow(th ? 'ด่านที่ฟาร์มอยู่' : 'Currently farming', cur ? esc(fld(cur, 'display_tag')) : '—', 'sm')
     + saRow(th ? 'ด่านที่ผ่านสูงสุด' : 'Highest cleared', cleared ? esc(fld(cleared, 'display_tag')) : '—', 'sm')
-    + saRow(th ? 'ทอง/วินาที' : 'Gold/sec', cur ? saFmt(cur.gold_per_sec, 2) : '—', 'gold')
-    + saRow(th ? 'ทอง/ชั่วโมง (ทิ้ง AFK)' : 'Gold/hour (AFK)', cur ? saFmt(cur.gold_per_sec * 3600) : '—', 'gold')
-    + saRow(th ? 'EXP/วินาที' : 'EXP/sec', cur ? saFmt(saExpPerSec(cur), 2) : '—', 'good')
-    + saRow(th ? 'EXP/ชั่วโมง (ทิ้ง AFK)' : 'EXP/hour (AFK)', cur ? saFmt(saExpPerSec(cur) * 3600) : '—', 'good')
+    + saRow(th ? 'ทอง/วินาที' : 'Gold/sec', cr ? saFmt(cr.gps, 2) : '—', 'gold')
+    + saRow(th ? 'ทอง/ชั่วโมง (ทิ้ง AFK)' : 'Gold/hour (AFK)', cr ? saFmt(cr.gps * 3600) : '—', 'gold')
+    + saRow(th ? 'EXP/วินาที' : 'EXP/sec', cr ? saFmt(cr.eps, 2) : '—', 'good')
+    + saRow(th ? 'EXP/ชั่วโมง (ทิ้ง AFK)' : 'EXP/hour (AFK)', cr ? saFmt(cr.eps * 3600) : '—', 'good')
+    + saRow(th ? 'ที่มาของตัวเลข' : 'Source of these numbers', cr ? esc(farmBasisTag(cr, P, th)) : '—', 'sm')
     + saRow(th ? 'ด่านที่ปลดล็อกแล้ว' : 'Stages unlocked', `${saFmt(unlocked.length)} / ${saFmt(stages.length)}`, 'sm')
-    + (bestGold && cur && gain > 3
-      ? `<div class="sa-advice go">💰 ${th ? `ย้ายไปฟาร์ม <b>${esc(fld(bestGold, 'display_tag'))}</b> ได้ทองมากกว่าราว <b>+${gain.toFixed(1)}%</b> (${saFmt(bestGold.gold_per_sec, 2)} ทอง/วิ)` : `Switch to <b>${esc(fld(bestGold, 'display_tag'))}</b> for about <b>+${gain.toFixed(1)}%</b> more gold (${saFmt(bestGold.gold_per_sec, 2)}/s)`}</div>`
-      : `<div class="sa-advice info">✅ ${th ? 'ด่านที่ฟาร์มอยู่ให้ทองดีที่สุดเท่าที่ปลดล็อกแล้ว (หรือต่างกันไม่ถึง 3% ไม่คุ้มย้าย)' : 'Your current stage is already the best unlocked gold stage (or within 3%, not worth switching)'}</div>`)
+    + advice
     + (bestExp && cur && bestExp.stage_id !== cur.stage_id
-      ? `<div class="sa-advice info" style="margin-top:8px;">📈 ${th ? `ถ้าอยากดันเลเวล ด่าน EXP ดีที่สุดที่ปลดล็อกแล้วคือ <b>${esc(fld(bestExp, 'display_tag'))}</b> (${saFmt(saExpPerSec(bestExp), 1)} EXP/วิ)` : `For leveling, the best unlocked EXP stage is <b>${esc(fld(bestExp, 'display_tag'))}</b> (${saFmt(saExpPerSec(bestExp), 1)} EXP/s)`}</div>`
+      ? `<div class="sa-advice info" style="margin-top:8px;">📈 ${th ? `ถ้าอยากดันเลเวล ด่าน EXP ดีที่สุดที่ปลอดภัยคือ <b>${esc(fld(bestExp, 'display_tag'))}</b> (${saFmt(rate(bestExp).eps, 1)} EXP/วิ)` : `For leveling, the best safe EXP stage is <b>${esc(fld(bestExp, 'display_tag'))}</b> (${saFmt(rate(bestExp).eps, 1)} EXP/s)`}</div>`
       : '')
-    + `<div class="sa-sub">${th ? 'ทอง/วินาที สูงสุด 3 อันดับ (ที่ปลดล็อกแล้ว)' : 'Top 3 gold/sec (unlocked)'}</div>`
+    + `<div class="sa-sub">${th ? 'ทอง/วินาที สูงสุด 3 อันดับ (ปลอดภัย+ปลดล็อกแล้ว)' : 'Top 3 gold/sec (safe, unlocked)'}</div>`
     + byGold.slice(0, 3).map(stageLine).join('')
-    + `<div class="sa-sub">${th ? 'EXP/วินาที สูงสุด 3 อันดับ (ที่ปลดล็อกแล้ว)' : 'Top 3 EXP/sec (unlocked)'}</div>`
+    + `<div class="sa-sub">${th ? 'EXP/วินาที สูงสุด 3 อันดับ (ปลอดภัย+ปลดล็อกแล้ว)' : 'Top 3 EXP/sec (safe, unlocked)'}</div>`
     + byExp.slice(0, 3).map(stageLine).join('');
-  // Navigation is sidebar-click driven (no hash router) - same pattern the
-  // Profile page's gear cards use.
+  // Navigation is sidebar-click driven - same pattern the Profile gear cards use.
   el.querySelectorAll('[data-stage-id]').forEach(node => node.addEventListener('click', () => {
     const s = stages.find(x => x.stage_id === parseInt(node.dataset.stageId, 10));
     if (!s) return;
@@ -2949,8 +3257,10 @@ function saRenderFarm(d, th){
     setTimeout(() => {
       const box = document.getElementById('farm-search');
       const diff = document.getElementById('farm-difficulty-filter');
+      const scope = document.getElementById('farm-scope');
       if (box) box.value = s.chapter_stage;
       if (diff) diff.value = s.difficulty;
+      if (scope) { scope.value = 'all'; farmScope = 'all'; }
       renderFarm();
     }, 60);
   }));

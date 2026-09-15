@@ -54,9 +54,22 @@ testing/bookmarking.
 
 - **Skill Tree** — all 3 classes × 5 branches × 105 skills, click +/- to simulate point
   allocation (`localStorage`, never touches the real game/save).
-- **Farm Ranking** — all 400 stages, sortable (Gold/sec default, highest first), searchable,
-  filterable by difficulty. This table's numbers are the game's own real precomputed values,
-  not derived from character stats — the most reliably accurate menu in the whole tool.
+- **Farm Ranking** (`#farm`) — rebuilt 2026-09-16. The old note here called the game's own
+  precomputed `gold_per_sec` "the most reliably accurate menu in the whole tool"; **real runs
+  proved that wrong for this account.** The game's `est_clear_sec` assumes a reference
+  character: this account's clears ran ~2.9× longer, and the game's #1 gold stage for it (4-2,
+  321 gold/s on paper) died 5 of 5 runs and paid nothing, while 3-9 really paid 94/s. The old
+  Smart Analysis farm card had even advised moving to 4-2.
+  Now built on `stagePerfTable()` (shared with the Smart Analysis farm card): a stage with runs
+  uses its **measured rate including deaths** (gold earned ÷ seconds spent on cleared + died
+  runs; abandoned/partial runs are excluded as untrustworthy timing); a stage without runs uses
+  `est_clear_sec` × this account's measured slowdown, labelled as an estimate. **Death risk is
+  applied whichever number basis is on screen** — flipping to "game numbers" must never put a
+  deadly stage back at ⭐ best (it did, before the fix). Stages harder than the hardest one
+  ever cleared are never recommended. When the top pick is only an estimate, the advice says
+  so and names the best *proven* stage too. Also fixed three old bugs: the difficulty filter
+  showed raw Vietnamese, the "EXP/sec" sort actually sorted total EXP, and "clear time"
+  sorted slowest-first.
 - **Equipment** (1872 items) / **Jewels** (85) / **Training** (40) — searchable reference,
   chunk-rendered (equipment) so 1872 rows never block the main thread on insert.
 - **Profile / DPS** — a local-only character-stat form (attack/crit/bonuses, defaults to the
