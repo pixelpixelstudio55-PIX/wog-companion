@@ -64,29 +64,61 @@ testing/bookmarking.
   ⚠️ **The DPS formula is an estimate and does NOT reproduce the game's own number** — see
   the Skill DPS section below for what was measured and what replaced it. It survives only as
   the offline fallback (no game running) and as a source of *ratios*.
-- **Skill DPS breakdown** (`#dpsbreak`) — rebuilt 2026-09-15 against the live game.
-  **Measured finding, don't re-derive it:** the game's own DPS (`contentState.getValue(103)`)
-  **already includes skill damage** — every normal-attack-only formula we could build lands far
-  below it (2417.8 attack / 1.0544 hits-per-sec / 32.8% crit rate / 193.7% crit dmg /
-  +26.7% general +45% PvE +35% boss ⇒ real 10,796; standard-crit additive 6,889, our-crit
-  additive 8,617, standard-crit multiplicative 8,266), and it moves when the equipped skills
-  move. It is a stable computed stat, not a rolling measurement (identical to 12 decimals
-  across repeated polls). **We could not reproduce it and deliberately do not pretend to.**
-  What *is* exact is each source's **share**: normal attack contributes `hits/sec`, a skill
-  contributes `(damage% / 100) / cooldown`, and attack/crit/every damage bonus multiply all
-  sources alike so they cancel out of the ratio. So the page splits the game's real DPS by
-  that share (`dpsbWeights()`), and `smartDpsModel()` carries an `anchor` that rescales every
-  absolute number onto it — which is why Skill DPS and Smart Analysis now agree exactly.
-  Keep this approach; don't reintroduce a "model total vs real, deviation %" row.
+- **Ability ids — read them from the game, never guess.** `nn.db.ability._convertFinalToBaseMap`
+  maps each final stat (1xx) to its base row (3xxx), and `_abilityTypeMap` holds that row's
+  locale key, so the game will name its own stats. Corrected 2026-09-16 after **103 was
+  wrongly used as "real DPS"** for two menus (a label inherited from the reference site's
+  `realDps`): 103 is **HP**, proven equal to the combat pawn's own `_maxHp`, and 105 is
+  **Movement Speed**, not HP. The authoritative list now lives in a comment above
+  `PROFILE_ABILITY_IDS` in `index.html`. **The game exposes no DPS stat at all** — anything
+  labelled DPS in this app is either our own estimate or a measured throughput.
+- **Skill DPS breakdown** (`#dpsbreak`) — rebuilt 2026-09-15, corrected 2026-09-16.
+  Three tiers of trust, kept visibly separate in the UI and worth preserving:
+  - **Exact**: equipped skills, their real levels, cooldowns, casts/min, and the **% share** of
+    damage. The share needs no formula — normal attack contributes `hits/sec`, a skill
+    contributes `(damage% / 100) / cooldown`, and attack/crit/every damage bonus multiply all
+    sources alike so they cancel out of the ratio (`dpsbWeights()`).
+  - **Measured**: `stageRunMeasuredDps()` = mobs that actually died × that stage's real
+    `avg_mob_hp` ÷ real elapsed seconds. Real, but it is clear *throughput*, so it includes
+    time spent waiting for spawns.
+  - **Estimated**: the DPS / damage-per-cast / damage-per-minute columns, from our own formula.
+    Fine for ranking skills, not an in-game number.
+  **Measured finding worth keeping:** the estimate runs ~20–37× the measured throughput, and
+  mob defense cannot explain it (350 vs 2,418 attack on stage 3-10). The hero is only dealing
+  damage a few percent of the time — clear speed is gated by the **spawn rate**, not by damage.
+  So on a stage where mobs already die in one hit, more DPS does not clear it faster;
+  survivability is what unlocks higher stages. The page says this out loud.
   Also here: live stage banner, mob/boss mode (boss mode applies only the real boss-bonus
-  ratio — **no invented AoE multiplier**, the data doesn't say which skills are AoE), and a
-  3-class comparison table fed by `recordClassDpsSnapshot()` (localStorage `wog_class_dps_log`,
-  written from both this page and Smart Analysis; unseen classes stay blank, never guessed).
+  ratio from ability 1057 — **no invented AoE multiplier**, the data doesn't say which skills
+  are AoE), and a 3-class comparison table fed by `recordClassDpsSnapshot()` (localStorage
+  `wog_class_dps_log`, written from both this page and Smart Analysis; unseen classes stay
+  blank, never guessed).
+- **Stage Run History** (`#history`) — rebuilt 2026-09-16 as a real per-run tracker.
+  `LIVE_SYNC_EXPR` now also returns `out.run` from `ServiceCombat.getCurrentActiveCombatProxy()`:
+  `_gameId` (run identity), `_elapsedTime` (the run's own clock), `_dieMobCnt` (kills),
+  `_bStageClearSequenceStarted`, `_gameState`/`_isGameEnd`, `_mapMonsterPawnProxy.size`, plus
+  the hero pawn's `_curHp`/`_maxHp`/`_isDead`. From those, `trackStageRun()` derives a run's
+  true duration, its lowest HP, and a status: `success` / `failed` / `abandoned` / `partial`
+  (caught mid-run, so its duration can't be trusted). Up to 100 runs in `wog_stage_runs`,
+  plus a LIVE row, summary cards, CSV export, and an advice line that warns when the death
+  rate is high or real clear times drift from `est_clear_sec`.
+  **Verified against real gameplay** on 2026-09-16: a death on 3-10 (HP → 0%, 58/70 kills,
+  101.4s) recorded as `failed`, and a clear of 3-9 (67/70 kills, lowest HP 20.6%, 129.6s)
+  recorded as `success`.
+  The reference site does this by injecting `globalThis.__stageTracker` **into the game
+  process**. We deliberately keep the tracker in our page: it samples the same values at the
+  same 2s cadence, so accuracy is identical, and nothing is written into the game's globals.
+  **Consequence worth remembering:** real clear times ran ~199% longer than the game's own
+  `est_clear_sec`, so every gold/sec and EXP/sec figure derived from it (Farm Ranking, the
+  Smart Analysis farm card) is optimistic for this account — the history table's own
+  gold-per-sec column is the real one.
 - **Smart Analysis** (`#smart`) — built 2026-09-15 on top of Live Sync, so it no longer needs
   the manual profile form at all. Four cards, all driven by one `buildProfileExpr()` snapshot:
-  Account Overview, Real DPS Analysis (real DPS from ability 103 + normal-attack vs skill
+  Account Overview, DPS Analysis (measured run DPS + our estimate + normal-attack vs skill
   share), Skill Tree Optimization, and Optimal Gold/EXP Farming (best unlocked stage, ≥3%
-  threshold before it suggests switching).
+  threshold before it suggests switching). Its DPS numbers follow the same three-tiers-of-trust
+  rule as the Skill DPS page above — it used to headline ability 103 as "real DPS", which was
+  wrong.
   ⚠️ **The upgrade ranking deliberately scores the DPS you'd actually gain, not raw skill
   damage.** With all 6 skill slots full, learning a 7th skill adds nothing until it replaces
   an equipped one, so an unequipped skill is scored against the *weakest equipped* skill and
@@ -111,12 +143,13 @@ own `127.0.0.1`, so hosting this publicly never exposes anyone else's game.
   `Object.keys()` — this was the missing piece for a while). `NetContainerItem._mapItemStack`
   holds currency/item counts by tid (1000=gold, 6000=diamond); `ServiceUser.getCurrentExpInfo()`
   gives level/EXP; `ServiceContentState.getValue(id)` gives live combat stats by the same
-  `E_AbilityType` ids documented in the game's own enum table (101=attack, 104=attack speed,
-  106/107=crit rate/damage, 1054/1057/1058=PvE/Boss/general damage bonus).
+  `E_AbilityType` ids — **but take the id list from the "Ability ids" bullet above, read out of
+  the game's own tables; the ones assumed here in 2026-09-15 included two wrong ones.**
 - Fed into a persistent top bar (own design, not the reference site's layout) shown on every
   tab, plus three new computed tabs — Skill DPS Breakdown, Smart Analysis (skill-upgrade
-  ranking), Stage Run History (local log starting from now, can't backfill or detect
-  clear-vs-fail) — all pure client-side math on data already in `game_data.js`.
+  ranking), Stage Run History (local log starting from now, can't backfill; clear-vs-fail
+  detection was added 2026-09-16 — see its section above) — all client-side math on data
+  already in `game_data.js`, plus the live combat read the run tracker needs.
 
 **Real game icons**: equipment/jewel/training items share the *same* base64 icon atlas as
 skills (`skillIconsBase64` in the reference page), keyed by each item's own `icon` field which

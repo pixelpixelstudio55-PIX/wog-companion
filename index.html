@@ -620,8 +620,20 @@
   </div>
 
   <div class="view" id="view-history">
-    <p class="hint" style="margin-bottom:14px;">บันทึกอัตโนมัติทุกครั้งที่ Live Sync ตรวจพบว่าด่านเปลี่ยน (เก็บย้อนหลังสูงสุด 20 ครั้ง) — เริ่มบันทึกนับจากตอนนี้เท่านั้น ไม่มีประวัติก่อนหน้า และบอกได้แค่ "เข้าด่านไหนเมื่อไหร่" ยังแยกไม่ได้ว่าผ่าน/ไม่ผ่าน</p>
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:14px;">
+      <div>
+        <h3 style="margin:0;color:#7ee787;" data-i="hist-head-title">📜 ประวัติเข้าด่าน (100 รอบล่าสุด)</h3>
+        <p class="hint" style="margin:4px 0 0;" data-i="hist-head-sub">จับทุกรอบการตีจากตัวเกมโดยตรง — รู้เวลาที่ใช้จริง จำนวนมอบที่ฆ่าจริง เลือดที่เหลือต่ำสุด และแยกได้ว่า ผ่าน / ตาย / ออกกลางทาง เริ่มเก็บนับจากตอนนี้ ย้อนหลังไม่ได้ และต้องเปิดหน้านี้ค้างไว้ระบบจึงจับได้</p>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn btn-outline" id="btn-hist-export" data-i="hist-btn-export">💾 บันทึกเป็น CSV</button>
+        <button class="btn btn-outline" id="btn-hist-clear" style="color:#f85149;" data-i="hist-btn-clear">🗑️ ล้างประวัติ</button>
+      </div>
+    </div>
+    <div class="dpsb-cards" id="hist-cards"></div>
+    <div id="hist-advice" style="margin-bottom:14px;"></div>
     <div class="table-scroll"><table class="data-table" id="history-table"></table></div>
+    <p class="hint" style="margin-top:12px;" data-i="hist-foot">"DPS ที่วัดได้" = จำนวนมอบที่ตายจริง × เลือดมอบจริงของด่านนั้น ÷ เวลาที่ใช้จริง เป็นค่าที่วัดได้จริงไม่ใช่สูตรประมาณ แต่เป็น "อัตราการเคลียร์เฉลี่ย" ซึ่งรวมช่วงที่ยืนรอมอบเกิดด้วย จึงต่ำกว่าดาเมจตอนกำลังตี · ทอง/EXP นับให้เฉพาะรอบที่ผ่านจริง รอบที่ตายหรือออกกลางทางไม่ได้รางวัล</p>
   </div>
 
   <div class="view" id="view-smart">
@@ -870,6 +882,11 @@ const UI_STRINGS = {
   'forge-sw-skills-d': { th: 'ใส่สกิล Active ที่เรียนแล้วจริงของคลาสนั้น เรียงตามเลเวลที่ลงไว้มากสุดก่อน (สกิล Passive ไม่ต้องใส่ช่อง ใช้งานอัตโนมัติอยู่แล้ว)', en: "Equips the real learned Active skills for that class, highest invested level first (Passive skills don't need a slot - they apply automatically)." },
   'forge-sw-reconnect-t': { th: 'ยืนยันเชื่อมต่อใหม่อัตโนมัติเมื่อเน็ตหลุด', en: 'Auto-confirm reconnect on network error' },
   'forge-sw-reconnect-d': { th: 'เจอกล่อง "Reconnect Failed" จะกด Confirm ให้เองไม่ให้ AFK สะดุด — จุดนี้ยังไม่เคยเจอเหตุการณ์จริงให้ทดสอบ ทำตามโครงสร้างที่เจอในโค้ดต้นฉบับ ถ้าเกมเปลี่ยนหน้าตา popup อาจไม่ทำงาน', en: 'Clicks "Confirm" automatically when a "Reconnect Failed" dialog appears, so AFK farming isn\'t interrupted - built from the reference site\'s own code structure but never seen a real disconnect to test against, so it may silently not fire if the game\'s popup shape differs.' },
+  'hist-head-title': { th: '📜 ประวัติเข้าด่าน (100 รอบล่าสุด)', en: '📜 Stage Run History (last 100 runs)' },
+  'hist-head-sub': { th: 'จับทุกรอบการตีจากตัวเกมโดยตรง — รู้เวลาที่ใช้จริง จำนวนมอบที่ฆ่าจริง เลือดที่เหลือต่ำสุด และแยกได้ว่า ผ่าน / ตาย / ออกกลางทาง เริ่มเก็บนับจากตอนนี้ ย้อนหลังไม่ได้ และต้องเปิดหน้านี้ค้างไว้ระบบจึงจับได้', en: "Every run is caught from the game itself - real duration, real kill count, lowest HP reached, and whether it was cleared, died or abandoned. Recording starts now (no backfill) and this page has to stay open to catch runs." },
+  'hist-btn-export': { th: '💾 บันทึกเป็น CSV', en: '💾 Export CSV' },
+  'hist-btn-clear': { th: '🗑️ ล้างประวัติ', en: '🗑️ Clear history' },
+  'hist-foot': { th: '"DPS ที่วัดได้" = จำนวนมอบที่ตายจริง × เลือดมอบจริงของด่านนั้น ÷ เวลาที่ใช้จริง เป็นค่าที่วัดได้จริงไม่ใช่สูตรประมาณ แต่เป็น "อัตราการเคลียร์เฉลี่ย" ซึ่งรวมช่วงที่ยืนรอมอบเกิดด้วย จึงต่ำกว่าดาเมจตอนกำลังตี · ทอง/EXP นับให้เฉพาะรอบที่ผ่านจริง รอบที่ตายหรือออกกลางทางไม่ได้รางวัล', en: '"Measured DPS" = mobs actually killed x that stage\'s real mob HP / real elapsed time. It is measured, not modelled - but it is average clear throughput, which includes the seconds spent waiting for spawns, so it reads lower than burst damage. Gold/EXP are counted only for runs that actually cleared; deaths and abandoned runs earn nothing.' },
   'dpsb-head-title': { th: '⚔️ แจกแจงดาเมจต่อสกิล', en: '⚔️ Skill Damage Breakdown' },
   'dpsb-head-sub': { th: 'อ่านสกิลที่ใส่อยู่จริงและเลเวลจริงจากเกม แล้วแจกแจงว่าดาเมจที่ออกมาจากไหนบ้าง เรียงจากมากไปน้อย', en: 'Reads the skills you actually have equipped, at their real levels, and shows where your damage comes from - highest first.' },
   'dpsb-btn-refresh': { th: '🔄 รีเฟรช', en: '🔄 Refresh' },
@@ -1512,7 +1529,21 @@ const PROFILE_FIELDS = [
                      treeTid - groupTid
      learned skills  same call with tree type 4, plus the equipped skill preset
    ============================================================================ */
-const PROFILE_ABILITY_IDS = { attack: 101, defense: 102, dps: 103, atkSpeed: 104, hp: 105, critRate: 106, critDmg: 107, hitRate: 108, evasion: 109, range: 110, pve: 1054, boss: 1057, dmg: 1058 };
+/* Ability ids, taken from the GAME'S OWN table - do not re-guess these.
+   `nn.db.ability._convertFinalToBaseMap` maps each final stat (1xx) to its base
+   row (3xxx), and `_abilityTypeMap` holds that row's locale key, so the names
+   below are the game's, read back live:
+     101 AbilityType_BaseAttack        102 AbilityType_BaseDefense
+     103 AbilityType_BaseHP            104 AbilityType_BaseAttackSpeed
+     105 AbilityType_BaseMoveSpeed     106 AbilityType_BaseCriticalRate
+     107 AbilityType_BaseCriticalDamage 108 AbilityType_BaseHitRate
+     109 AbilityType_BaseEvasion       110 AbilityType_BaseAttackDistance
+     1054 PvE Attack Power +   1056 PvE Defense +   1057 Boss DMG +
+     1058 Damage +             1059 Damage Taken -
+   103 was previously mislabelled "real DPS" here (a label inherited from the
+   reference site); it is HP, confirmed equal to the combat pawn's own _maxHp.
+   THE GAME EXPOSES NO DPS STAT AT ALL - see measuredDps in the run tracker. */
+const PROFILE_ABILITY_IDS = { attack: 101, defense: 102, hp: 103, atkSpeed: 104, moveSpeed: 105, critRate: 106, critDmg: 107, hitRate: 108, evasion: 109, range: 110, pve: 1054, pveDef: 1056, boss: 1057, dmg: 1058, dmgTaken: 1059 };
 function buildProfileExpr(){
   const gearTids = {};
   GAME_DATA.equipments.forEach(e => { gearTids[e.id] = 1; });
@@ -1670,7 +1701,7 @@ async function refreshProfileLive(){
     [th?'ชื่อผู้เล่น':'Player Name', d.nick || '—', 'gold sm'],
     [th?'เลเวลปัจจุบัน':'Current Level', lv || '—', ''],
     [th?'พลังต่อสู้ (Combat Power)':'Combat Power', profFmt(d.combatPower), 'cp'],
-    [th?'DPS จริงจากเกม':'Real DPS (in-game)', ab.dps != null ? profFmt(Math.round(ab.dps)) : '—', 'dps'],
+    [th?'เลือดสูงสุด (HP)':'Max HP', ab.hp != null ? profFmt(Math.round(ab.hp)) : '—', 'dps'],
     [th?'ด่านที่ผ่านสูงสุด':'Highest Stage Cleared', profStageLabel(d.clearStageTid), 'sm'],
     [th?'ด่านที่ฟาร์มอยู่':'Currently Farming', profStageLabel(d.stageTid), 'sm'],
     [th?'ทอง':'Gold', profFmt(curBy(1000)), 'gold'],
@@ -1678,15 +1709,18 @@ async function refreshProfileLive(){
     [th?'แต้มสกิลที่เหลือ':'Skill Points Left', `${curBy(8000)??0} / ${curBy(8100)??0} / ${curBy(8200)??0}`, 'sm'],
     [th?'พลังโจมตี':'Attack', ab.attack != null ? profFmt(Math.round(ab.attack)) : '—', ''],
     [th?'ป้องกัน':'Defense', ab.defense != null ? profFmt(Math.round(ab.defense)) : '—', ''],
-    [th?'เลือด (HP)':'HP', ab.hp != null ? profFmt(Math.round(ab.hp)) : '—', ''],
+    [th?'ความเร็วเคลื่อนที่':'Movement Speed', ab.moveSpeed != null ? profFmt(Math.round(ab.moveSpeed)) : '—', ''],
     [th?'ความเร็วโจมตี':'Attack Speed', ab.atkSpeed != null ? ab.atkSpeed.toFixed(1) + '%' : '—', ''],
     [th?'อัตราคริ':'Crit Rate', ab.critRate != null ? ab.critRate.toFixed(1) + '%' : '—', ''],
     [th?'ดาเมจคริ':'Crit Damage', ab.critDmg != null ? ab.critDmg.toFixed(1) + '%' : '—', ''],
     [th?'ความแม่นยำ':'Hit Rate', ab.hitRate != null ? ab.hitRate.toFixed(1) : '—', ''],
     [th?'หลบหลีก':'Evasion', ab.evasion != null ? ab.evasion.toFixed(1) : '—', ''],
-    [th?'โบนัสดาเมจ PvE':'PvE Damage Bonus', ab.pve != null ? ab.pve.toFixed(1) + '%' : '—', ''],
-    [th?'โบนัสดาเมจบอส':'Boss Damage Bonus', ab.boss != null ? ab.boss.toFixed(1) + '%' : '—', ''],
-    [th?'โบนัสดาเมจรวม':'Total Damage Bonus', ab.dmg != null ? ab.dmg.toFixed(1) + '%' : '—', ''],
+    // Names below are the game's own locale strings for these ability ids.
+    [th?'พลังโจมตี PvE +':'PvE Attack Power +', ab.pve != null ? ab.pve.toFixed(1) + '%' : '—', ''],
+    [th?'ป้องกัน PvE +':'PvE Defense +', ab.pveDef != null ? ab.pveDef.toFixed(1) + '%' : '—', ''],
+    [th?'ดาเมจต่อบอส +':'Boss DMG +', ab.boss != null ? ab.boss.toFixed(1) + '%' : '—', ''],
+    [th?'ดาเมจ +':'Damage +', ab.dmg != null ? ab.dmg.toFixed(1) + '%' : '—', ''],
+    [th?'ดาเมจที่รับ −':'Damage Taken −', ab.dmgTaken != null ? ab.dmgTaken.toFixed(1) + '%' : '—', ''],
   ];
   gridEl.innerHTML = cards.map(([t,v,cls]) => `
     <div class="prof-sum-card"><div class="prof-sum-title">${esc(t)}</div><div class="prof-sum-val ${cls}">${esc(String(v))}</div></div>
@@ -1940,6 +1974,46 @@ const LIVE_SYNC_EXPR = `(function(){
       }
     } catch(e){}
 
+    // Combat run state, for the Stage Run History tracker. All getters:
+    // ServiceCombat.getCurrentActiveCombatProxy() is the live battle object and
+    // carries its own run id, clock and kill counter, and the hero pawn carries
+    // real HP - which is how a run's duration, death and clear can be known
+    // instead of guessed. Read-only; the tracker itself lives in our page, so
+    // nothing is written into the game's own globals.
+    try {
+      var sCombat, sStage;
+      for (var e3 of nn.services._mapService.entries()) {
+        var name3 = e3[0].name || e3[0].toString();
+        if (name3 === 'ServiceCombat') sCombat = e3[1];
+        if (name3 === 'ServiceStage') sStage = e3[1];
+      }
+      var proxy = (sCombat && sCombat.getCurrentActiveCombatProxy) ? sCombat.getCurrentActiveCombatProxy() : null;
+      var run = { hasProxy: !!proxy };
+      if (sStage) {
+        try { run.playingStageTid = sStage.playingStageTid || sStage.stageTid || null; } catch(e){}
+        try { run.clearStageTid = sStage.stageInfo ? sStage.stageInfo._clearStageTid : null; } catch(e){}
+      }
+      if (proxy) {
+        run.gameId = proxy._gameId != null ? Number(proxy._gameId) : null;
+        run.stageTid = proxy.fieldTid != null ? Number(proxy.fieldTid) : null;
+        run.elapsed = Number(proxy._elapsedTime || proxy.elapsedTime || 0);
+        run.kills = Number(proxy._dieMobCnt || 0);
+        run.gameState = proxy._gameState != null ? Number(proxy._gameState) : null;
+        run.isGameEnd = !!proxy._isGameEnd;
+        run.clearSeq = !!(proxy._bStageClearSequenceStarted || proxy._bStageClearSequenceActive);
+        try { run.mobsAlive = proxy._mapMonsterPawnProxy ? proxy._mapMonsterPawnProxy.size : null; } catch(e){}
+        try {
+          var pawn = proxy.getMyHeroPawn ? proxy.getMyHeroPawn() : null;
+          if (pawn) {
+            run.curHp = Number(pawn._curHp);
+            run.maxHp = Number(pawn._maxHp);
+            run.isDead = !!pawn._isDead || pawn._isAlive === false || (run.curHp != null && run.curHp <= 0);
+          }
+        } catch(e){}
+      }
+      out.run = run;
+    } catch(e){}
+
     return JSON.stringify(out);
   } catch(e) { return JSON.stringify({ error: e.message }); }
 })()`;
@@ -2026,7 +2100,7 @@ function connectLiveSync(){
       const dps = data.attack * critMult * bonusMult * (data.attackSpeed/100);
       document.getElementById('tb-dps').textContent = Math.round(dps).toLocaleString();
     }
-    trackStageHistory(data.stageTid);
+    trackStageRun(data.run);
     // Keep the Profile page live too, but on its own slower cadence - it reads
     // a lot more per call than the top bar does.
     if (currentView === 'profile' && Date.now() - lastProfileRefreshAt > 4000) {
@@ -2105,13 +2179,14 @@ async function refreshDpsBreakLive(){
   } catch(e) { d = null; }
 
   const live = !!d;
-  let hitsPerSec, skills, realDps, clsCode, ab = {}, stage = null, cleared = null;
+  let hitsPerSec, skills, estDps, clsCode, ab = {}, stage = null, cleared = null;
   if (live) {
     const m = smartDpsModel(d);
     ab = m.ab;
     hitsPerSec = (ab.atkSpeed || 0) / 100;
     skills = m.equipped.map(s => ({ meta: s.meta, lv: s.lv, dmgPct: s.dmgPct, cd: s.cd }));
-    realDps = ab.dps || null;
+    // Our own estimate - the game exposes no DPS stat to use instead.
+    estDps = m.modelTotal;
     clsCode = HERO_CLASSTYPE_TO_SKILLCLASS[d.classType];
     stage = (GAME_DATA.stageData || []).find(s => s.stage_id === d.stageTid) || null;
     cleared = (GAME_DATA.stageData || []).find(s => s.stage_id === d.clearStageTid) || null;
@@ -2134,18 +2209,22 @@ async function refreshDpsBreakLive(){
     }));
     const critMult = 1 + (st.critRate / 100) * (st.critDamage / 100);
     const bonusMult = 1 + (st.damageBonus + st.pveBonus + st.bossBonus) / 100;
-    const w = dpsbWeights(hitsPerSec, skills);
-    realDps = st.attack * critMult * bonusMult * w.total;   // estimated, clearly labelled below
+    const w0 = dpsbWeights(hitsPerSec, skills);
+    estDps = st.attack * critMult * bonusMult * w0.total;
   }
 
   const w = dpsbWeights(hitsPerSec, skills);
-  // Boss bonus only applies to bosses, so mob mode is the baseline the game's
-  // own DPS number reflects, and boss mode scales it by the extra boss bonus.
+  // Boss bonus only applies to bosses, so mob mode is the baseline and boss
+  // mode scales by the extra boss bonus. This ratio IS real - it comes from
+  // ability 1057 - even though the base total is our own estimate.
   const gp = 1 + ((ab.dmg || 0) + (ab.pve || 0)) / 100;
   const gpb = gp + (ab.boss || 0) / 100;
   const bossFactor = gp > 0 ? gpb / gp : 1;
   const modeFactor = dpsbMode === 'boss' ? bossFactor : 1;
-  const totalDps = (realDps || 0) * modeFactor;
+  const totalDps = (estDps || 0) * modeFactor;
+  // The one DPS figure here that is measured rather than modelled.
+  const measuredDps = (live && liveRunView)
+    ? stageRunMeasuredDps(liveRunView.kills, liveRunView.stageTid, liveRunView.duration) : null;
 
   // ---- mode buttons ----
   ['mob', 'boss'].forEach(mode => {
@@ -2174,9 +2253,12 @@ async function refreshDpsBreakLive(){
     [th ? 'คริ (อัตรา / ดาเมจ)' : 'Crit (rate / damage)', `${saFmt(ab.critRate, 1)}% / ${saFmt(ab.critDmg, 1)}%`, '', '#bc8cff'],
     [th ? 'โบนัสดาเมจ' : 'Damage amp', `+${saFmt((ab.dmg || 0) + (ab.pve || 0) + (dpsbMode === 'boss' ? (ab.boss || 0) : 0), 1)}%`,
       th ? `ทั่วไป ${saFmt(ab.dmg, 1)}% · PvE ${saFmt(ab.pve, 1)}%${dpsbMode === 'boss' ? ` · บอส ${saFmt(ab.boss, 1)}%` : ''}` : `general ${saFmt(ab.dmg, 1)}% · PvE ${saFmt(ab.pve, 1)}%${dpsbMode === 'boss' ? ` · boss ${saFmt(ab.boss, 1)}%` : ''}`, '#bc8cff'],
-    [live ? (th ? 'DPS รวม (ค่าจริงจากเกม)' : 'Total DPS (real, from game)') : (th ? 'DPS รวม (ประมาณการ)' : 'Total DPS (estimated)'),
+    [th ? 'DPS รวม (สูตรของเรา · ประมาณการ)' : 'Total DPS (our formula · estimated)',
       saFmt(totalDps), dpsbMode === 'boss' ? (th ? 'ตอนตีบอส' : 'against a boss') : (th ? 'ตอนตีมอบธรรมดา' : 'against normal mobs'), '#f85149'],
-    [th ? 'ดาเมจรวมใน 1 นาที' : 'Total damage per minute', saFmt(totalDps * 60), '', 'var(--gold)'],
+    [th ? 'DPS ที่วัดได้จริงจากรอบนี้' : 'Measured DPS (this run)',
+      measuredDps ? saFmt(measuredDps) : '—',
+      measuredDps ? (th ? 'จากมอบที่ตายจริง ÷ เวลาจริง' : 'mobs actually killed / real time') : (th ? 'รออยู่ในด่านสักครู่' : 'waiting for a run'), '#7ee787'],
+    [th ? 'ดาเมจรวมใน 1 นาที (ประมาณการ)' : 'Damage per minute (estimated)', saFmt(totalDps * 60), '', 'var(--gold)'],
   ];
   document.getElementById('dpsb-cards').innerHTML = cards.map(([t2, v, sub, col]) => `
     <div class="dpsb-card" style="border-left-color:${col};">
@@ -2232,11 +2314,23 @@ async function refreshDpsBreakLive(){
       </tr>`).join('') + `</tbody>`;
   }
 
-  document.getElementById('dpsb-method').innerHTML = live
-    ? (th ? `วิธีคิด: <b>DPS รวมเป็นค่าจริงจากเกม</b> (ค่าความสามารถ 103 ซึ่งรวมดาเมจสกิลอยู่แล้ว) ส่วนการ<b>แบ่งสัดส่วน</b>คิดจากความเร็วโจมตีและ %ดาเมจ÷คูลดาวน์ของแต่ละสกิล — ตัวคูณพลังโจมตี/คริ/โบนัสตัดกันหมดในอัตราส่วน สัดส่วนจึงไม่ขึ้นกับสูตร ข้อแม้เดียวคือถ้าเกมคิดคริหรือโบนัสกับสกิลไม่เท่ากับโจมตีปกติ สัดส่วนจะเพี้ยนไปบ้าง`
-          : `Method: <b>the total is the game's own real DPS</b> (ability 103, which already includes skill damage). The <b>split</b> comes from attack speed and each skill's damage% ÷ cooldown - attack, crit and bonus multipliers cancel out of the ratio, so the shares don't depend on any formula. The one caveat: if the game applies crit or bonuses differently to skills than to normal attacks, the split shifts a little.`)
+  // When a run is in progress we can compare the two side by side. The gap is
+  // mostly IDLE TIME, not a broken formula: mob defense on these stages is
+  // tiny next to our attack (e.g. 350 vs 2,418), so it cannot explain a 20x
+  // difference - the clear is gated by how fast mobs spawn, not by damage.
+  const gapNote = (live && measuredDps && totalDps > 0) ? (() => {
+    const times = totalDps / measuredDps;
+    const busyPct = 100 / times;
+    return th
+      ? `<br><br>🔍 <b>ทำไมสองตัวเลขต่างกันมาก:</b> สูตรให้ ${saFmt(totalDps)} แต่วัดได้ ${saFmt(measuredDps)} (ต่างกัน ~${times.toFixed(0)} เท่า) ส่วนต่างเกือบทั้งหมดคือ<b>เวลาที่ยืนรออยู่เฉยๆ</b> ไม่ใช่สูตรผิด — เกราะมอบด่านนี้น้อยมากเทียบกับพลังโจมตีของบอส จึงอธิบายส่วนต่างขนาดนี้ไม่ได้ แปลว่าจริงๆ บอสออกดาเมจจริงแค่ราว <b>${busyPct.toFixed(1)}%</b> ของเวลาในด่าน ที่เหลือคือรอมอบเกิด · <b>ผลที่ตามมา:</b> ในด่านที่ฆ่ามอบทีเดียวตายอยู่แล้ว การเพิ่ม DPS จะ<b>ไม่ได้ทำให้เคลียร์เร็วขึ้น</b> เพราะเวลาถูกจำกัดด้วยอัตราการเกิดของมอบ ตัวที่ควรดันคือ<b>ความอยู่รอด</b> เพื่อขึ้นด่านที่สูงกว่า (ดูอัตราตายจริงได้ที่เมนูประวัติเข้าด่าน)`
+      : `<br><br>🔍 <b>Why the two numbers differ so much:</b> the formula says ${saFmt(totalDps)} while the measured value is ${saFmt(measuredDps)} (~${times.toFixed(0)}x apart). Almost all of that is <b>idle time, not a broken formula</b> - mob defense on these stages is tiny next to your attack, so it cannot account for a gap this size. It means you are only actually dealing damage about <b>${busyPct.toFixed(1)}%</b> of the time in the stage; the rest is waiting for spawns. <b>Consequence:</b> on a stage where mobs already die in one hit, more DPS will <b>not</b> clear it faster, because the clear is gated by the spawn rate. Survivability is what lets you push to higher stages - see the Stage Run History tab for your real death rate.`;
+  })() : '';
+
+  document.getElementById('dpsb-method').innerHTML = (live
+    ? (th ? `วิธีคิด — แยกให้ชัดว่าอะไรจริงอะไรประมาณ: <b>เกมนี้ไม่มีค่า DPS ให้อ่านเลย</b> (ตรวจแล้วจากตาราง ability ของเกมเอง ค่า 103 ที่เคยเข้าใจว่าเป็น DPS คือ <b>เลือด</b>) · <b>เชื่อได้ 100%</b>: สกิลที่ใส่อยู่, เลเวลสกิล, คูลดาวน์, ครั้ง/นาที, <b>สัดส่วน %</b> (ตัวคูณพลังโจมตี/คริ/โบนัสตัดกันหมดในอัตราส่วน จึงไม่ขึ้นกับสูตร) และ <b>DPS ที่วัดได้</b> ซึ่งนับจากมอบที่ตายจริง ÷ เวลาจริง · <b>เป็นประมาณการ</b>: ช่อง DPS, ดาเมจ/ครั้ง และดาเมจ/นาที ที่คิดจากสูตรของเรา ใช้เทียบสกิลกันเองได้ แต่ไม่ใช่เลขเป๊ะจากเกม`
+          : `Method - what is real vs estimated: <b>this game exposes no DPS stat at all</b> (checked against the game's own ability table; the 103 value once assumed to be DPS is <b>HP</b>). <b>Exact</b>: your equipped skills, their levels, cooldowns, casts/min, the <b>% split</b> (attack, crit and bonus multipliers cancel out of the ratio, so it needs no formula) and the <b>measured DPS</b> from mobs actually killed / real elapsed time. <b>Estimated</b>: the DPS, damage-per-cast and damage-per-minute columns, which come from our own formula - fine for comparing skills, not an exact in-game number.`)
     : (th ? `⚠️ ไม่ได้เชื่อมต่อเกม — ตัวเลขทั้งหมดเป็น<b>ประมาณการ</b>จากฟอร์มโปรไฟล์และแต้มสกิลที่จำลองไว้ในหน้าสกิลทรี ไม่ใช่ค่าจริง เปิดเกมแล้วกดรีเฟรชเพื่อดูของจริง`
-          : `⚠️ Not connected to the game - every number here is <b>estimated</b> from the Profile form and the simulated allocations in the Skill Tree tab. Run the game and hit Refresh for the real thing.`);
+          : `⚠️ Not connected to the game - every number here is <b>estimated</b> from the Profile form and the simulated allocations in the Skill Tree tab. Run the game and hit Refresh for the real thing.`)) + gapNote;
 
   renderClassDpsComparison();
 }
@@ -2244,11 +2338,12 @@ async function refreshDpsBreakLive(){
 /* ---- per-class snapshots, so the 3 classes can be compared over time ---- */
 function recordClassDpsSnapshot(d, m){
   const code = HERO_CLASSTYPE_TO_SKILLCLASS[d.classType];
-  if (!code || !m.ab || m.ab.dps == null) return;
+  if (!code || !m.ab || m.ab.attack == null) return;
   let log = {};
   try { log = JSON.parse(localStorage.getItem('wog_class_dps_log') || '{}'); } catch(e) {}
   log[code] = {
-    dps: m.ab.dps, attack: m.ab.attack, atkSpeed: m.ab.atkSpeed, critRate: m.ab.critRate, critDmg: m.ab.critDmg,
+    // `dps` here is OUR estimate (the game has none) - the table labels it so.
+    dps: m.modelTotal, attack: m.ab.attack, atkSpeed: m.ab.atkSpeed, critRate: m.ab.critRate, critDmg: m.ab.critDmg,
     hp: m.ab.hp, defense: m.ab.defense, cp: d.combatPower, level: d.level, stageTid: d.stageTid, at: Date.now(),
   };
   localStorage.setItem('wog_class_dps_log', JSON.stringify(log));
@@ -2268,11 +2363,11 @@ function renderClassDpsComparison(){
   const best = Math.max(...seen.map(c => log[c].dps || 0));
   const cell = (c, get, fmt) => { const v = log[c] ? get(log[c]) : null; return v == null ? '<span style="color:var(--text-dim);">—</span>' : (fmt ? fmt(v) : saFmt(v)); };
   const metrics = [
-    [th ? '💥 DPS จริง' : '💥 Real DPS', r => r.dps, v => `<b style="color:#f85149;">${saFmt(v)}</b>`],
+    [th ? '💥 DPS (ประมาณการ)' : '💥 DPS (estimated)', r => r.dps, v => `<b style="color:#f85149;">${saFmt(v)}</b>`],
     [th ? '⚔️ พลังโจมตี' : '⚔️ Attack', r => r.attack],
     [th ? '⚡ ความเร็วโจมตี' : '⚡ Attack speed', r => r.atkSpeed, v => (v / 100).toFixed(3) + (th ? ' ครั้ง/วิ' : ' /s')],
     [th ? '🎯 คริ (อัตรา/ดาเมจ)' : '🎯 Crit (rate/dmg)', r => r, v => `${saFmt(v.critRate, 1)}% / ${saFmt(v.critDmg, 1)}%`],
-    [th ? '❤️ เลือด' : '❤️ HP', r => r.hp],
+    [th ? '❤️ เลือดสูงสุด' : '❤️ Max HP', r => r.hp],
     [th ? '🛡️ ป้องกัน' : '🛡️ Defense', r => r.defense],
     [th ? '🔥 พลังต่อสู้' : '🔥 Combat power', r => r.cp, v => `<b style="color:#bc8cff;">${saFmt(v)}</b>`],
     [th ? '📍 ด่านตอนบันทึก' : '📍 Stage when recorded', r => r.stageTid, v => esc(profStageLabel(v))],
@@ -2301,32 +2396,267 @@ document.getElementById('btn-dpsb-cmp-reset').addEventListener('click', () => {
   toast(currentLang === 'th' ? 'ล้างแล้ว' : 'Cleared');
 });
 
-/* ================= STAGE RUN HISTORY ================= */
-let lastKnownStageTid = null;
-function trackStageHistory(stageTid){
-  if (stageTid == null) return;
-  if (lastKnownStageTid === null) { lastKnownStageTid = stageTid; return; }
-  if (stageTid === lastKnownStageTid) return;
-  lastKnownStageTid = stageTid;
-  const hist = JSON.parse(localStorage.getItem('wog_stage_history') || '[]');
-  hist.unshift({ time: Date.now(), stageTid });
-  localStorage.setItem('wog_stage_history', JSON.stringify(hist.slice(0, 20)));
+/* ================= STAGE RUN HISTORY =================
+   A real per-run tracker, not a "the stage number changed" log. Every 2s poll
+   already carries `out.run` from the live expression: the battle's own run id
+   (_gameId), its own clock (_elapsedTime), its kill counter (_dieMobCnt), the
+   clear-sequence flag, and the hero pawn's real HP. From those we can know a
+   run's true duration, whether the hero died, and whether the stage was
+   actually cleared - none of which the old stage-number diff could tell.
+
+   The reference site does this by injecting `globalThis.__stageTracker` INTO
+   the game process. We deliberately keep the tracker here in the page instead:
+   it samples the same values at the same 2s cadence, so accuracy is identical,
+   and nothing gets written into the game's own globals. */
+const RUN_MIN_SECONDS = 6;        // shorter than this = joined/left mid-battle
+let runCur = null;                // the run being watched right now
+let liveRunView = null;           // what the LIVE row renders from
+
+function stageRunsLoad(){
+  try { const a = JSON.parse(localStorage.getItem('wog_stage_runs') || '[]'); return Array.isArray(a) ? a : []; }
+  catch(e) { return []; }
+}
+function stageRunsSave(list){
+  try { localStorage.setItem('wog_stage_runs', JSON.stringify(list.slice(0, 100))); } catch(e) {}
+}
+function stageRunAvgMobHp(stageTid){
+  const s = (GAME_DATA.stageData || []).find(x => x.stage_id === stageTid);
+  return s ? s.avg_mob_hp : null;
+}
+// Measured, not modelled: mobs that actually died x their real HP / real time.
+// This is farming THROUGHPUT - it includes the seconds spent waiting for the
+// next spawn, so it reads lower than burst damage, and the UI says so.
+function stageRunMeasuredDps(kills, stageTid, seconds){
+  const hp = stageRunAvgMobHp(stageTid);
+  if (!hp || !seconds || seconds <= 0 || !kills) return null;
+  return (kills * hp) / seconds;
+}
+
+function trackStageRun(run){
+  if (!run) return;
+  const now = Date.now();
+  const proxyStage = run.stageTid || run.playingStageTid || null;
+
+  if (runCur) {
+    const sameRun = (run.gameId != null && runCur.gameId != null)
+      ? run.gameId === runCur.gameId
+      : (run.hasProxy && proxyStage === runCur.stageTid);
+    if (sameRun) {
+      runCur.duration = run.elapsed > 0 ? run.elapsed : (now - runCur.startedAt) / 1000;
+      if (run.kills != null) runCur.kills = Math.max(runCur.kills, run.kills);
+      if (run.isDead) runCur.died = true;
+      if (run.clearSeq) runCur.clearSeq = true;
+      if (run.clearStageTid != null && runCur.startClearTid != null && run.clearStageTid > runCur.startClearTid) runCur.clearedNew = true;
+      if (run.curHp != null && run.maxHp > 0) runCur.minHpPct = Math.min(runCur.minHpPct, 100 * run.curHp / run.maxHp);
+    }
+    const ended = (!sameRun && run.gameId != null) || !run.hasProxy || run.isGameEnd
+      || runCur.clearSeq || runCur.died
+      || (proxyStage != null && proxyStage !== runCur.stageTid);
+    if (ended) finishStageRun(now);
+  }
+
+  if (!runCur && run.hasProxy && proxyStage && !run.isGameEnd && !run.isDead) {
+    // A run we only caught partway through cannot report an honest duration.
+    const joinedLate = (run.elapsed || 0) >= 3;
+    runCur = {
+      gameId: run.gameId != null ? run.gameId : null,
+      stageTid: proxyStage,
+      startedAt: now - (run.elapsed || 0) * 1000,
+      duration: run.elapsed || 0,
+      kills: run.kills || 0,
+      died: !!run.isDead,
+      clearSeq: !!run.clearSeq,
+      clearedNew: false,
+      startClearTid: run.clearStageTid != null ? run.clearStageTid : null,
+      minHpPct: (run.curHp != null && run.maxHp > 0) ? 100 * run.curHp / run.maxHp : 100,
+      partial: joinedLate,
+    };
+  }
+
+  liveRunView = runCur
+    ? { ...runCur, mobsAlive: run.mobsAlive, curHpPct: (run.curHp != null && run.maxHp > 0) ? 100 * run.curHp / run.maxHp : null }
+    : null;
   if (currentView === 'history') renderHistory();
 }
+
+function finishStageRun(now){
+  const c = runCur;
+  runCur = null;
+  if (!c || c.duration < 1) return;
+  const tooShort = c.duration < RUN_MIN_SECONDS;
+  let status;
+  if (c.died) status = 'failed';
+  else if (c.clearSeq || c.clearedNew) status = 'success';
+  else if (c.partial || tooShort) status = 'partial';
+  else status = 'abandoned';
+  const list = stageRunsLoad();
+  // Guard against the same run being written twice across reconnects.
+  if (c.gameId != null && list.some(r => r.gameId === c.gameId)) return;
+  list.unshift({
+    gameId: c.gameId, stageTid: c.stageTid, status,
+    duration: Math.round(c.duration * 10) / 10,
+    kills: c.kills, minHpPct: Math.round(c.minHpPct * 10) / 10,
+    at: now,
+  });
+  stageRunsSave(list);
+  if (currentView === 'history') renderHistory();
+}
+
+const RUN_STATUS_META = {
+  success:   { th: 'ผ่าน',             en: 'Cleared',   color: '#7ee787', icon: '✅' },
+  failed:    { th: 'ตาย',              en: 'Died',      color: '#f85149', icon: '💀' },
+  abandoned: { th: 'ออกกลางทาง',       en: 'Abandoned', color: '#8b949e', icon: '🚪' },
+  partial:   { th: 'จับได้ไม่ครบรอบ',  en: 'Partial',   color: '#ffa657', icon: '⚠️' },
+};
+
 function renderHistory(){
-  const hist = JSON.parse(localStorage.getItem('wog_stage_history') || '[]');
+  const th = currentLang === 'th';
+  const runs = stageRunsLoad();
+  const stageOf = tid => (GAME_DATA.stageData || []).find(s => s.stage_id === tid) || null;
+
+  // ---- summary cards ----
+  const done = runs.filter(r => r.status === 'success');
+  const failed = runs.filter(r => r.status === 'failed');
+  const counted = done.length + failed.length;
+  const gold = done.reduce((a, r) => { const s = stageOf(r.stageTid); return a + (s ? s.total_gold : 0); }, 0);
+  const exp = done.reduce((a, r) => { const s = stageOf(r.stageTid); return a + (s ? s.total_exp : 0); }, 0);
+  const secs = done.reduce((a, r) => a + r.duration, 0);
+  const avg = done.length ? secs / done.length : 0;
+  const estAvg = done.length ? done.reduce((a, r) => { const s = stageOf(r.stageTid); return a + (s ? s.est_clear_sec : 0); }, 0) / done.length : 0;
+  const vsEst = estAvg > 0 ? 100 * (avg - estAvg) / estAvg : null;
+  const cards = [
+    [th ? 'รอบที่บันทึกไว้' : 'Runs recorded', saFmt(runs.length), th ? 'เก็บย้อนหลังสูงสุด 100 รอบ' : 'up to 100 kept', '#58a6ff'],
+    [th ? 'ผ่าน / ตาย' : 'Cleared / died', `${done.length} / ${failed.length}`,
+      counted ? (th ? `อัตราผ่าน ${(100 * done.length / counted).toFixed(0)}%` : `${(100 * done.length / counted).toFixed(0)}% clear rate`) : '', '#7ee787'],
+    [th ? 'ทองที่ได้จากรอบที่ผ่าน' : 'Gold from cleared runs', saFmt(gold), '', 'var(--gold)'],
+    [th ? 'EXP ที่ได้จากรอบที่ผ่าน' : 'EXP from cleared runs', saFmt(exp), '', '#bc8cff'],
+    [th ? 'เวลาเคลียร์เฉลี่ย' : 'Average clear time', done.length ? avg.toFixed(1) + 's' : '—',
+      vsEst != null ? (th ? `${vsEst >= 0 ? 'ช้ากว่า' : 'เร็วกว่า'}ค่าอ้างอิงของเกม ${Math.abs(vsEst).toFixed(0)}%` : `${vsEst >= 0 ? 'slower' : 'faster'} than the game's estimate by ${Math.abs(vsEst).toFixed(0)}%`) : '', '#7ee787'],
+    [th ? 'เวลาฟาร์มรวมที่จับได้' : 'Total tracked farm time', secs > 0 ? profEta(secs) : '—', '', '#58a6ff'],
+  ];
+  document.getElementById('hist-cards').innerHTML = cards.map(([t2, v, sub, col]) => `
+    <div class="dpsb-card" style="border-left-color:${col};">
+      <div class="dpsb-card-title">${esc(t2)}</div>
+      <div class="dpsb-card-val" style="color:${col};">${v}</div>
+      ${sub ? `<div class="dpsb-card-sub">${esc(sub)}</div>` : ''}
+    </div>`).join('');
+
+  // The game's own est_clear_sec (and therefore every gold/sec and EXP/sec
+  // figure derived from it, including the Farm Ranking and Smart Analysis
+  // suggestions) assumes a reference character. Once real runs are on record we
+  // can say whether those numbers actually hold for this account - and if runs
+  // are dying, the "best" stage on paper is the wrong stage in practice.
+  const advice = document.getElementById('hist-advice');
+  if (!done.length && !failed.length) { advice.innerHTML = ''; }
+  else if (failed.length && counted && failed.length / counted >= 0.25) {
+    advice.className = 'sa-advice hold';
+    advice.innerHTML = `⚠️ ${th
+      ? `ตายไป <b>${failed.length}</b> จาก <b>${counted}</b> รอบ (${(100 * failed.length / counted).toFixed(0)}%) — ด่านที่ฟาร์มอยู่แรงเกินตัวละครตอนนี้ รอบที่ตาย<b>ไม่ได้ทองและ EXP เลย</b> ถอยไปด่านที่ต่ำลงหน่อยมักได้ต่อชั่วโมงมากกว่า แม้ตัวเลขทอง/วิ บนกระดาษจะน้อยกว่า`
+      : `<b>${failed.length}</b> of <b>${counted}</b> runs died (${(100 * failed.length / counted).toFixed(0)}%). The stage being farmed is above this character right now, and a run that dies earns <b>no gold or EXP at all</b> - dropping a stage or two usually yields more per hour even though its gold/sec looks lower on paper.`}`;
+  } else if (vsEst != null && vsEst > 25) {
+    advice.className = 'sa-advice hold';
+    advice.innerHTML = `⏱️ ${th
+      ? `รอบจริงของบอสช้ากว่าค่าอ้างอิงของเกมราว <b>${vsEst.toFixed(0)}%</b> — ตัวเลข "ทอง/วินาที" ในหน้าจัดอันดับฟาร์มและหน้าวิเคราะห์อัจฉริยะคิดจากค่าอ้างอิงนั้น ของจริงจึงได้น้อยกว่าที่โชว์ประมาณเท่านี้ ใช้คอลัมน์ "ทอง (ต่อวิ)" ในตารางนี้เป็นตัวเลขจริงแทน`
+      : `Your real runs are about <b>${vsEst.toFixed(0)}%</b> slower than the game's reference estimate. The gold/sec figures in Farm Ranking and Smart Analysis are derived from that estimate, so your actual rate is lower by roughly the same margin - use the "Gold (per sec)" column in this table as the real number.`}`;
+  } else if (vsEst != null && vsEst < -10) {
+    advice.className = 'sa-advice go';
+    advice.innerHTML = `🚀 ${th
+      ? `รอบจริงเร็วกว่าค่าอ้างอิงของเกมราว <b>${Math.abs(vsEst).toFixed(0)}%</b> — ตัวละครเกินด่านนี้แล้ว ลองขยับขึ้นด่านที่ยากกว่าได้เลย`
+      : `Your real runs are about <b>${Math.abs(vsEst).toFixed(0)}%</b> faster than the game's reference estimate - this character has outgrown the stage, try pushing higher.`}`;
+  } else {
+    advice.className = 'sa-advice info';
+    advice.innerHTML = `✅ ${th ? 'รอบจริงใกล้เคียงค่าอ้างอิงของเกม ตัวเลขทอง/วิ ในหน้าจัดอันดับฟาร์มเชื่อได้ตามนั้น' : "Your real runs track the game's reference estimate, so the gold/sec figures in Farm Ranking hold up."}`;
+  }
+
+  // ---- table ----
   const table = document.getElementById('history-table');
-  if (!hist.length) {
-    table.innerHTML = `<tbody><tr><td class="empty-state">${currentLang==='th'?'ยังไม่มีข้อมูล — เปิดเกม+เชื่อม Live Sync ทิ้งไว้ แล้วรอด่านเปลี่ยน':'No data yet — keep the game running with Live Sync connected and wait for a stage change'}</td></tr></tbody>`;
+  const head = `<thead><tr>
+      <th style="width:62px;text-align:center;">#</th>
+      <th>🗺️ ${th ? 'ด่าน' : 'Stage'}</th>
+      <th>🌲 ${th ? 'พื้นที่' : 'Area'}</th>
+      <th style="text-align:center;">📊 ${th ? 'ผลรอบนั้น' : 'Result'}</th>
+      <th>⏱️ ${th ? 'ใช้เวลา' : 'Duration'}</th>
+      <th>⚔️ ${th ? 'มอบที่ฆ่า' : 'Kills'}</th>
+      <th style="color:#f85149;">💥 ${th ? 'DPS ที่วัดได้' : 'Measured DPS'}</th>
+      <th style="color:var(--gold-bright);">💰 ${th ? 'ทอง (ต่อวิ)' : 'Gold (per sec)'}</th>
+      <th style="color:#bc8cff;">⭐ ${th ? 'EXP (ต่อวิ)' : 'EXP (per sec)'}</th>
+      <th>❤️ ${th ? 'เลือดต่ำสุด' : 'Lowest HP'}</th>
+      <th>🕒 ${th ? 'เวลา' : 'When'}</th>
+    </tr></thead>`;
+
+  let liveRow = '';
+  if (liveRunView) {
+    const lr = liveRunView, s = stageOf(lr.stageTid);
+    const dur = Math.max(0.1, lr.duration || 0);
+    const mdps = stageRunMeasuredDps(lr.kills, lr.stageTid, dur);
+    liveRow = `<tr style="background:rgba(212,175,55,.12);">
+      <td style="text-align:center;"><span style="background:var(--gold);color:#1a1408;font-weight:800;font-size:10px;padding:2px 7px;border-radius:12px;white-space:nowrap;">⚔️ LIVE</span></td>
+      <td><b style="color:#58a6ff;">${esc(s ? fld(s, 'display_tag') : '#' + lr.stageTid)}</b><div class="dpsb-skillsub">${th ? 'กำลังตีอยู่' : 'fighting now'}</div></td>
+      <td>${esc(s ? fld(s, 'area_name') : '—')}</td>
+      <td style="text-align:center;"><span style="color:var(--gold-bright);font-weight:700;">⚔️ ${th ? 'กำลังตี' : 'Running'}</span></td>
+      <td><b style="color:#7ee787;">${dur.toFixed(1)}s</b>${s ? `<div class="dpsb-skillsub">${th ? 'อ้างอิง' : 'est.'} ~${s.est_clear_sec}s</div>` : ''}</td>
+      <td>${saFmt(lr.kills)}${s ? ` <span style="color:var(--text-dim);">/ ${saFmt(s.boss_req_mobs)}</span>` : ''}${lr.mobsAlive != null ? `<div class="dpsb-skillsub">${th ? 'บนจอ' : 'on screen'} ${lr.mobsAlive}</div>` : ''}</td>
+      <td style="color:#f85149;font-weight:700;">${mdps ? saFmt(mdps) : '—'}</td>
+      <td style="color:var(--gold-bright);">${s ? saFmt(s.total_gold) : '—'}<div class="dpsb-skillsub">${s ? saFmt(s.total_gold / dur, 1) + '/s' : '—'}</div></td>
+      <td style="color:#bc8cff;">${s ? saFmt(s.total_exp) : '—'}<div class="dpsb-skillsub">${s ? saFmt(s.total_exp / dur, 1) + '/s' : '—'}</div></td>
+      <td>${lr.curHpPct != null ? `<b style="color:${lr.curHpPct < 35 ? '#f85149' : '#7ee787'};">${lr.curHpPct.toFixed(0)}%</b>` : '—'}</td>
+      <td>${th ? 'ตอนนี้' : 'now'}</td>
+    </tr>`;
+  }
+
+  if (!runs.length && !liveRow) {
+    table.innerHTML = `<tbody><tr><td class="empty-state">${th ? 'ยังไม่มีรอบที่บันทึกไว้ — เปิดเกมค้างไว้พร้อม Live Sync แล้วปล่อยให้ตีจนจบ 1 รอบ ระบบจะจับให้เอง (ต้องเปิดหน้าเว็บนี้ค้างไว้ด้วย)' : 'No runs recorded yet - keep the game and Live Sync running and let one stage finish; it is caught automatically (this page has to stay open too)'}</td></tr></tbody>`;
     return;
   }
-  table.innerHTML = `<thead><tr><th>#</th><th>${currentLang==='th'?'เวลา':'Time'}</th><th>${t('stage')}</th></tr></thead><tbody>` +
-    hist.map((h,i) => {
-      const s = GAME_DATA.stageData.find(s2 => s2.stage_id === h.stageTid);
-      const label = s ? fld(s,'display_full') : h.stageTid;
-      return `<tr><td>${i+1}</td><td>${new Date(h.time).toLocaleString(currentLang==='th'?'th-TH':'en-US')}</td><td>${esc(label)}</td></tr>`;
-    }).join('') + `</tbody>`;
+
+  table.innerHTML = head + `<tbody>` + liveRow + runs.map((r, i) => {
+    const s = stageOf(r.stageTid);
+    const meta = RUN_STATUS_META[r.status] || RUN_STATUS_META.abandoned;
+    const mdps = stageRunMeasuredDps(r.kills, r.stageTid, r.duration);
+    const slower = (s && s.est_clear_sec) ? 100 * (r.duration - s.est_clear_sec) / s.est_clear_sec : null;
+    const rewarded = r.status === 'success';
+    const rowStyle = r.status === 'failed' ? ' style="background:rgba(248,81,73,.07);"'
+      : (r.status === 'abandoned' || r.status === 'partial') ? ' style="opacity:.72;"' : '';
+    return `<tr${rowStyle}>
+      <td style="text-align:center;">${i + 1}</td>
+      <td><b style="color:#58a6ff;">${esc(s ? fld(s, 'display_tag') : '#' + r.stageTid)}</b><div class="dpsb-skillsub">ID: ${r.stageTid}</div></td>
+      <td>${esc(s ? fld(s, 'area_name') : '—')}</td>
+      <td style="text-align:center;"><span style="color:${meta.color};font-weight:700;">${meta.icon} ${esc(th ? meta.th : meta.en)}</span></td>
+      <td><b>${r.duration.toFixed(1)}s</b>${slower != null ? `<div class="dpsb-skillsub" style="color:${slower > 0 ? '#ffa657' : '#7ee787'};">${slower > 0 ? '+' : ''}${slower.toFixed(0)}% ${th ? 'เทียบค่าอ้างอิง' : 'vs est.'}</div>` : ''}</td>
+      <td>${saFmt(r.kills)}${s ? ` <span style="color:var(--text-dim);">/ ${saFmt(s.boss_req_mobs)}</span>` : ''}</td>
+      <td style="color:#f85149;font-weight:700;">${mdps ? saFmt(mdps) : '—'}</td>
+      <td style="color:var(--gold-bright);">${rewarded && s ? saFmt(s.total_gold) : '<span style="color:var(--text-dim);">—</span>'}<div class="dpsb-skillsub">${rewarded && s ? saFmt(s.total_gold / r.duration, 1) + '/s' : (th ? 'ไม่ได้รางวัล' : 'no reward')}</div></td>
+      <td style="color:#bc8cff;">${rewarded && s ? saFmt(s.total_exp) : '<span style="color:var(--text-dim);">—</span>'}<div class="dpsb-skillsub">${rewarded && s ? saFmt(s.total_exp / r.duration, 1) + '/s' : ''}</div></td>
+      <td>${r.minHpPct != null ? `<b style="color:${r.minHpPct < 35 ? '#f85149' : r.minHpPct < 70 ? '#ffa657' : '#7ee787'};">${r.minHpPct.toFixed(0)}%</b>` : '—'}</td>
+      <td>${new Date(r.at).toLocaleTimeString(th ? 'th-TH' : 'en-US')}<div class="dpsb-skillsub">${new Date(r.at).toLocaleDateString(th ? 'th-TH' : 'en-US')}</div></td>
+    </tr>`;
+  }).join('') + `</tbody>`;
 }
+document.getElementById('btn-hist-clear').addEventListener('click', () => {
+  if (!confirm(currentLang === 'th' ? 'ล้างประวัติการเข้าด่านทั้งหมดที่เก็บไว้ในเบราว์เซอร์นี้?' : 'Clear all stage run history saved in this browser?')) return;
+  localStorage.removeItem('wog_stage_runs');
+  localStorage.removeItem('wog_stage_history');
+  renderHistory();
+  toast(currentLang === 'th' ? 'ล้างแล้ว' : 'Cleared');
+});
+document.getElementById('btn-hist-export').addEventListener('click', () => {
+  const runs = stageRunsLoad();
+  if (!runs.length) { toast(currentLang === 'th' ? 'ยังไม่มีข้อมูลให้บันทึก' : 'Nothing to export yet'); return; }
+  const rows = runs.map(r => {
+    const s = (GAME_DATA.stageData || []).find(x => x.stage_id === r.stageTid);
+    return [new Date(r.at).toISOString(), r.stageTid, s ? s.chapter_stage : '', s ? s.difficulty_en : '',
+            r.status, r.duration, r.kills, r.minHpPct,
+            r.status === 'success' && s ? s.total_gold : 0,
+            r.status === 'success' && s ? s.total_exp : 0].join(',');
+  });
+  const csv = 'time,stage_id,stage,difficulty,status,duration_sec,kills,lowest_hp_pct,gold,exp\n' + rows.join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([csv], { type: 'text/csv' }));
+  a.download = `wog-stage-runs-${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  toast(currentLang === 'th' ? 'บันทึกไฟล์ CSV แล้ว' : 'Exported CSV');
+});
 
 /* ================= SMART ANALYSIS =================
    Reads the SAME live snapshot the Profile page uses (buildProfileExpr), so every
@@ -2379,18 +2709,19 @@ function smartDpsModel(d){
   }).filter(Boolean).sort((a, b) => b.dps - a.dps);
   const skillDps = equipped.reduce((s, x) => s + x.dps, 0);
   const freeSlots = (d.skillSlots || []).filter(x => !x).length;
+  // The game exposes NO DPS stat (ability 103 is HP - see PROFILE_ABILITY_IDS),
+  // so there is nothing real to anchor absolute DPS onto. Two honest outputs:
+  //   - totalDps / per-skill dps: OUR estimate, always labelled as such.
+  //   - share (below): exact, because attack, crit and every damage bonus scale
+  //     each source alike and cancel out of the ratio. Only attack speed and
+  //     each skill's damage% / cooldown survive.
+  // A separately MEASURED dps (kills x mob HP / elapsed) comes from the run
+  // tracker and is shown next to these, never mixed into them.
   const modelTotal = basicDps + skillDps;
-  // Our multiplier formula does NOT reproduce the game's own DPS (ability 103,
-  // which already includes skill damage - proven live). What IS exact is the
-  // ratio between sources, since attack/crit/bonus scale every source alike and
-  // cancel. So we keep the model only for its ratios and rescale every absolute
-  // number onto the game's real total.
-  const anchor = (ab.dps && modelTotal > 0) ? ab.dps / modelTotal : 1;
-  equipped.forEach(e => { e.rawDps = e.dps; e.dps = e.dps * anchor; });
-  return { ab, attack, critMult, bonusMult, equipped, equippedSet, freeSlots, anchor,
-           basicDps: basicDps * anchor, skillDps: skillDps * anchor,
-           modelTotal, weakest: equipped.length ? equipped[equipped.length - 1] : null,
-           totalDps: modelTotal * anchor, lvByGroup, allSk };
+  return { ab, attack, critMult, bonusMult, equipped, equippedSet, freeSlots,
+           basicDps, skillDps, modelTotal,
+           weakest: equipped.length ? equipped[equipped.length - 1] : null,
+           totalDps: modelTotal, lvByGroup, allSk };
 }
 
 function renderSmartAnalysis(){ refreshSmartLive(); }
@@ -2459,10 +2790,16 @@ function saRenderDps(d, m, th){
   const tot = m.totalDps || 1;
   const basicPct = 100 * m.basicDps / tot;
   const skillPct = 100 * m.skillDps / tot;
-  const real = ab.dps;
   const top = m.equipped.slice(0, 4);
+  // The game has no DPS stat, so the only real DPS available is the one
+  // measured from the run in progress (kills x mob HP / elapsed).
+  const measured = liveRunView
+    ? stageRunMeasuredDps(liveRunView.kills, liveRunView.stageTid, liveRunView.duration) : null;
   document.getElementById('sa-dps').innerHTML =
-    saRow(th ? 'DPS จริงจากเกม' : 'Real DPS (from the game)', saFmt(real), 'dps')
+    saRow(th ? 'DPS ที่วัดได้จากรอบที่กำลังตี' : 'Measured DPS (run in progress)',
+          measured ? saFmt(measured) : (th ? 'รออยู่ในด่าน…' : 'waiting for a run…'), 'dps')
+    + saRow(th ? 'DPS ตามสูตรของเรา (ประมาณการ)' : 'Our estimated DPS', saFmt(m.totalDps), 'sm')
+    + saRow(th ? 'เลือดสูงสุด' : 'Max HP', saFmt(ab.hp), 'good')
     + saRow(th ? 'คลาสที่เล่นอยู่' : 'Active class', esc(clsLabel), 'sm')
     + saBar(th ? '🗡️ ส่วนที่มาจากโจมตีปกติ' : '🗡️ From normal attacks', basicPct, 'linear-gradient(90deg,#3d6fa8,#79c0ff)', saFmt(m.basicDps) + ' (' + basicPct.toFixed(1) + '%)')
     + saBar(th ? '✨ ส่วนที่มาจากสกิล' : '✨ From skills', skillPct, 'linear-gradient(90deg,#8957e5,#bc8cff)', saFmt(m.skillDps) + ' (' + skillPct.toFixed(1) + '%)')
@@ -2482,7 +2819,7 @@ function saRenderDps(d, m, th){
         <div class="sa-item-val">${saFmt(s.dps)}<small>${(100 * s.dps / tot).toFixed(1)}% ${th ? 'ของ DPS รวม' : 'of total'}</small></div>
       </div>`).join('')
       : `<div class="empty-state" style="padding:16px 8px;">${th ? 'ยังไม่ได้ใส่สกิลโจมตีในช่องสกิล' : 'No damaging skills equipped'}</div>`)
-    + `<div class="sa-advice info" style="margin-top:10px;">ℹ️ ${th ? 'ยอดรวมเป็นค่าจริงจากเกม ส่วนการแบ่งว่าสกิลไหนกี่ % คิดจากความเร็วโจมตีและ %ดาเมจ÷คูลดาวน์ — ดูวิธีคิดแบบเต็มได้ที่เมนู Skill DPS' : "The total is the game's own number; the per-skill split comes from attack speed and each skill's damage% ÷ cooldown - see the Skill DPS tab for the full method."}</div>`;
+    + `<div class="sa-advice info" style="margin-top:10px;">ℹ️ ${th ? '<b>เกมไม่มีค่า DPS ให้อ่านเลย</b> ตัวเลข DPS ทุกตัวที่เป็น "ประมาณการ" มาจากสูตรของเราเอง ส่วนที่เชื่อได้จริงคือ <b>สัดส่วน %</b> (คิดจากความเร็วโจมตีและ %ดาเมจ÷คูลดาวน์ ตัวคูณทุกตัวตัดกันหมด) และ <b>DPS ที่วัดได้</b> จากมอบที่ตายจริง — ดูวิธีคิดเต็มที่เมนู Skill DPS' : "<b>The game exposes no DPS stat at all.</b> Every \"estimated\" DPS here comes from our own formula. What you can trust is the <b>% split</b> (from attack speed and each skill's damage% ÷ cooldown, where all multipliers cancel) and the <b>measured DPS</b> from mobs that actually died - see the Skill DPS tab for the full method."}</div>`;
 }
 
 /* ---- card 3: which skill upgrade pays the most ---- */
@@ -2499,10 +2836,9 @@ function saRenderSkill(d, m, th){
     const nextL = sk.levels[lv];
     if (!nextL || !nextL.damage_percent || !nextL.cooldown_sec) return;
     const curL = lv > 0 ? sk.levels[lv - 1] : null;
-    // Anchored onto the game's real DPS, the same way m.equipped[].dps is, so
-    // these deltas can be compared against the equipped skills directly.
-    const curDps = (curL ? m.attack * (curL.damage_percent / 100) * m.critMult * m.bonusMult / curL.cooldown_sec : 0) * m.anchor;
-    const nextDps = m.attack * (nextL.damage_percent / 100) * m.critMult * m.bonusMult / nextL.cooldown_sec * m.anchor;
+    // Same units as m.equipped[].dps, so these deltas compare directly.
+    const curDps = curL ? m.attack * (curL.damage_percent / 100) * m.critMult * m.bonusMult / curL.cooldown_sec : 0;
+    const nextDps = m.attack * (nextL.damage_percent / 100) * m.critMult * m.bonusMult / nextL.cooldown_sec;
     const equipped = m.equippedSet.has(sk.group_id);
     // The honest number is the DPS you'd ACTUALLY gain. A skill sitting outside
     // the 6 slots contributes nothing until it's equipped - and with every slot
