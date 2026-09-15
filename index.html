@@ -503,7 +503,7 @@
       <div class="forge-stat-card">
         <div class="forge-stat-label">⚡ <span data-i="forge-stat-ready">เทียร์ที่พร้อมหลอม</span></div>
         <div class="forge-stat-value" id="forge-stat-ready">—</div>
-        <div class="hint" data-i="forge-stat-ready-sub">ต้องการ 3 ชิ้นชนิดเดียวกัน</div>
+        <div class="hint" data-i="forge-stat-ready-sub">ต้องการ 6 ชิ้นเทียร์เดียวกัน</div>
       </div>
       <div class="forge-stat-card">
         <div class="forge-stat-label">📡 <span data-i="forge-stat-conn">สถานะเชื่อมต่อ</span></div>
@@ -673,7 +673,7 @@ const UI_STRINGS = {
   'forge-vault-tabs-2': { th: '2 คลัง (84 ช่อง)', en: '2 Tabs (84 slots)' },
   'forge-vault-tabs-3': { th: '3 คลัง (126 ช่อง)', en: '3 Tabs (126 slots)' },
   'forge-stat-ready': { th: 'เทียร์ที่พร้อมหลอม', en: 'Tiers Ready for Fuse' },
-  'forge-stat-ready-sub': { th: 'ต้องการ 3 ชิ้นชนิดเดียวกัน', en: 'Needs 3 of the exact same jewel' },
+  'forge-stat-ready-sub': { th: 'ต้องการ 6 ชิ้นเทียร์เดียวกัน', en: 'Needs 6 of the same tier' },
   'forge-stat-conn': { th: 'สถานะเชื่อมต่อ', en: 'Connection Status' },
   'forge-stat-conn-sub': { th: 'อ่านทุก 2 วิ ตอนเปิดหน้านี้', en: 'Reads every 2s while this tab is open' },
   'forge-settings-title': { th: 'การตั้งค่าอัตโนมัติ', en: 'Automation Settings' },
@@ -701,7 +701,7 @@ const UI_STRINGS = {
   'forge-btn-clearlog': { th: 'ล้างบันทึก', en: 'Clear Log' },
   'forge-log-empty': { th: 'ยังไม่มีบันทึก — เมื่อกดปุ่มด้านบน (ใส่อาวุธ/เก็บเข้าคลัง/ถอนออกกระเป๋า/เปิดปิด Auto Fuse) จะบันทึกไว้ที่นี่', en: "No activity yet - actions you trigger above (equip weapon / store / withdraw / toggle Auto Fuse) will be logged here." },
   'forge-progress-title': { th: 'การหลอมอัญมณี (ครบ 6 ชิ้นในเทียร์เดียวกัน)', en: 'Jewel Fusion (6 of same tier)' },
-  'forge-progress-sub': { th: 'นับรวมกระเป๋า+คลังจริงจากเกม (ต้อง 3 ชิ้น "ชนิดเดียวกัน" เป๊ะ - เทียร์เดียวกันอาจมีของหลายชนิดปนกัน)', en: 'Counts real Bag + Vault totals from the game (needs 3 of the exact same jewel type - a tier can contain several different types mixed together).' },
+  'forge-progress-sub': { th: 'นับรวมกระเป๋า+คลังจริงจากเกม (ต้องการ 6 ชิ้นแค่เทียร์เดียวกัน ชนิด/เลเวลอะไรก็ได้)', en: 'Counts real Bag + Vault totals from the game (needs 6 items of the same tier - any type, any level).' },
   'forge-gear-progress-title': { th: 'การหลอมอุปกรณ์ (ครบ 6 ชิ้นในเทียร์เดียวกัน)', en: 'Gear Fusion (6 of same tier)' },
   'forge-gear-progress-sub': { th: 'นับรวมกระเป๋า+คลังจริงจากเกม (ไม่รวมอุปกรณ์ที่สวมใส่อยู่ และไม่รวมเครื่องประดับ)', en: 'Counts real Bag + Vault totals from the game (not counting equipped gear or jewelry).' },
   'forge-jewelry-progress-title': { th: 'การหลอมเครื่องประดับ (ครบ 3 ชิ้นในเทียร์เดียวกัน)', en: 'Jewelry Fusion (3 of same tier)' },
@@ -1659,18 +1659,11 @@ function buildForgeStatusExpr(){
       var totals = {};
       Object.keys(byGrade).forEach(function(g){
         var bag = 0, vault = 0, other = 0, locked = 0;
-        // Real jewel conversion (ServiceWorkshop.reqJewelConvertStagedAsync)
-        // needs jewelConvertSlotCnt (3) items of the SAME exact tid, not just
-        // the same grade - a grade can span several distinct tids at once, so
-        // track usable count per-tid to find which (if any) tid actually has
-        // enough to convert.
-        var byTidUsable = {};
         byGrade[g].forEach(function(tid){
           try {
             var items = itemC.getItemNotStackAllByTid(tid);
             var arr = [];
             if (items && items.length !== undefined) { for (var i=0;i<items.length;i++) arr.push(items[i]); }
-            var tidUsable = 0;
             arr.forEach(function(it){
               if (it._location === 1) bag++;
               else if (it._location === 2) vault++;
@@ -1678,74 +1671,38 @@ function buildForgeStatusExpr(){
               var isStaged = false;
               try { isStaged = nn.services.steamMarket.staging.isStaged(it._itemId); } catch(e){}
               if (it._isLock || isStaged) locked++;
-              else if (it._location === 1 || it._location === 2) tidUsable++;
             });
-            if (tidUsable > 0) byTidUsable[tid] = tidUsable;
           } catch(e){}
         });
-        var bestTid = null, bestCnt = 0;
-        Object.keys(byTidUsable).forEach(function(tid){
-          if (byTidUsable[tid] > bestCnt) { bestCnt = byTidUsable[tid]; bestTid = tid; }
-        });
-        totals[g] = { bag: bag, vault: vault, other: other, total: bag+vault+other, locked: locked, bestTid: bestTid, bestTidCount: bestCnt };
+        totals[g] = { bag: bag, vault: vault, other: other, total: bag+vault+other, locked: locked };
       });
       var autoFusionOn = null;
-      var jewelConvertSlotCnt = 3;
       try {
         var lc = nn.localSaveManager._userData._listChild;
         var contentNode = lc.find(function(c){ return c._key === 'UserData_Content'; });
         if (contentNode && contentNode._workShopAutoFusionOn) autoFusionOn = contentNode._workShopAutoFusionOn._value;
       } catch(e){}
-      try {
-        var sWorkshop;
-        for (var e of nn.services._mapService.entries()) { var name = e[0].name || e[0].toString(); if (name === 'ServiceWorkshop') sWorkshop = e[1]; }
-        if (sWorkshop && sWorkshop.jewelConvertSlotCnt) jewelConvertSlotCnt = sWorkshop.jewelConvertSlotCnt;
-      } catch(e){}
-      return JSON.stringify({ totals: totals, autoFusionOn: autoFusionOn, needCount: jewelConvertSlotCnt });
+      return JSON.stringify({ totals: totals, autoFusionOn: autoFusionOn, needCount: 6 });
     } catch(e) { return JSON.stringify({ error: e.message }); }
   })()`;
 }
-/* ---- Real Jewel/Gem Conversion (the 85-item jewelDatabase currency, DIFFERENT
-   system from Gear/Jewelry Fusion): ServiceWorkshop.reqJewelConvertStagedAsync,
-   staged via stageJewelConvertItem one at a time. Needs jewelConvertSlotCnt
-   (real value, 3) items of the exact same itemTid - a "grade" can span several
-   distinct tids, so this targets one specific tid at a time (the grade's own
-   card picks whichever tid has the most owned automatically). */
-function buildRealGemFuseExpr(tid, needCount){
-  return `(async function(){
-    try {
-      var sWorkshop;
-      for (var e of nn.services._mapService.entries()) { var name = e[0].name || e[0].toString(); if (name === 'ServiceWorkshop') sWorkshop = e[1]; }
-      sWorkshop.clearJewelConvertStaging();
-      var allItems = nn.net.data.item.getAllItemNotStack();
-      var candidates = allItems.filter(function(it){ return it.itemTid === ${tid} && (it.location === 1 || it.location === 2) && !it.isLock; });
-      try { candidates = candidates.filter(function(it){ return !nn.services.steamMarket.staging.isStaged(it.itemId); }); } catch(e){}
-      var need = ${needCount};
-      if (candidates.length < need) return JSON.stringify({ error: 'not_enough', have: candidates.length, need: need });
-      for (var i = 0; i < need; i++) {
-        var ok = sWorkshop.stageJewelConvertItem(candidates[i].itemTid, candidates[i].itemId);
-        if (!ok) return JSON.stringify({ error: 'stage_failed', idx: i });
-      }
-      if (!sWorkshop.isJewelConvertStagingFull()) return JSON.stringify({ error: 'not_full' });
-      var res = await sWorkshop.reqJewelConvertStagedAsync();
-      return JSON.stringify({ ok: !!res, needCount: need });
-    } catch(e) { return JSON.stringify({ error: e.message }); }
-  })()`;
-}
-async function forgeRealFuseGem(tid, needCount){
-  const res = await sendLiveEvalAwait(buildRealGemFuseExpr(tid, needCount), 15000);
-  if (res.error === 'not_enough') {
-    toast(currentLang==='th' ? `ของไม่พอ (มี ${res.have}/${res.need})` : `Not enough items (${res.have}/${res.need})`);
-  } else if (res.error) {
-    toast(currentLang==='th' ? `หลอมไม่สำเร็จ: ${res.error}` : `Fuse failed: ${res.error}`);
-    forgeLogActivity(currentLang==='th' ? `💎 หลอมอัญมณี (tid ${tid}) ไม่สำเร็จ: ${res.error}` : `💎 Fuse jewel (tid ${tid}) failed: ${res.error}`);
-  } else if (res.ok) {
-    toast(currentLang==='th' ? `หลอมอัญมณีสำเร็จ!` : `Fused jewel successfully!`);
-    forgeLogActivity(currentLang==='th' ? `💎 หลอมอัญมณีสำเร็จ (${needCount} ชิ้น tid ${tid} → เทียร์ถัดไป)` : `💎 Fused jewel (${needCount} items tid ${tid} → next tier)`);
-  } else {
-    toast(currentLang==='th' ? 'ผลลัพธ์ไม่ชัดเจน เช็คในเกมด้วย' : 'Unclear result, please check in-game');
-  }
-  setTimeout(refreshForgeStatus, 800);
+/* ---- Real Jewel/Gem Fusion (the 85-item jewelDatabase currency): uses the
+   SAME "Fusion" system as Gear/Jewelry (findFusionTable/validateFusionMaterials
+   /reqFusionAsync), just under its own ContentType. Confirmed live via
+   nn.services.workshop.getContentTypeByTid(realOwnedJewelTid) === 20, and
+   findFusionTable(20, tier, anyLevel) returns a real table with
+   MaterialRatingCnt: 6 and MaterialLevelLimit: 1 - i.e. 6 items of the same
+   tier, any type, any level, confirmed by boss from the real in-game "Jewel
+   Blacksmith > Combine" panel (6 slots). This is a DIFFERENT feature from the
+   "Jewel Conversion" tab in that same panel (ServiceWorkshop's separate
+   JewelConvert system - stageJewelConvertItem/reqJewelConvertStagedAsync,
+   needs 3 of the exact same tid - tested and working, just not what this
+   button uses). Reuses the shared buildRealFuseExpr/forgeRunRealFuse already
+   built for Gear/Jewelry, just with contentType 20 and needCount 6; vault is
+   always included per boss's request (no separate toggle for this one). */
+const JEWEL_FUSION_CONTENT_TYPE = 20;
+async function forgeRealFuseGem(tier){
+  await forgeRunRealFuse(JEWEL_FUSION_CONTENT_TYPE, tier, JEWEL_TIDS_BY_GRADE[tier] || [], 6, true, false);
 }
 const EQUIP_TIDS_BY_GRADE = (() => {
   const out = {};
@@ -1893,22 +1850,20 @@ async function refreshForgeStatus(){
     stateEl.textContent = forgeAutoFusionOn ? (currentLang==='th'?'เปิดอยู่ 🟢':'ON 🟢') : (currentLang==='th'?'ปิดอยู่ ⚪':'OFF ⚪');
     toggleBtn.classList.toggle('btn-outline', !forgeAutoFusionOn);
     const gradeLabels = { 1:['Tier 1','Basic'], 2:['Tier 2','Common'], 3:['Tier 3','Advanced'], 4:['Tier 4','Superior'], 5:['Tier 5','Rare'], 6:['Tier 6','Divine'] };
-    const needCount = data.needCount || 3;
+    const needCount = data.needCount || 6;
     let totalOwned = 0, tiersReady = 0;
     gridEl.innerHTML = Object.keys(gradeLabels).map(g => {
-      const row = data.totals[g] || { bag: 0, vault: 0, other: 0, total: 0, locked: 0, bestTid: null, bestTidCount: 0 };
+      const row = data.totals[g] || { bag: 0, vault: 0, other: 0, total: 0, locked: 0 };
       const cnt = row.total;
       const locked = row.locked || 0;
       const usable = Math.max(0, cnt - locked);
       totalOwned += cnt;
-      // Real conversion (ServiceWorkshop.reqJewelConvertStagedAsync) needs
-      // needCount items of the exact SAME tid - a grade can span several
-      // distinct tids, so readiness is based on the best single tid's count,
-      // not the grade's combined total.
-      const bestTidCount = row.bestTidCount || 0;
-      const ready = bestTidCount >= needCount;
+      // Real fusion (ContentType 20) just needs needCount items of the same
+      // tier - any type, any level - so readiness is the grade's combined
+      // usable total, same as Gear/Jewelry.
+      const ready = usable >= needCount;
       if (ready) tiersReady++;
-      const pct = Math.min(100, 100 * bestTidCount / needCount);
+      const pct = Math.min(100, 100 * usable / needCount);
       const isMax = g === '6';
       const countLabel = locked > 0 ? `${usable}(${cnt})` : `${cnt}`;
       return `<div class="forge-tier-progress-card tier-${g}">
@@ -1917,11 +1872,11 @@ async function refreshForgeStatus(){
         <div class="ftp-bar"><div class="ftp-bar-fill" style="width:${pct}%;"></div></div>
         ${isMax
           ? `<div class="hint" style="color:var(--gold-bright);margin-top:6px;">⭐ ${currentLang==='th'?'เทียร์สูงสุดแล้ว':'Max Tier'}</div>`
-          : `<div class="hint" style="margin-top:6px;">${currentLang==='th'?`ชนิดเดียวกันมากสุด ${bestTidCount}/${needCount} ชิ้น (ขาดอีก ${Math.max(0,needCount-bestTidCount)})`:`Best single type: ${bestTidCount}/${needCount} (Need ${Math.max(0,needCount-bestTidCount)})`}</div>
-             <button class="btn btn-outline forge-fuse-gem-btn" data-tid="${row.bestTid||''}" data-need="${needCount}" style="width:100%;margin-top:8px;padding:6px;font-size:11.5px;" ${ready?'':'disabled'}>${ready ? (currentLang==='th'?'พร้อมหลอม (กดเพื่อหลอมจริง)':'Ready to fuse (click to fuse for real)') : (currentLang==='th'?`ต้องการ ${needCount} ชิ้นชนิดเดียวกัน`:`Need ${needCount} of the same type`)}</button>`}
+          : `<div class="hint" style="margin-top:6px;">${currentLang==='th'?`มี ${usable}/${needCount} ชิ้น (ขาดอีก ${Math.max(0,needCount-usable)})`:`Has ${usable}/${needCount} jewels (Need ${Math.max(0,needCount-usable)})`}</div>
+             <button class="btn btn-outline forge-fuse-gem-btn" data-tier="${g}" style="width:100%;margin-top:8px;padding:6px;font-size:11.5px;" ${ready?'':'disabled'}>${ready ? (currentLang==='th'?'พร้อมหลอม (กดเพื่อหลอมจริง)':'Ready to fuse (click to fuse for real)') : (currentLang==='th'?`ต้องการ ${needCount} ชิ้น`:`Need ${needCount} jewels`)}</button>`}
       </div>`;
     }).join('');
-    gridEl.querySelectorAll('.forge-fuse-gem-btn:not([disabled])').forEach(el => el.addEventListener('click', () => forgeRealFuseGem(parseInt(el.dataset.tid, 10), parseInt(el.dataset.need, 10))));
+    gridEl.querySelectorAll('.forge-fuse-gem-btn:not([disabled])').forEach(el => el.addEventListener('click', () => forgeRealFuseGem(parseInt(el.dataset.tier, 10))));
     document.getElementById('forge-stat-total').textContent = totalOwned.toLocaleString();
     document.getElementById('forge-stat-total-sub').textContent = currentLang==='th' ? 'นับเทียร์ 1-6 (กระเป๋า+คลัง)' : 'Tiers 1-6 (Bag + Vault)';
     document.getElementById('forge-stat-ready').textContent = tiersReady;
@@ -2292,7 +2247,9 @@ async function forgeRunRealFuse(contentType, tier, tidList, needCount, includeVa
   opts = opts || {};
   const kindLabel = contentType === 1
     ? (currentLang==='th' ? 'อุปกรณ์' : 'gear')
-    : (currentLang==='th' ? 'เครื่องประดับ' : 'jewelry');
+    : contentType === 2
+    ? (currentLang==='th' ? 'เครื่องประดับ' : 'jewelry')
+    : (currentLang==='th' ? 'อัญมณี' : 'jewel');
   if (!opts.silent) {
     const confirmMsg = currentLang==='th'
       ? `ยืนยันหลอม${kindLabel} Tier ${tier} จำนวน ${needCount} ชิ้นจริง? การกระทำนี้ย้อนกลับไม่ได้ (${needCount} ชิ้นจะหายไป กลายเป็น 1 ชิ้น Tier ${tier+1})`
@@ -2315,8 +2272,11 @@ async function forgeRunRealFuse(contentType, tier, tidList, needCount, includeVa
     if (!opts.silent) toast(currentLang==='th' ? `หลอมไม่สำเร็จ: ${res.error}` : `Fuse failed: ${res.error}`);
     forgeLogActivity(currentLang==='th' ? `⚙️ หลอม${kindLabel} Tier ${tier} ไม่สำเร็จ: ${res.error}` : `⚙️ Fuse ${kindLabel} Tier ${tier} failed: ${res.error}`);
   } else if (res.ok) {
-    if (!opts.silent) toast(currentLang==='th' ? `หลอม Tier ${tier} สำเร็จ! (Lv.${res.level})` : `Fused Tier ${tier} successfully! (Lv.${res.level})`);
-    forgeLogActivity(currentLang==='th' ? `${opts.silent?'🤖':'⚙️'} หลอม${kindLabel} Tier ${tier} สำเร็จ (Lv.${res.level}, ${needCount} ชิ้น → Tier ${tier+1})` : `${opts.silent?'🤖':'⚙️'} Fused ${kindLabel} Tier ${tier} (Lv.${res.level}, ${needCount} items → Tier ${tier+1})`);
+    // Gems (contentType 20) have no real level concept (MaterialLevelLimit is
+    // always 1) - omit the confusing "Lv.0" for that case.
+    const lvSuffix = contentType === 20 ? '' : (currentLang==='th' ? ` (Lv.${res.level})` : ` (Lv.${res.level})`);
+    if (!opts.silent) toast(currentLang==='th' ? `หลอม Tier ${tier} สำเร็จ!${lvSuffix}` : `Fused Tier ${tier} successfully!${lvSuffix}`);
+    forgeLogActivity(currentLang==='th' ? `${opts.silent?'🤖':'⚙️'} หลอม${kindLabel} Tier ${tier} สำเร็จ${lvSuffix} (${needCount} ชิ้น → Tier ${tier+1})` : `${opts.silent?'🤖':'⚙️'} Fused ${kindLabel} Tier ${tier}${lvSuffix} (${needCount} items → Tier ${tier+1})`);
   } else {
     if (!opts.silent) toast(currentLang==='th' ? 'ผลลัพธ์ไม่ชัดเจน เช็คในเกมด้วย' : 'Unclear result, please check in-game');
   }
