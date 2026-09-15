@@ -275,6 +275,7 @@
   .forge-tier-check.tier-5 { color: #bc8cff; border-color: rgba(188,140,255,0.5); background: rgba(188,140,255,0.08); }
   .forge-tier-check.tier-6 { color: #e3b341; border-color: rgba(227,179,65,0.6); background: rgba(227,179,65,0.1); }
   .forge-log-empty { text-align: center; color: var(--text-dim); font-size: 13px; padding: 40px 20px; line-height: 1.7; }
+  #forge-log-list { max-height: 400px; overflow-y: auto; }
   .forge-log-item { display: flex; justify-content: space-between; gap: 10px; padding: 8px 4px; border-bottom: 1px solid var(--navy-line); font-size: 13px; }
   .forge-log-item:last-child { border-bottom: none; }
   .forge-log-item .forge-log-text { flex: 1; }
@@ -470,8 +471,8 @@
 
   <div class="view" id="view-forge">
     <div class="forge-warn">
-      <b>⚠️ <span data-i="forge-warn-title">ของจริงหลายจุดแล้ว แต่ยังไม่ใช่ทั้งหมด</span></b>
-      <p class="hint" style="margin-top:6px;" data-i="forge-warn-body">ของจริง: Auto Jewel Fuse, จำนวนอัญมณี/อุปกรณ์ตามเทียร์, ความจุคลัง, ปุ่มใส่อาวุธดีที่สุด/เก็บเข้าคลัง/ถอนออกกระเป๋า, สวิตช์อัตโนมัติ "ใส่อาวุธดีที่สุดตอนสลับคลาส" กับ "เก็บอัญมณีเข้าคลังตอน AFK", และปุ่ม "พร้อมหลอม" ใต้การ์ดอุปกรณ์แต่ละเทียร์ = หลอมจริง (กด 6 ชิ้นหายจริง กลายเป็น 1 ชิ้นเทียร์ถัดไป ทดสอบสำเร็จแล้วกับของจริง) — ทั้งหมดผ่านฟังก์ชันทางการของเกม ไม่ใช่แก้ค่าตรงๆ, สวิตช์ด้านล่างทำงานเฉพาะตอนเปิดหน้านี้ค้างไว้เท่านั้น — ส่วนที่ยังไม่ทำ: หลอมเครื่องประดับ (แหวน/ต่างหู ฯลฯ ใช้ระบบคนละตัวกับอุปกรณ์ทั่วไป), "ใส่สกิลมาตรฐาน" ยังหาวิธีอ่าน "สกิลที่เรียนแล้ว" จากเกมไม่เจอ, "ยืนยันเชื่อมต่อใหม่อัตโนมัติ" ทำตามโครงสร้างที่เจอในโค้ดต้นฉบับแต่ยังไม่เคยเจอเหตุการณ์จริงให้ทดสอบ</p>
+      <b>⚠️ <span data-i="forge-warn-title">ของจริงเกือบทั้งหมดแล้ว เหลือจุดเดียว</span></b>
+      <p class="hint" style="margin-top:6px;" data-i="forge-warn-body">ของจริงทั้งหมด: Auto Jewel Fuse, ใส่อาวุธดีที่สุด, เก็บเข้าคลัง/ถอนออกกระเป๋า, ความจุคลัง, หลอมอุปกรณ์+เครื่องประดับจริง (ทั้งกดเองและอัตโนมัติตามเทียร์ที่ติ๊กไว้), auto-store อัญมณีตอน AFK, auto-equip อาวุธตอนสลับคลาส, auto-confirm reconnect (ยังไม่เคยเจอเหตุการณ์จริงให้ทดสอบ) — ทั้งหมดผ่านฟังก์ชันทางการของเกม ไม่ใช่แก้ค่าตรงๆ, ตั้งค่าทุกอันจำการติ๊กไว้ข้ามการรีเฟรช, สวิตช์อัตโนมัติทำงานเฉพาะตอนเปิดหน้านี้ค้างไว้เท่านั้น — เหลือจุดเดียวที่ยังไม่ทำ: "ใส่สกิลมาตรฐาน" ยังหาวิธีอ่าน "สกิลที่เรียนแล้วจริง" จากเกมไม่เจอ</p>
     </div>
 
     <div class="forge-actions">
@@ -520,52 +521,53 @@
           <div style="flex:1;"><b data-i="forge-sw-main-t">หลอมอัตโนมัติเมื่ออัญมณีเทียร์เดียวกันครบ 6 ชิ้น</b>
           <div class="hint" data-i="forge-sw-main-d">รวม 6 ชิ้นในเทียร์เดียวกันให้กลายเป็นเทียร์ถัดไปทันที</div>
           <div class="forge-tier-checks" style="margin-top:8px;">
-            <label class="forge-tier-check tier-1"><input type="checkbox" class="forge-inert-sw" checked> Tier 1</label>
-            <label class="forge-tier-check tier-2"><input type="checkbox" class="forge-inert-sw" checked> Tier 2</label>
-            <label class="forge-tier-check tier-3"><input type="checkbox" class="forge-inert-sw"> Tier 3</label>
-            <label class="forge-tier-check tier-4"><input type="checkbox" class="forge-inert-sw"> Tier 4</label>
-            <label class="forge-tier-check tier-5"><input type="checkbox" class="forge-inert-sw"> Tier 5</label>
-            <label class="forge-tier-check tier-6"><input type="checkbox" class="forge-inert-sw"> Tier 6</label>
-          </div></div>
+            <label class="forge-tier-check tier-1"><input type="checkbox" id="forge-gem-tier-1" checked> Tier 1</label>
+            <label class="forge-tier-check tier-2"><input type="checkbox" id="forge-gem-tier-2" checked> Tier 2</label>
+            <label class="forge-tier-check tier-3"><input type="checkbox" id="forge-gem-tier-3"> Tier 3</label>
+            <label class="forge-tier-check tier-4"><input type="checkbox" id="forge-gem-tier-4"> Tier 4</label>
+            <label class="forge-tier-check tier-5"><input type="checkbox" id="forge-gem-tier-5"> Tier 5</label>
+            <label class="forge-tier-check tier-6"><input type="checkbox" id="forge-gem-tier-6"> Tier 6</label>
+          </div>
+          <div class="hint" style="margin-top:6px;color:var(--gold);" data-i="forge-gem-tier-note">⚠️ ยังไม่เจอวิธีสั่งให้เกมหลอมเฉพาะเทียร์ที่เลือก - ปุ่ม Auto Jewel Fuse ด้านบนจะหลอมเทียร์ไหนก็ได้ที่ครบ 6 ชิ้นก่อน ไม่สนใจว่าติ๊กเทียร์ไหนไว้</div></div>
         </div>
         <div class="forge-toggle-row" style="flex-direction:column;align-items:stretch;">
           <div style="display:flex;gap:12px;">
-            <label class="switch"><input type="checkbox" class="forge-radio-a" data-pair="gear"><span class="slider"></span></label>
+            <label class="switch"><input type="checkbox" id="forge-sw-gear" class="forge-radio-a" data-pair="gear"><span class="slider"></span></label>
             <div style="flex:1;"><b>💎 <span data-i="forge-sw-gear-t">หลอมอุปกรณ์อัตโนมัติ (ต้องการ 6 ชิ้น)</span></b>
             <div class="hint" data-i="forge-sw-gear-d">รวมอุปกรณ์เทียร์ที่เลือกไว้ 6 ชิ้น เป็นเทียร์ถัดไปอัตโนมัติ (ไม่จำกัดแค่ Tier 3 แล้ว)</div></div>
           </div>
           <div style="display:flex;gap:12px;margin-top:10px;padding-top:10px;border-top:1px dashed var(--navy-line);">
-            <label class="switch"><input type="checkbox" class="forge-radio-a" data-pair="gear" checked><span class="slider"></span></label>
+            <label class="switch"><input type="checkbox" id="forge-sw-samelvl" class="forge-radio-a" data-pair="gear" checked><span class="slider"></span></label>
             <div style="flex:1;"><b>🔒 <span data-i="forge-sw-samelvl-t">หลอมเฉพาะไอเทมเลเวลเดียวกันเท่านั้น</span></b> <span class="sidebar-badge" data-i="forge-recommended">แนะนำ</span>
             <div class="hint" data-i="forge-sw-samelvl-d">บังคับให้ของ 6 ชิ้นต้องการเลเวลเท่ากันทั้งหมด (เช่น Lv.50 ล้วน) ป้องกันของเลเวลต่ำหลุดไปปนกับของเลเวลสูงตอนหลอม</div>
-            <div class="hint" style="margin-top:4px;color:var(--gold);" data-i="forge-radio-note">เลือกได้แค่ 1 ใน 2 ข้อนี้เท่านั้น</div></div>
+            <div class="hint" style="margin-top:4px;color:var(--gold);" data-i="forge-radio-note">เลือกได้แค่ 1 ใน 2 ข้อนี้เท่านั้น (เกมบังคับให้ของต้องเลเวลเดียวกันอยู่แล้วทั้ง 2 แบบ - สวิตช์นี้แค่บันทึกไว้)</div></div>
           </div>
           <div class="forge-tier-checks" style="margin-top:12px;">
-            <label class="forge-tier-check tier-1"><input type="checkbox" class="forge-inert-sw" checked> Tier 1</label>
-            <label class="forge-tier-check tier-2"><input type="checkbox" class="forge-inert-sw"> Tier 2</label>
-            <label class="forge-tier-check tier-3"><input type="checkbox" class="forge-inert-sw" checked> Tier 3</label>
-            <label class="forge-tier-check tier-4"><input type="checkbox" class="forge-inert-sw"> Tier 4</label>
-            <label class="forge-tier-check tier-5"><input type="checkbox" class="forge-inert-sw"> Tier 5</label>
-            <label class="forge-tier-check tier-6"><input type="checkbox" class="forge-inert-sw"> Tier 6</label>
+            <label class="forge-tier-check tier-1"><input type="checkbox" id="forge-gear-tier-1" checked> Tier 1</label>
+            <label class="forge-tier-check tier-2"><input type="checkbox" id="forge-gear-tier-2"> Tier 2</label>
+            <label class="forge-tier-check tier-3"><input type="checkbox" id="forge-gear-tier-3" checked> Tier 3</label>
+            <label class="forge-tier-check tier-4"><input type="checkbox" id="forge-gear-tier-4"> Tier 4</label>
+            <label class="forge-tier-check tier-5"><input type="checkbox" id="forge-gear-tier-5"> Tier 5</label>
+            <label class="forge-tier-check tier-6"><input type="checkbox" id="forge-gear-tier-6"> Tier 6</label>
           </div>
         </div>
         <div class="forge-toggle-row" style="flex-direction:column;align-items:stretch;">
           <div style="display:flex;gap:12px;">
-            <label class="switch"><input type="checkbox" class="forge-inert-sw"><span class="slider"></span></label>
+            <label class="switch"><input type="checkbox" id="forge-sw-jewelry"><span class="slider"></span></label>
             <div style="flex:1;"><b>💍 <span data-i="forge-sw-jewelry-t">หลอมเครื่องประดับ อัตโนมัติ (ต้องการ 3 ชิ้น)</span></b>
             <div class="hint" data-i="forge-sw-jewelry-d">รวมเครื่องประดับเทียร์ที่เลือกไว้ 3 ชิ้น เป็นเทียร์ถัดไปอัตโนมัติ (ไม่จำกัดแค่ Tier 3 แล้ว)</div></div>
           </div>
           <div class="forge-tier-checks" style="margin-top:12px;">
-            <label class="forge-tier-check tier-1"><input type="checkbox" class="forge-inert-sw"> Tier 1</label>
-            <label class="forge-tier-check tier-2"><input type="checkbox" class="forge-inert-sw"> Tier 2</label>
-            <label class="forge-tier-check tier-3"><input type="checkbox" class="forge-inert-sw" checked> Tier 3</label>
-            <label class="forge-tier-check tier-4"><input type="checkbox" class="forge-inert-sw"> Tier 4</label>
-            <label class="forge-tier-check tier-5"><input type="checkbox" class="forge-inert-sw"> Tier 5</label>
-            <label class="forge-tier-check tier-6"><input type="checkbox" class="forge-inert-sw"> Tier 6</label>
+            <label class="forge-tier-check tier-1"><input type="checkbox" id="forge-jewelry-tier-1"> Tier 1</label>
+            <label class="forge-tier-check tier-2"><input type="checkbox" id="forge-jewelry-tier-2"> Tier 2</label>
+            <label class="forge-tier-check tier-3"><input type="checkbox" id="forge-jewelry-tier-3" checked> Tier 3</label>
+            <label class="forge-tier-check tier-4"><input type="checkbox" id="forge-jewelry-tier-4"> Tier 4</label>
+            <label class="forge-tier-check tier-5"><input type="checkbox" id="forge-jewelry-tier-5"> Tier 5</label>
+            <label class="forge-tier-check tier-6"><input type="checkbox" id="forge-jewelry-tier-6"> Tier 6</label>
           </div>
         </div>
         <div class="forge-toggle-row">
-          <label class="switch"><input type="checkbox" class="forge-inert-sw" checked><span class="slider"></span></label>
+          <label class="switch"><input type="checkbox" id="forge-sw-usevault" checked><span class="slider"></span></label>
           <div><b data-i="forge-sw-usevault-t">ใช้ของ/อัญมณีในคลังตอนหลอมได้ด้วย</b>
           <div class="hint" data-i="forge-sw-usevault-d">ไม่ใช่แค่ในกระเป๋า รวมของจากคลังทุกแท็บมานับด้วย</div></div>
         </div>
@@ -655,8 +657,8 @@ const UI_STRINGS = {
   jewel_market_only: { th: '💵 เฉพาะที่มีราคา Steam', en: '💵 Only jewels with a Steam price' },
   sort_grade_desc: { th: 'เกรด (6★ → 1★)', en: 'Grade (6★ → 1★)' },
   sort_grade_asc: { th: 'เกรด (1★ → 6★)', en: 'Grade (1★ → 6★)' },
-  'forge-warn-title': { th: 'ของจริงหลายจุดแล้ว แต่ยังไม่ใช่ทั้งหมด', en: 'Several parts are real now - but not everything yet' },
-  'forge-warn-body': { th: 'ของจริง: Auto Jewel Fuse, จำนวนอัญมณี/อุปกรณ์ตามเทียร์, ความจุคลัง, ปุ่มใส่อาวุธดีที่สุด/เก็บเข้าคลัง/ถอนออกกระเป๋า, สวิตช์อัตโนมัติ "ใส่อาวุธดีที่สุดตอนสลับคลาส" กับ "เก็บอัญมณีเข้าคลังตอน AFK", และปุ่ม "พร้อมหลอม" ใต้การ์ดอุปกรณ์แต่ละเทียร์ = หลอมจริง (กด 6 ชิ้นหายจริง กลายเป็น 1 ชิ้นเทียร์ถัดไป ทดสอบสำเร็จแล้วกับของจริง) — ทั้งหมดผ่านฟังก์ชันทางการของเกม ไม่ใช่แก้ค่าตรงๆ, สวิตช์ด้านล่างทำงานเฉพาะตอนเปิดหน้านี้ค้างไว้เท่านั้น — ส่วนที่ยังไม่ทำ: หลอมเครื่องประดับ (แหวน/ต่างหู ฯลฯ ใช้ระบบคนละตัวกับอุปกรณ์ทั่วไป), "ใส่สกิลมาตรฐาน" ยังหาวิธีอ่าน "สกิลที่เรียนแล้ว" จากเกมไม่เจอ, "ยืนยันเชื่อมต่อใหม่อัตโนมัติ" ทำตามโครงสร้างที่เจอในโค้ดต้นฉบับแต่ยังไม่เคยเจอเหตุการณ์จริงให้ทดสอบ', en: 'Real now: Auto Jewel Fuse, per-tier jewel/gear counts, Vault capacity, Equip Best Weapons/Store All/Withdraw All, the "auto-equip on class switch" and "auto-store loose jewels while AFK" automation switches, and the "Ready to fuse" button under each gear tier card - REAL fusion (6 real items become 1 of the next tier, tested successfully against the real game) - all through the game\'s own official functions, never a raw value edit; the switches below only run while this tab stays open. Not built yet: Jewelry fusion (rings/earrings/etc. use a separate content-type from regular gear), "Equip Standard Skills" (blocked on finding a reliable way to read which skills are actually learned), and "Auto-confirm reconnect" (built from the reference site\'s own code structure but never tested against a real disconnect).' },
+  'forge-warn-title': { th: 'ของจริงเกือบทั้งหมดแล้ว เหลือจุดเดียว', en: 'Almost everything is real now - one piece left' },
+  'forge-warn-body': { th: 'ของจริงทั้งหมด: Auto Jewel Fuse, ใส่อาวุธดีที่สุด, เก็บเข้าคลัง/ถอนออกกระเป๋า, ความจุคลัง, หลอมอุปกรณ์+เครื่องประดับจริง (ทั้งกดเองและอัตโนมัติตามเทียร์ที่ติ๊กไว้), auto-store อัญมณีตอน AFK, auto-equip อาวุธตอนสลับคลาส, auto-confirm reconnect (ยังไม่เคยเจอเหตุการณ์จริงให้ทดสอบ) — ทั้งหมดผ่านฟังก์ชันทางการของเกม ไม่ใช่แก้ค่าตรงๆ, ตั้งค่าทุกอันจำการติ๊กไว้ข้ามการรีเฟรช, สวิตช์อัตโนมัติทำงานเฉพาะตอนเปิดหน้านี้ค้างไว้เท่านั้น — เหลือจุดเดียวที่ยังไม่ทำ: "ใส่สกิลมาตรฐาน" ยังหาวิธีอ่าน "สกิลที่เรียนแล้วจริง" จากเกมไม่เจอ', en: 'Everything real now: Auto Jewel Fuse, Equip Best Weapons, Store All/Withdraw All, Vault capacity, real Gear + Jewelry fusion (manual button and automatic per ticked tier), auto-store jewels while AFK, auto-equip weapon on class switch, auto-confirm reconnect (never tested against a real disconnect yet) - all through the game\'s own official functions, never a raw value edit. Every setting remembers what was ticked across a refresh; the automation switches only run while this tab stays open. One piece still not built: "Equip Standard Skills" - haven\'t found a reliable way to read which skills are actually learned in the game.' },
   'forge-btn-autofuse': { th: 'Auto Jewel Fuse', en: 'Auto Jewel Fuse' },
   'forge-btn-equipweapon': { th: 'ใส่อาวุธที่ดีที่สุด', en: 'Equip Best Weapons' },
   'forge-btn-equipskills': { th: 'ใส่สกิลมาตรฐาน', en: 'Equip Standard Skills' },
@@ -684,7 +686,8 @@ const UI_STRINGS = {
   'forge-recommended': { th: 'แนะนำ', en: 'Recommended' },
   'forge-sw-samelvl-t': { th: 'หลอมเฉพาะไอเทมเลเวลเดียวกันเท่านั้น', en: 'Only fuse SAME LEVEL items' },
   'forge-sw-samelvl-d': { th: 'บังคับให้ของ 6 ชิ้นต้องการเลเวลเท่ากันทั้งหมด (เช่น Lv.50 ล้วน) ป้องกันของเลเวลต่ำหลุดไปปนกับของเลเวลสูงตอนหลอม', en: "Requires all 6 items to share the same required level (e.g. all Lv.50) - stops a low-level item from slipping into a high-level fusion." },
-  'forge-radio-note': { th: 'เลือกได้แค่ 1 ใน 2 ข้อนี้เท่านั้น', en: 'Only one of these two can be on at a time.' },
+  'forge-radio-note': { th: 'เลือกได้แค่ 1 ใน 2 ข้อนี้เท่านั้น (เกมบังคับให้ของต้องเลเวลเดียวกันอยู่แล้วทั้ง 2 แบบ - สวิตช์นี้แค่บันทึกไว้)', en: 'Only one of these two can be on at a time (the game requires same-level materials either way - this switch is just saved for reference).' },
+  'forge-gem-tier-note': { th: '⚠️ ยังไม่เจอวิธีสั่งให้เกมหลอมเฉพาะเทียร์ที่เลือก - ปุ่ม Auto Jewel Fuse ด้านบนจะหลอมเทียร์ไหนก็ได้ที่ครบ 6 ชิ้นก่อน ไม่สนใจว่าติ๊กเทียร์ไหนไว้', en: "⚠️ Haven't found a way to make the game fuse only selected tiers - the Auto Jewel Fuse switch above fuses whichever tier reaches 6 first, regardless of what's ticked here." },
   'forge-sw-usevault-t': { th: 'ใช้ของ/อัญมณีในคลังตอนหลอมได้ด้วย', en: 'Allow using gear & jewels from the Vault when fusing' },
   'forge-sw-usevault-d': { th: 'ไม่ใช่แค่ในกระเป๋า รวมของจากคลังทุกแท็บมานับด้วย', en: 'Not just the Bag - counts items across every Vault tab too.' },
   'forge-sw-autostore-t': { th: 'เก็บอัญมณีที่หลุดเข้าคลังอัตโนมัติ', en: 'Auto-store loose jewels into the Vault' },
@@ -1699,6 +1702,13 @@ const GEAR_ONLY_TIDS_BY_TIER = (() => {
   });
   return out;
 })();
+const JEWELRY_ONLY_TIDS_BY_TIER = (() => {
+  const out = {};
+  GAME_DATA.equipments.forEach(e => {
+    if (e.slot >= 9 && e.slot <= 14) (out[e.tier] = out[e.tier] || []).push(e.id);
+  });
+  return out;
+})();
 function buildForgeEquipStatusExpr(){
   // Same NotStack/_location pattern as jewels, confirmed against boss's own
   // currently-equipped gear: _location 1 = Bag, 2 = Vault, 3 = Equipped.
@@ -1798,10 +1808,17 @@ async function refreshForgeStatus(){
         ${isMax
           ? `<div class="hint" style="color:var(--gold-bright);margin-top:6px;">⭐ ${currentLang==='th'?'เทียร์สูงสุดแล้ว':'Max Tier'}</div>`
           : `<div class="hint" style="margin-top:6px;">${currentLang==='th'?`มี ${cnt}/6 ชิ้น (ขาดอีก ${Math.max(0,6-cnt)})`:`Has ${cnt}/6 jewels (Need ${Math.max(0,6-cnt)})`}</div>
-             <button class="btn btn-outline forge-inert" style="width:100%;margin-top:8px;padding:6px;font-size:11.5px;" ${ready?'':'disabled'}>${ready ? (currentLang==='th'?'พร้อมหลอม':'Ready to fuse') : (currentLang==='th'?'ต้องการ 6 ชิ้น':'Need 6 jewels')}</button>`}
+             <button class="btn btn-outline forge-jewel-ready-btn" style="width:100%;margin-top:8px;padding:6px;font-size:11.5px;" ${ready?'':'disabled'}>${ready ? (currentLang==='th'?'พร้อมหลอม (เปิด Auto Fuse ให้)':'Ready to fuse (turns on Auto Fuse)') : (currentLang==='th'?'ต้องการ 6 ชิ้น':'Need 6 jewels')}</button>`}
       </div>`;
     }).join('');
-    gridEl.querySelectorAll('.forge-inert:not([disabled])').forEach(el => el.addEventListener('click', forgeInertToast));
+    // Jewels/gems have no manual "fuse now" API (confirmed: findFusionTable
+    // only returns a real table for Gear/Jewelry contentTypes, not gems) -
+    // the only real lever here is the same Auto Jewel Fuse switch already at
+    // the top, which fuses whichever tier reaches 6 first on its own.
+    gridEl.querySelectorAll('.forge-jewel-ready-btn:not([disabled])').forEach(el => el.addEventListener('click', async () => {
+      if (!forgeAutoFusionOn) { await toggleAutoFusion(); }
+      toast(currentLang==='th' ? 'เปิด Auto Jewel Fuse แล้ว เกมจะหลอมเทียร์ที่ครบ 6 ชิ้นให้เองในไม่ช้า' : 'Auto Jewel Fuse is on - the game will fuse any tier with 6 jewels on its own shortly');
+    }));
     document.getElementById('forge-stat-total').textContent = totalOwned.toLocaleString();
     document.getElementById('forge-stat-total-sub').textContent = currentLang==='th' ? 'นับเทียร์ 1-6 (กระเป๋า+คลัง)' : 'Tiers 1-6 (Bag + Vault)';
     document.getElementById('forge-stat-ready').textContent = tiersReady;
@@ -2017,22 +2034,25 @@ async function forgeEquipBestWeapon(){
 }
 document.getElementById('btn-forge-equipweapon').addEventListener('click', forgeEquipBestWeapon);
 
-/* ---- Real Fuse (Gear only, contentType 1): the one irreversible action in
-   this app. Uses the exact sequence found in the reference site's own code:
-   findFusionTable(contentType, tier, maxLevel) -> validateFusionMaterials ->
-   clearFusionStaging -> reqFusionAsync(FusionID, materials). Picks the 6
-   owned items of that tier sharing the same level requirement (the largest
-   such group), since the game itself groups fusion by level. Confirmed via a
-   native confirm() dialog first since this consumes real items with no undo. */
-function buildRealGearFuseExpr(tier, tidList){
+/* ---- Real Fuse (Gear contentType 1, Jewelry contentType 2): the irreversible
+   actions in this app. Uses the exact sequence found in the reference site's
+   own code: findFusionTable(contentType, tier, maxLevel) ->
+   validateFusionMaterials -> clearFusionStaging -> reqFusionAsync(FusionID,
+   materials). Picks the needCount owned items of that tier sharing the same
+   level requirement (the largest such group), since the game itself groups
+   fusion by level - this is a hard game rule, not a setting, so the "same
+   level only" switch above doesn't change this behavior either way. */
+function buildRealFuseExpr(contentType, tier, tidList, needCount, includeVault){
   return `(async function(){
     try {
       var sWorkshop;
       for (var e of nn.services._mapService.entries()) { var name = e[0].name || e[0].toString(); if (name === 'ServiceWorkshop') sWorkshop = e[1]; }
       var tidSet = ${JSON.stringify(tidList)};
+      var allowedLocs = ${includeVault} ? [1,2] : [1];
       var allItems = nn.net.data.item.getAllItemNotStack();
-      var candidates = allItems.filter(function(it){ return (it.location === 1 || it.location === 2) && tidSet.indexOf(it.itemTid) !== -1; });
-      if (candidates.length < 6) return JSON.stringify({ error: 'not_enough', have: candidates.length });
+      var candidates = allItems.filter(function(it){ return allowedLocs.indexOf(it.location) !== -1 && tidSet.indexOf(it.itemTid) !== -1; });
+      var need = ${needCount};
+      if (candidates.length < need) return JSON.stringify({ error: 'not_enough', have: candidates.length });
       var byLevel = {};
       candidates.forEach(function(it){
         var d = nn.db.equip.get(it.itemTid);
@@ -2041,68 +2061,96 @@ function buildRealGearFuseExpr(tier, tidList){
       });
       var bestLv = null, bestGroup = null;
       Object.keys(byLevel).forEach(function(lv){
-        if (byLevel[lv].length >= 6 && (!bestGroup || byLevel[lv].length > bestGroup.length)) { bestGroup = byLevel[lv]; bestLv = lv; }
+        if (byLevel[lv].length >= need && (!bestGroup || byLevel[lv].length > bestGroup.length)) { bestGroup = byLevel[lv]; bestLv = lv; }
       });
       if (!bestGroup) {
         var summary = Object.keys(byLevel).map(function(lv){ return lv + ':' + byLevel[lv].length; }).join(', ');
         return JSON.stringify({ error: 'no_same_level_group', have: candidates.length, byLevel: summary });
       }
-      var selected = bestGroup.slice(0, 6);
+      var selected = bestGroup.slice(0, need);
       var maxLv = Math.max.apply(null, selected.map(function(it){ var d = nn.db.equip.get(it.itemTid); return d ? d.LimitLevel : 0; }));
-      var targetTable = sWorkshop.findFusionTable(1, ${tier}, maxLv);
+      var targetTable = sWorkshop.findFusionTable(${contentType}, ${tier}, maxLv);
       if (!targetTable) return JSON.stringify({ error: 'no_target_table', level: bestLv });
       var materials = selected.map(function(it){ return { itemId: it.itemId, itemTid: it.itemTid, itemCnt: 1 }; });
       if (!sWorkshop.validateFusionMaterials(targetTable, materials)) return JSON.stringify({ error: 'validate_failed', level: bestLv });
       sWorkshop.clearFusionStaging();
       var fusionRes = await sWorkshop.reqFusionAsync(targetTable.FusionID, materials);
       var ok = !!(fusionRes && (fusionRes.NetResult === 0 || !fusionRes.NetResult || fusionRes.Data));
-      return JSON.stringify({ ok: ok, level: bestLv, resultTids: selected.map(function(it){ return it.itemTid; }) });
+      return JSON.stringify({ ok: ok, level: bestLv, needCount: need });
     } catch(e) { return JSON.stringify({ error: e.message }); }
   })()`;
 }
-async function forgeRealFuseGear(tier){
-  const confirmMsg = currentLang==='th'
-    ? `ยืนยันหลอมอุปกรณ์ Tier ${tier} จำนวน 6 ชิ้นจริง? การกระทำนี้ย้อนกลับไม่ได้ (ของ 6 ชิ้นจะหายไป กลายเป็น 1 ชิ้น Tier ${tier+1})`
-    : `Really fuse 6 real Tier ${tier} gear items? This cannot be undone (6 items become 1 Tier ${tier+1} item).`;
-  if (!confirm(confirmMsg)) return;
-  const tidList = GEAR_ONLY_TIDS_BY_TIER[tier] || [];
-  toast(currentLang==='th' ? `กำลังหลอม Tier ${tier}...` : `Fusing Tier ${tier}...`);
+// Shared executor for both the manual per-card button (confirm dialog, own
+// toasts) and the unattended automation tick (no dialog, throttled, logs only).
+async function forgeRunRealFuse(contentType, tier, tidList, needCount, includeVault, opts){
+  opts = opts || {};
+  const kindLabel = contentType === 1
+    ? (currentLang==='th' ? 'อุปกรณ์' : 'gear')
+    : (currentLang==='th' ? 'เครื่องประดับ' : 'jewelry');
+  if (!opts.silent) {
+    const confirmMsg = currentLang==='th'
+      ? `ยืนยันหลอม${kindLabel} Tier ${tier} จำนวน ${needCount} ชิ้นจริง? การกระทำนี้ย้อนกลับไม่ได้ (${needCount} ชิ้นจะหายไป กลายเป็น 1 ชิ้น Tier ${tier+1})`
+      : `Really fuse ${needCount} real Tier ${tier} ${kindLabel} items? This cannot be undone (${needCount} items become 1 Tier ${tier+1} item).`;
+    if (!confirm(confirmMsg)) return null;
+    toast(currentLang==='th' ? `กำลังหลอม Tier ${tier}...` : `Fusing Tier ${tier}...`);
+  }
+  let res;
   try {
-    const res = await sendLiveEvalAwait(buildRealGearFuseExpr(tier, tidList), 15000);
-    if (res.error === 'not_enough') {
-      toast(currentLang==='th' ? `ของไม่พอ (มี ${res.have}/6)` : `Not enough items (${res.have}/6)`);
-    } else if (res.error === 'no_same_level_group') {
-      toast(currentLang==='th' ? `ไม่มีกลุ่มเลเวลเดียวกันครบ 6 ชิ้น (${res.byLevel})` : `No same-level group has 6 items (${res.byLevel})`);
-    } else if (res.error) {
-      toast(currentLang==='th' ? `หลอมไม่สำเร็จ: ${res.error}` : `Fuse failed: ${res.error}`);
-      forgeLogActivity(currentLang==='th' ? `⚙️ หลอม Tier ${tier} ไม่สำเร็จ: ${res.error}` : `⚙️ Fuse Tier ${tier} failed: ${res.error}`);
-    } else if (res.ok) {
-      toast(currentLang==='th' ? `หลอม Tier ${tier} สำเร็จ! (Lv.${res.level})` : `Fused Tier ${tier} successfully! (Lv.${res.level})`);
-      forgeLogActivity(currentLang==='th' ? `⚙️ หลอมอุปกรณ์ Tier ${tier} สำเร็จ (Lv.${res.level}, 6 ชิ้น → Tier ${tier+1})` : `⚙️ Fused Tier ${tier} gear (Lv.${res.level}, 6 items → Tier ${tier+1})`);
-    } else {
-      toast(currentLang==='th' ? 'ผลลัพธ์ไม่ชัดเจน เช็คในเกมด้วย' : 'Unclear result, please check in-game');
-      forgeLogActivity(currentLang==='th' ? `⚙️ หลอม Tier ${tier}: ผลลัพธ์ไม่ชัดเจน` : `⚙️ Fuse Tier ${tier}: unclear result`);
-    }
+    res = await sendLiveEvalAwait(buildRealFuseExpr(contentType, tier, tidList, needCount, includeVault), 15000);
   } catch(e) {
-    toast(currentLang==='th' ? 'สั่งงานไม่สำเร็จ (เกมไม่ได้เปิด/ไม่ได้เชื่อมต่อ/หมดเวลา)' : 'Command failed (game not running / not connected / timed out)');
+    if (!opts.silent) toast(currentLang==='th' ? 'สั่งงานไม่สำเร็จ (เกมไม่ได้เปิด/ไม่ได้เชื่อมต่อ/หมดเวลา)' : 'Command failed (game not running / not connected / timed out)');
+    return null;
+  }
+  if (res.error === 'not_enough' || res.error === 'no_same_level_group') {
+    if (!opts.silent) toast(currentLang==='th' ? `ยังหลอมไม่ได้ (ของไม่ครบ/ไม่ครบเลเวลเดียวกัน)` : `Can't fuse yet (not enough matching same-level items)`);
+    return res;
+  }
+  if (res.error) {
+    if (!opts.silent) toast(currentLang==='th' ? `หลอมไม่สำเร็จ: ${res.error}` : `Fuse failed: ${res.error}`);
+    forgeLogActivity(currentLang==='th' ? `⚙️ หลอม${kindLabel} Tier ${tier} ไม่สำเร็จ: ${res.error}` : `⚙️ Fuse ${kindLabel} Tier ${tier} failed: ${res.error}`);
+  } else if (res.ok) {
+    if (!opts.silent) toast(currentLang==='th' ? `หลอม Tier ${tier} สำเร็จ! (Lv.${res.level})` : `Fused Tier ${tier} successfully! (Lv.${res.level})`);
+    forgeLogActivity(currentLang==='th' ? `${opts.silent?'🤖':'⚙️'} หลอม${kindLabel} Tier ${tier} สำเร็จ (Lv.${res.level}, ${needCount} ชิ้น → Tier ${tier+1})` : `${opts.silent?'🤖':'⚙️'} Fused ${kindLabel} Tier ${tier} (Lv.${res.level}, ${needCount} items → Tier ${tier+1})`);
+  } else {
+    if (!opts.silent) toast(currentLang==='th' ? 'ผลลัพธ์ไม่ชัดเจน เช็คในเกมด้วย' : 'Unclear result, please check in-game');
   }
   setTimeout(() => { refreshForgeStatus(); refreshForgeEquipStatus(); refreshForgeStorageCapacity(); }, 800);
+  return res;
+}
+function forgeIncludeVault(){ return document.getElementById('forge-sw-usevault').checked; }
+async function forgeRealFuseGear(tier){
+  await forgeRunRealFuse(1, tier, GEAR_ONLY_TIDS_BY_TIER[tier] || [], 6, forgeIncludeVault());
 }
 
 /* ---- Automation: runs every 2s while this tab stays open, only for whichever
    switch below is on. There is no background service - closing this tab (or
    the browser) stops it immediately, same as any other page-only script. Each
    switch's on/off state is saved to localStorage so it survives a reload. ---- */
-const FORGE_AUTOMATION_SW_IDS = ['forge-sw-weapon', 'forge-sw-autostore', 'forge-sw-reconnect'];
+const FORGE_AUTOMATION_SW_IDS = [
+  'forge-sw-weapon', 'forge-sw-autostore', 'forge-sw-reconnect',
+  'forge-sw-gear', 'forge-sw-samelvl', 'forge-sw-jewelry', 'forge-sw-usevault',
+  'forge-gem-tier-1','forge-gem-tier-2','forge-gem-tier-3','forge-gem-tier-4','forge-gem-tier-5','forge-gem-tier-6',
+  'forge-gear-tier-1','forge-gear-tier-2','forge-gear-tier-3','forge-gear-tier-4','forge-gear-tier-5','forge-gear-tier-6',
+  'forge-jewelry-tier-1','forge-jewelry-tier-2','forge-jewelry-tier-3','forge-jewelry-tier-4','forge-jewelry-tier-5','forge-jewelry-tier-6',
+];
 FORGE_AUTOMATION_SW_IDS.forEach(id => {
   const el = document.getElementById(id);
-  el.checked = localStorage.getItem('wog_' + id) === '1';
+  const saved = localStorage.getItem('wog_' + id);
+  // First-ever load (nothing saved yet) keeps the HTML's own default
+  // (checked/unchecked); every load after that always restores exactly what
+  // was last saved, per boss's request.
+  if (saved !== null) el.checked = saved === '1';
   el.addEventListener('change', () => localStorage.setItem('wog_' + id, el.checked ? '1' : '0'));
 });
+function forgeSelectedTiers(prefix){
+  return [1,2,3,4,5,6].filter(t => document.getElementById(`${prefix}-${t}`).checked);
+}
 
 let forgeLastClassType = null;
 let forgeLastAutoStoreAt = 0;
-function buildForgeAutomationProbeExpr(jewelTids){
+let forgeLastGearFuseAt = {};
+let forgeLastJewelryFuseAt = {};
+function buildForgeAutomationProbeExpr(jewelTids, gearByTier, jewelryByTier, includeVault){
   return `(function(){
     try {
       var out = {};
@@ -2110,13 +2158,27 @@ function buildForgeAutomationProbeExpr(jewelTids){
       var jewelTids = ${JSON.stringify(jewelTids)};
       var bagJewelIds = [];
       var used = 0;
-      nn.net.data.item.getAllItemNotStack().forEach(function(it){
+      var allowedLocs = ${includeVault} ? [1,2] : [1];
+      var allItems = nn.net.data.item.getAllItemNotStack();
+      allItems.forEach(function(it){
         if (it.location === 2) used++;
         if (it.location === 1 && jewelTids.indexOf(it.itemTid) !== -1) bagJewelIds.push(String(it.itemId));
       });
       out.bagJewelIds = bagJewelIds;
       out.usedStorage = used;
       out.slotCnt = nn.db.config.gen.Storage_Slot_Cnt || 42;
+      function countReady(byTier){
+        var counts = {};
+        Object.keys(byTier).forEach(function(t){
+          var tidSet = byTier[t];
+          var c = 0;
+          allItems.forEach(function(it){ if (allowedLocs.indexOf(it.location) !== -1 && tidSet.indexOf(it.itemTid) !== -1) c++; });
+          counts[t] = c;
+        });
+        return counts;
+      }
+      out.gearCounts = countReady(${JSON.stringify(gearByTier)});
+      out.jewelryCounts = countReady(${JSON.stringify(jewelryByTier)});
       var popupInfo = null;
       try {
         var panels = nn.uiManager._showingPanels;
@@ -2156,10 +2218,13 @@ async function forgeAutomationTick(){
   const wantWeapon = document.getElementById('forge-sw-weapon').checked;
   const wantAutostore = document.getElementById('forge-sw-autostore').checked;
   const wantReconnect = document.getElementById('forge-sw-reconnect').checked;
-  if (!wantWeapon && !wantAutostore && !wantReconnect) return;
+  const wantGear = document.getElementById('forge-sw-gear').checked;
+  const wantJewelry = document.getElementById('forge-sw-jewelry').checked;
+  if (!wantWeapon && !wantAutostore && !wantReconnect && !wantGear && !wantJewelry) return;
   const jewelTids = Object.values(JEWEL_TIDS_BY_GRADE).flat();
+  const includeVault = forgeIncludeVault();
   let data;
-  try { data = await sendLiveEval(buildForgeAutomationProbeExpr(jewelTids)); } catch(e) { return; }
+  try { data = await sendLiveEval(buildForgeAutomationProbeExpr(jewelTids, GEAR_ONLY_TIDS_BY_TIER, JEWELRY_ONLY_TIDS_BY_TIER, includeVault)); } catch(e) { return; }
   if (!data || data.error) return;
 
   if (wantWeapon) {
@@ -2176,15 +2241,20 @@ async function forgeAutomationTick(){
     const toMove = data.bagJewelIds.slice(0, avail);
     if (toMove.length > 0) {
       forgeLastAutoStoreAt = Date.now();
-      const moveExpr = `(function(){
+      // itemId is a real BigInt in-game - the probe step above had to send it
+      // out as a string (JSON can't carry BigInt), so it must be converted
+      // back to BigInt here before calling the real move method, or the game
+      // silently matches nothing and nothing actually moves.
+      const moveExpr = `(async function(){
         try {
           var gs = nn.net.manager.gameSession;
-          gs.reqStorageMoveInList(${JSON.stringify(toMove)});
+          var ids = ${JSON.stringify(toMove)}.map(function(s){ return BigInt(s); });
+          await gs.reqStorageMoveInList(ids);
           return JSON.stringify({ ok: true });
         } catch(e) { return JSON.stringify({ error: e.message }); }
       })()`;
       try {
-        const res = await sendLiveEval(moveExpr);
+        const res = await sendLiveEvalAwait(moveExpr, 8000);
         if (!res.error) {
           forgeLogActivity(currentLang==='th' ? `🤖 เก็บอัญมณีที่หลุดในกระเป๋าเข้าคลังอัตโนมัติ (${toMove.length} ชิ้น)` : `🤖 Auto-stored ${toMove.length} loose jewel(s) into the Vault`);
           refreshForgeStorageCapacity();
@@ -2220,12 +2290,41 @@ async function forgeAutomationTick(){
       } catch(e){}
     }
   }
+
+  // Auto-fuse gear/jewelry: only for tiers the boss ticked, only when ready,
+  // throttled per-tier so a slow-to-refresh count can't trigger it twice in a
+  // row. No confirm() dialog here (unlike the manual button) since that would
+  // block an unattended/AFK loop - every fuse is still logged either way.
+  if (wantGear) {
+    for (const t of forgeSelectedTiers('forge-gear-tier')) {
+      const cnt = data.gearCounts[t] || 0;
+      const last = forgeLastGearFuseAt[t] || 0;
+      if (cnt >= 6 && Date.now() - last > 20000) {
+        forgeLastGearFuseAt[t] = Date.now();
+        // Sequential on purpose: ServiceWorkshop's staging calls
+        // (clearFusionStaging/reqFusionAsync) are shared singleton state -
+        // firing several tiers concurrently risks one tier's staging call
+        // clobbering another's in-flight request.
+        await forgeRunRealFuse(1, t, GEAR_ONLY_TIDS_BY_TIER[t] || [], 6, includeVault, { silent: true });
+      }
+    }
+  }
+  if (wantJewelry) {
+    for (const t of forgeSelectedTiers('forge-jewelry-tier')) {
+      const cnt = data.jewelryCounts[t] || 0;
+      const last = forgeLastJewelryFuseAt[t] || 0;
+      if (cnt >= 3 && Date.now() - last > 20000) {
+        forgeLastJewelryFuseAt[t] = Date.now();
+        await forgeRunRealFuse(2, t, JEWELRY_ONLY_TIDS_BY_TIER[t] || [], 3, includeVault, { silent: true });
+      }
+    }
+  }
 }
 setInterval(forgeAutomationTick, 2000);
 
-// Everything below this line is still a UI preview only (real fusion execution,
-// standard-skill auto-equip, and the remaining automation switches) - clicking
-// just says so, nothing is wired.
+// Everything below this line is still a UI preview only - only "Equip
+// Standard Skills" remains unbuilt (no reliable way found yet to read which
+// skills are actually learned in the game).
 function forgeInertToast(){
   toast(currentLang==='th' ? '🚧 ยังไม่เปิดใช้งาน (รอต่อระบบจริง)' : "🚧 Not active yet (backend not wired up)");
 }
@@ -2238,9 +2337,16 @@ document.querySelectorAll('.forge-inert-sw').forEach(el => el.addEventListener('
 document.querySelectorAll('.forge-radio-a[data-pair="gear"]').forEach(el => {
   el.addEventListener('change', () => {
     if (el.checked) {
-      document.querySelectorAll('.forge-radio-a[data-pair="gear"]').forEach(other => { if (other !== el) other.checked = false; });
+      document.querySelectorAll('.forge-radio-a[data-pair="gear"]').forEach(other => {
+        if (other !== el) {
+          other.checked = false;
+          // setting .checked in JS doesn't fire 'change', so the persistence
+          // listener above never runs for it - save it here too or a reload
+          // would bring back a stale checked state for the one just cleared.
+          localStorage.setItem('wog_' + other.id, '0');
+        }
+      });
     }
-    forgeInertToast();
   });
 });
 
